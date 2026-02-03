@@ -1,0 +1,23 @@
+[project]
+name = "comfyui-umeairt-toolkit"
+version = "1.0.0"
+description = "A Wireless, Nodes 2.0 Ready, and Aesthetic Toolkit for ComfyUI."
+readme = "README.md"
+authors = [
+    { name = "UmeAiRT Team", email = "contact@umeairt.com" }
+]
+license = { file = "LICENSE" }
+dependencies = [
+    "ultralytics>=8.0.0"
+]
+requires-python = ">=3.8"
+keywords = ["comfyui", "stable-diffusion", "wireless", "workflow", "ai"]
+
+[project.urls]
+Homepage = "https://github.com/UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+Repository = "https://github.com/UmeAiRT/ComfyUI-UmeAiRT-Toolkit.git"
+
+[tool.comfy]
+PublisherId = "UmeAiRT"
+DisplayName = "UmeAiRT Toolkit"
+Icon = ""
