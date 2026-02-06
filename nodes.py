@@ -625,21 +625,103 @@ class UmeAiRT_WirelessImageLoader(comfy_nodes.LoadImage):
         return {
             "required": {
                 "image": (sorted(files), {"image_upload": True}),
+                "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF"}),
+                "mode": ("BOOLEAN", {"default": False, "label_on": "Inpaint", "label_off": "Img2Img"}),
             }
         }
 
-    RETURN_TYPES = ("IMAGE", "MASK")
+    RETURN_TYPES = ()
     FUNCTION = "load_image_wireless"
     CATEGORY = "UmeAiRT/Loaders"
     OUTPUT_NODE = True
 
-    def load_image_wireless(self, image):
+    def load_image_wireless(self, image, resize, mode):
         # Call original loader
         out = super().load_image(image)
+        img = out[0]
+        mask = out[1]
+
+        # Mode Logic: If Img2Img (False), we discard mask for global state
+        # But we still process resizing if needed
+        
+        if resize:
+            # Fetch Target Size
+            size = UME_SHARED_STATE.get(KEY_IMAGESIZE, {"width": 1024, "height": 1024})
+            target_w = int(size.get("width", 1024))
+            target_h = int(size.get("height", 1024))
+            
+            # --- Result Holders ---
+            final_img = img
+            final_mask = mask
+
+            # --- Helper: Resize & Crop ---
+            def resize_and_crop(tensor, mode="bilinear", is_mask=False):
+                # tensor shape: [B, H, W, C] (Image) or [B, H, W] (Mask)
+                
+                # 1. Permute to [B, C, H, W] for interpolate
+                if is_mask:
+                    # Mask is [B, H, W] -> Add C dim -> [B, 1, H, W]
+                    t = tensor.unsqueeze(1)
+                else:
+                     # Image is [B, H, W, C] -> [B, C, H, W]
+                    t = tensor.permute(0, 3, 1, 2)
+
+                b, c, h, w = t.shape
+                
+                # 2. Scale (Aspect Ratio Preserved - Cover)
+                scale = max(target_w / w, target_h / h)
+                new_w = int(w * scale)
+                new_h = int(h * scale)
+                
+                # Resize
+                if mode == "bilinear":
+                    t_resized = torch.nn.functional.interpolate(t, size=(new_h, new_w), mode=mode, align_corners=False)
+                else:
+                    t_resized = torch.nn.functional.interpolate(t, size=(new_h, new_w), mode=mode)
+                
+                # 3. Center Crop
+                # Calculate start indices
+                h_start = (new_h - target_h) // 2
+                w_start = (new_w - target_w) // 2
+                
+                if h_start < 0: h_start = 0 
+                if w_start < 0: w_start = 0
+                
+                t_cropped = t_resized[:, :, h_start:h_start+target_h, w_start:w_start+target_w]
+                
+                # 4. Restore Shape
+                if is_mask:
+                    # [B, 1, H, W] -> [B, H, W]
+                    return t_cropped.squeeze(1)
+                else:
+                    # [B, C, H, W] -> [B, H, W, C]
+                    return t_cropped.permute(0, 2, 3, 1)
+
+            # Apply Logic
+            if img is not None:
+                final_img = resize_and_crop(img, mode="bilinear", is_mask=False)
+            
+            if mask is not None:
+                final_mask = resize_and_crop(mask, mode="nearest", is_mask=True)
+            
+            # Update References
+            img = final_img
+            mask = final_mask
+            
+            print(f"UmeAiRT Wireless Image Loader: Resized to {target_w}x{target_h}")
+
         # Set Wireless State
-        UME_SHARED_STATE[KEY_SOURCE_IMAGE] = out[0]
-        UME_SHARED_STATE[KEY_SOURCE_MASK] = out[1]
-        return out
+        UME_SHARED_STATE[KEY_SOURCE_IMAGE] = img
+        
+        # Apply Mode (Inpaint vs Img2Img)
+        if mode:
+            # Inpaint: Store Mask
+            UME_SHARED_STATE[KEY_SOURCE_MASK] = mask
+        else:
+            # Img2Img: Clear/Nullify Mask
+            UME_SHARED_STATE[KEY_SOURCE_MASK] = None
+
+        return ()
 
 class UmeAiRT_SourceImage_Output:
     @classmethod
@@ -772,12 +854,29 @@ class UmeAiRT_WirelessKSampler:
         if denoise < 1.0:
             # Try to fetch source image for Img2Img
             source_image = UME_SHARED_STATE.get(KEY_SOURCE_IMAGE)
+            source_mask = UME_SHARED_STATE.get(KEY_SOURCE_MASK)
+
             if source_image is not None:
                 print(f"UmeAiRT DEBUG: Wireless KSampler triggered Img2Img (Denoise {denoise}). Encoding Source Image.")
                 # VAE Encode Logic
                 # VAEEncode needs (pixels, vae) -> returns (latent,)
                 try:
                     latent_image = comfy_nodes.VAEEncode().encode(vae, source_image)[0]
+                    
+                    # Apply Mask for Inpainting if present AND not empty
+                    # LoadImage returns a mask of 0s for opaque images. 
+                    # If we apply that as a noise_mask, KSampler changes nothing (keeps original).
+                    if source_mask is not None:
+                         if torch.any(source_mask > 0):
+                             # Ensure mask is suitable for latent (set_mask typically handles resizing/batching in KSampler logic, 
+                             # but here we are in raw latent space. 
+                             # ComfyUI 'SetLatentNoiseMask' node logic: s["noise_mask"] = mask
+                             latent_image["noise_mask"] = source_mask
+                             print("UmeAiRT DEBUG: Wireless KSampler applying Inpainting Mask.")
+                         else:
+                             # Mask is all zeros (Opaque image default). Ignore it to allow full Img2Img.
+                             print("UmeAiRT DEBUG: Sample mask is all zeros (Opaque). Ignoring to allow Img2Img.")
+
                 except Exception as e:
                      print(f"UmeAiRT Error: Failed to VAE Encode source image: {e}")
                      # Fallback to Txt2Img if encode fails? better to raise error or fallback to empty.
