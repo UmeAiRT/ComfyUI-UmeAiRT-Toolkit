@@ -1124,7 +1124,7 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
             "required": {
                 "image": ("IMAGE",),
                 "enabled": ("BOOLEAN", {"default": True}),
-                "upscale_model_name": (folder_paths.get_filename_list("upscale_models"),),
+                "model": (folder_paths.get_filename_list("upscale_models"),),
                 "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider"}),
             }
         }
@@ -1133,7 +1133,7 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
     FUNCTION = "upscale"
     CATEGORY = "UmeAiRT/Generation"
 
-    def upscale(self, image, enabled, upscale_model_name, upscale_by):
+    def upscale(self, image, enabled, model, upscale_by):
         print(f"DEBUG: UmeAiRT Wireless Upscale Simple - Enabled: {enabled}")
         if not enabled:
             return (image,)
@@ -1141,7 +1141,7 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         # Load Upscale Model Internally
         try:
              from comfy_extras.nodes_upscale_model import UpscaleModelLoader
-             upscale_model = UpscaleModelLoader().load_model(upscale_model_name)[0]
+             upscale_model = UpscaleModelLoader().load_model(model)[0]
         except ImportError:
              raise ImportError("UmeAiRT: Could not import UpscaleModelLoader from comfy_extras. Ensure ComfyUI is standard.")
              
@@ -1275,7 +1275,7 @@ class UmeAiRT_WirelessFaceDetailer_Simple(UmeAiRT_WirelessUltimateUpscale_Base):
             "required": {
                 "image": ("IMAGE",),
                 "enabled": ("BOOLEAN", {"default": True}),
-                "bbox_model_name": (folder_paths.get_filename_list("bbox"),),
+                "model": (folder_paths.get_filename_list("bbox"),),
                 "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01, "display": "slider"}),
             }
         }
@@ -1284,7 +1284,7 @@ class UmeAiRT_WirelessFaceDetailer_Simple(UmeAiRT_WirelessUltimateUpscale_Base):
     FUNCTION = "face_detail_simple"
     CATEGORY = "UmeAiRT/Generation"
 
-    def face_detail_simple(self, image, enabled, bbox_model_name, denoise):
+    def face_detail_simple(self, image, enabled, model, denoise):
         
         if not enabled:
             return (image,)
@@ -1303,7 +1303,7 @@ class UmeAiRT_WirelessFaceDetailer_Simple(UmeAiRT_WirelessUltimateUpscale_Base):
         drop_size = 10
 
         # Fetch Wireless State
-        model, vae, clip, pos_text, neg_text, wireless_seed, wireless_steps, wireless_sampler, wireless_scheduler, _, _, wireless_cfg, _ = self.fetch_wireless_common()
+        sd_model, vae, clip, pos_text, neg_text, wireless_seed, wireless_steps, wireless_sampler, wireless_scheduler, _, _, wireless_cfg, _ = self.fetch_wireless_common()
         positive, negative = self.encode_prompts(clip, pos_text, neg_text)
 
         # Import Logic & Detector
@@ -1315,7 +1315,7 @@ class UmeAiRT_WirelessFaceDetailer_Simple(UmeAiRT_WirelessUltimateUpscale_Base):
             import facedetailer_core.detector as detector
 
         # Load/Run Detector internally
-        bbox_detector = detector.load_bbox_model(bbox_model_name)
+        bbox_detector = detector.load_bbox_model(model)
         
         # Detect
         # print(f"DEBUG: Running Simple Detector with {bbox_model_name}")
@@ -1323,7 +1323,7 @@ class UmeAiRT_WirelessFaceDetailer_Simple(UmeAiRT_WirelessUltimateUpscale_Base):
 
         # Run Detailer
         result = fd_logic.do_detail(
-            image=image, segs=segs, model=model, clip=clip, vae=vae,
+            image=image, segs=segs, model=sd_model, clip=clip, vae=vae,
             guide_size=guide_size, guide_size_for_bbox=guide_size_for_bbox, max_size=max_size,
             seed=wireless_seed, steps=wireless_steps, cfg=wireless_cfg, sampler_name=wireless_sampler, scheduler=wireless_scheduler,
             positive=positive, negative=negative, denoise=denoise,
@@ -1524,3 +1524,848 @@ class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_B
 
 
 
+
+# --- BLOCK NODES (Wireless + Bundle) ---
+
+class UmeAiRT_GenerationSettings:
+    """
+    Bundles Generation Settings (Width, Height, Sampler, Schedule, Steps, CFG, Denoise, Seed).
+    Updates Global Wireless State.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "width": ("INT", {"default": 1024, "min": 512, "max": 2048, "step": 64, "display": "slider"}),
+                "height": ("INT", {"default": 1024, "min": 512, "max": 2048, "step": 64, "display": "slider"}),
+                "sampler": (comfy.samplers.KSampler.SAMPLERS,),
+                "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
+                "steps": ("INT", {"default": 20, "min": 1, "max": 150, "step": 1, "display": "slider"}),
+                "guidance": ("FLOAT", {"default": 8.0, "min": 1.0, "max": 30.0, "step": 0.5, "display": "slider"}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            }
+        }
+
+    RETURN_TYPES = ("UME_SETTINGS",)
+    RETURN_NAMES = ("settings",)
+    FUNCTION = "process"
+    CATEGORY = "UmeAiRT/Blocks"
+    OUTPUT_NODE = True
+
+    def process(self, width, height, sampler, scheduler, steps, guidance, seed):
+        # 1. Update Global State (Wireless Synergy)
+        UME_SHARED_STATE[KEY_IMAGESIZE] = {"width": width, "height": height}
+        UME_SHARED_STATE[KEY_SAMPLER] = sampler
+        UME_SHARED_STATE[KEY_SCHEDULER] = scheduler
+        UME_SHARED_STATE[KEY_STEPS] = steps
+        UME_SHARED_STATE[KEY_CFG] = guidance
+        UME_SHARED_STATE[KEY_SEED] = seed
+
+        # 2. Return Bundle
+        settings = {
+            "width": width,
+            "height": height,
+            "sampler": sampler,
+            "scheduler": scheduler,
+            "steps": steps,
+            "cfg": guidance,
+            "seed": seed
+        }
+        return (settings,)
+
+
+class UmeAiRT_FilesSettings:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "ckpt_name": (folder_paths.get_filename_list("checkpoints"), ),
+                "vae_name": (["Baked"] + folder_paths.get_filename_list("vae"),),
+                "clip_skip": ("INT", {"default": -1, "min": -24, "max": -1, "step": 1}),
+            }
+        }
+    
+    RETURN_TYPES = ("UME_FILES",)
+    RETURN_NAMES = ("files",)
+    FUNCTION = "load_files"
+    CATEGORY = "UmeAiRT/Blocks"
+    OUTPUT_NODE = True
+
+class UmeAiRT_FilesSettings_Checkpoint:
+    """
+    Simple version - loads Model, CLIP, and VAE from Checkpoint.
+    Uses baked VAE and default CLIP settings.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "ckpt_name": (folder_paths.get_filename_list("checkpoints"),),
+            }
+        }
+
+    RETURN_TYPES = ("UME_FILES",)
+    RETURN_NAMES = ("models",)
+    FUNCTION = "load_files"
+    CATEGORY = "UmeAiRT/Blocks"
+
+    def load_files(self, ckpt_name):
+        # 1. Load Checkpoint
+        ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
+        out = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
+        model = out[0]
+        clip = out[1]
+        vae = out[2]
+
+        # 2. Update Global State
+        UME_SHARED_STATE[KEY_MODEL] = model
+        UME_SHARED_STATE[KEY_CLIP] = clip
+        UME_SHARED_STATE[KEY_VAE] = vae
+        UME_SHARED_STATE[KEY_MODEL_NAME] = ckpt_name
+        UME_SHARED_STATE[KEY_LORAS] = []
+
+        # 3. Return Bundle
+        files = {
+            "model": model,
+            "clip": clip,
+            "vae": vae,
+            "model_name": ckpt_name
+        }
+        return (files,)
+
+
+class UmeAiRT_FilesSettings_Checkpoint_Advanced:
+    """
+    Advanced version - loads Model, CLIP, and VAE from Checkpoint.
+    Allows VAE override and CLIP Skip control.
+    Best for SD1.5 and SDXL.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "ckpt_name": (folder_paths.get_filename_list("checkpoints"),),
+            },
+            "optional": {
+                 "vae_name": (["Baked"] + folder_paths.get_filename_list("vae"),),
+                 "clip_skip": ("INT", {"default": -1, "min": -24, "max": -1, "step": 1}),
+            }
+        }
+
+    RETURN_TYPES = ("UME_FILES",)
+    RETURN_NAMES = ("models",)
+    FUNCTION = "load_files"
+    CATEGORY = "UmeAiRT/Blocks"
+
+    def load_files(self, ckpt_name, vae_name="Baked", clip_skip=-1):
+        # 1. Load Checkpoint
+        ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
+        out = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
+        model = out[0]
+        clip = out[1]
+        vae = out[2] # Baked VAE
+
+        # 2. Optional VAE Override
+        if vae_name != "Baked":
+            vae_path = folder_paths.get_full_path("vae", vae_name)
+            vae = comfy.sd.VAE(sd=comfy.utils.load_torch_file(vae_path))
+
+        # 3. CLIP Skip Logic
+        if clip_skip != -1:
+             clip = clip.clone()
+             clip.clip_layer(clip_skip)
+
+        # 4. Update Global State
+        UME_SHARED_STATE[KEY_MODEL] = model
+        UME_SHARED_STATE[KEY_CLIP] = clip
+        UME_SHARED_STATE[KEY_VAE] = vae
+        UME_SHARED_STATE[KEY_MODEL_NAME] = ckpt_name
+        UME_SHARED_STATE[KEY_LORAS] = [] # Reset LoRAs on new checkpoint load
+
+        # 5. Return Bundle
+        files = {
+            "model": model,
+            "clip": clip,
+            "vae": vae,
+            "model_name": ckpt_name
+        }
+        return (files,)
+
+
+class UmeAiRT_FilesSettings_FLUX:
+    """
+    Bundles Model (UNET), CLIP, and VAE (Loaded Separately).
+    Updates Global Wireless State.
+    Best for FLUX and complex workflows.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "unet_name": (folder_paths.get_filename_list("unet"),),
+                "weight_dtype": (["default", "fp8_e4m3fn", "fp8_e5m2"],),
+                "clip_name1": (folder_paths.get_filename_list("clip"),),
+                "clip_name2": (folder_paths.get_filename_list("clip"),),
+                "vae_name": (folder_paths.get_filename_list("vae"),),
+            }
+        }
+
+    RETURN_TYPES = ("UME_FILES",)
+    RETURN_NAMES = ("models",)
+    FUNCTION = "load_files"
+    CATEGORY = "UmeAiRT/Blocks"
+
+    def load_files(self, unet_name, weight_dtype, clip_name1, clip_name2, vae_name):
+        # 1. Load UNET
+        unet_path = folder_paths.get_full_path("unet", unet_name)
+        model = comfy.sd.load_unet(unet_path)
+        
+        # 2. Load CLIPs (Dual Clip Loader Logic)
+        clip_path1 = folder_paths.get_full_path("clip", clip_name1)
+        clip_path2 = folder_paths.get_full_path("clip", clip_name2)
+        clip = comfy.sd.load_clip(ckpt_paths=[clip_path1, clip_path2], embedding_directory=folder_paths.get_folder_paths("embeddings"))
+
+        # 3. Load VAE
+        vae_path = folder_paths.get_full_path("vae", vae_name)
+        vae = comfy.sd.VAE(sd=comfy.utils.load_torch_file(vae_path))
+
+        # 4. Update Global State
+        UME_SHARED_STATE[KEY_MODEL] = model
+        UME_SHARED_STATE[KEY_CLIP] = clip
+        UME_SHARED_STATE[KEY_VAE] = vae
+        UME_SHARED_STATE[KEY_MODEL_NAME] = unet_name
+        UME_SHARED_STATE[KEY_LORAS] = [] # Reset LoRAs on new checkpoint load
+
+        # 5. Return Bundle
+        files = {
+            "model": model,
+            "clip": clip,
+            "vae": vae,
+            "model_name": unet_name
+        }
+        return (files,)
+
+
+# Helper for generating LoRA inputs
+def get_lora_inputs(count):
+    inputs = {
+        "required": {},
+        "optional": {
+            "loras": ("UME_LORA_STACK",),
+        }
+    }
+    lora_list = ["None"] + folder_paths.get_filename_list("loras")
+    for i in range(1, count + 1):
+        inputs["optional"][f"lora_{i}_name"] = (lora_list,)
+        inputs["optional"][f"lora_{i}_strength"] = ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider"})
+    return inputs
+
+def process_lora_stack(loras, **kwargs):
+    current_stack = []
+    if loras:
+        current_stack.extend(loras)
+    
+    # Iterate through kwargs to find lora definitions
+    # We assume keys like lora_1_name, lora_1_strength
+    
+    # Extract indices
+    indices = set()
+    for k in kwargs.keys():
+        if k.startswith("lora_") and "_name" in k:
+            parts = k.split("_")
+            # lora_{i}_name -> index is parts[1]
+            if len(parts) >= 3 and parts[1].isdigit():
+                indices.add(int(parts[1]))
+    
+    sorted_indices = sorted(list(indices))
+
+    for i in sorted_indices:
+        name = kwargs.get(f"lora_{i}_name")
+        strength = kwargs.get(f"lora_{i}_strength", 1.0)
+        
+        if name and name != "None":
+            # Unified strength for model and clip
+            current_stack.append((name, strength, strength))
+            
+    return (current_stack,)
+
+class UmeAiRT_LoraBlock_1:
+    @classmethod
+    def INPUT_TYPES(s):
+        return get_lora_inputs(1)
+
+    RETURN_TYPES = ("UME_LORA_STACK",)
+    RETURN_NAMES = ("loras",)
+    FUNCTION = "process"
+    CATEGORY = "UmeAiRT/Blocks/LoRA"
+
+    def process(self, loras=None, **kwargs):
+        return process_lora_stack(loras, **kwargs)
+
+class UmeAiRT_LoraBlock_3:
+    @classmethod
+    def INPUT_TYPES(s):
+        return get_lora_inputs(3)
+
+    RETURN_TYPES = ("UME_LORA_STACK",)
+    RETURN_NAMES = ("loras",)
+    FUNCTION = "process"
+    CATEGORY = "UmeAiRT/Blocks/LoRA"
+
+    def process(self, loras=None, **kwargs):
+        return process_lora_stack(loras, **kwargs)
+
+class UmeAiRT_LoraBlock_5:
+    @classmethod
+    def INPUT_TYPES(s):
+        return get_lora_inputs(5)
+
+    RETURN_TYPES = ("UME_LORA_STACK",)
+    RETURN_NAMES = ("loras",)
+    FUNCTION = "process"
+    CATEGORY = "UmeAiRT/Blocks/LoRA"
+
+    def process(self, loras=None, **kwargs):
+        return process_lora_stack(loras, **kwargs)
+
+class UmeAiRT_LoraBlock_10:
+    @classmethod
+    def INPUT_TYPES(s):
+        return get_lora_inputs(10)
+
+    RETURN_TYPES = ("UME_LORA_STACK",)
+    RETURN_NAMES = ("loras",)
+    FUNCTION = "process"
+    CATEGORY = "UmeAiRT/Blocks/LoRA"
+
+    def process(self, loras=None, **kwargs):
+        return process_lora_stack(loras, **kwargs)
+
+
+class UmeAiRT_PromptBlock:
+    """
+    Bundles Positive and Negative Prompts.
+    Updates Global Wireless State for Prompts.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "positive": ("STRING", {"default": "", "multiline": True}),
+                "negative": ("STRING", {"default": "", "multiline": True}),
+            }
+        }
+
+    RETURN_TYPES = ("UME_PROMPTS",)
+    RETURN_NAMES = ("prompts",)
+    FUNCTION = "process"
+    CATEGORY = "UmeAiRT/Blocks"
+
+    def process(self, positive, negative):
+        # 1. Update Global State
+        UME_SHARED_STATE[KEY_POSITIVE] = positive
+        UME_SHARED_STATE[KEY_NEGATIVE] = negative
+
+        # 2. Return Bundle
+        prompts = {
+            "positive": positive,
+            "negative": negative,
+        }
+        return (prompts,)
+
+class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
+    """
+    Block version of Image Loader.
+    Outputs an UME_IMAGE bundle (image, mask, mode) for the Block Sampler.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        input_dir = folder_paths.get_input_directory()
+        files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
+        files.sort()
+        return {
+            "required": {
+                "image": (sorted(files), {"image_upload": True}),
+            },
+            "optional": {
+                "mode": (["img2img", "inpaint"], {"default": "img2img"}),
+                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
+                "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF"}),
+            }
+        }
+
+    RETURN_TYPES = ("UME_IMAGE",)
+    RETURN_NAMES = ("image",)
+    FUNCTION = "load_block_image"
+    CATEGORY = "UmeAiRT/Blocks"
+
+    @classmethod
+    def IS_CHANGED(cls, image, **kwargs):
+        # Override parent IS_CHANGED to ignore extra kwargs like denoise
+        return super().IS_CHANGED(image)
+
+    def load_block_image(self, image, denoise=0.75, resize=False, mode="img2img"):
+        # Load Image (from parent LoadImage)
+        out = super().load_image(image)
+        img = out[0]
+        mask = out[1]
+
+        # Resize Logic (same as Wireless)
+        if resize:
+            size = UME_SHARED_STATE.get(KEY_IMAGESIZE, {"width": 1024, "height": 1024})
+            target_w = int(size.get("width", 1024))
+            target_h = int(size.get("height", 1024))
+
+            def resize_and_crop(tensor, interp_mode="bilinear", is_mask=False):
+                if is_mask:
+                    t = tensor.unsqueeze(1)
+                else:
+                    t = tensor.permute(0, 3, 1, 2)
+                b, c, h, w = t.shape
+                scale = max(target_w / w, target_h / h)
+                new_w = int(w * scale)
+                new_h = int(h * scale)
+                if interp_mode == "bilinear":
+                    t_resized = torch.nn.functional.interpolate(t, size=(new_h, new_w), mode=interp_mode, align_corners=False)
+                else:
+                    t_resized = torch.nn.functional.interpolate(t, size=(new_h, new_w), mode=interp_mode)
+                h_start = max(0, (new_h - target_h) // 2)
+                w_start = max(0, (new_w - target_w) // 2)
+                t_cropped = t_resized[:, :, h_start:h_start+target_h, w_start:w_start+target_w]
+                if is_mask:
+                    return t_cropped.squeeze(1)
+                else:
+                    return t_cropped.permute(0, 2, 3, 1)
+
+            img = resize_and_crop(img, interp_mode="bilinear", is_mask=False)
+            if mask is not None:
+                mask = resize_and_crop(mask, interp_mode="nearest", is_mask=True)
+
+        # Create Bundle
+        image_bundle = {
+            "image": img,
+            "mask": mask if mode == "inpaint" else None,
+            "mode": mode,
+            "denoise": denoise,
+        }
+
+        # Also update Wireless state for synergy
+        UME_SHARED_STATE[KEY_SOURCE_IMAGE] = img
+        UME_SHARED_STATE[KEY_SOURCE_MASK] = mask if mode == "inpaint" else None
+        UME_SHARED_STATE[KEY_DENOISE] = denoise
+
+        return (image_bundle,)
+
+
+class UmeAiRT_BlockSampler:
+    """
+    Sampler that takes 'Block' bundles as input.
+    Prioritizes inputs from the 'settings', 'files', and 'prompts' bundles.
+    Falls back to 'Wireless' state if something is missing in the bundle (or bundle not linked).
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {},
+            "optional": {
+                "models": ("UME_FILES",),
+                "prompts": ("UME_PROMPTS",),
+                "settings": ("UME_SETTINGS",),
+                "loras": ("UME_LORA_STACK",),
+                "image": ("UME_IMAGE",),  # Changed from IMAGE to UME_IMAGE bundle
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
+    FUNCTION = "process"
+    CATEGORY = "UmeAiRT/Blocks"
+
+    def __init__(self):
+        self.lora_loader = comfy_nodes.LoraLoader()
+
+    def process(self, settings, models=None, loras=None, prompts=None, image=None):
+        # 1. Expand Files/Models (Prioritize Bundle > Wireless)
+        if models:
+            model = models.get("model")
+            vae = models.get("vae")
+            clip = models.get("clip")
+        else:
+            model = UME_SHARED_STATE.get(KEY_MODEL)
+            vae = UME_SHARED_STATE.get(KEY_VAE)
+            clip = UME_SHARED_STATE.get(KEY_CLIP)
+
+        # 1.5 Apply LoRA Stack (if present)
+        if loras:
+            # We need valid model/clip first
+            if not model or not clip:
+                raise ValueError("UmeAiRT Block Sampler: Cannot apply LoRAs without a base Model/CLIP (from 'models' or Wireless state).")
+            
+            # Reset LoRA list metadata for this run
+            loaded_loras_meta = [] 
+
+            for lora_def in loras:
+                # Format: (lora_name, strength_model, strength_clip)
+                name, str_model, str_clip = lora_def
+                if name != "None":
+                    try:
+                         model, clip = self.lora_loader.load_lora(model, clip, name, str_model, str_clip)
+                         loaded_loras_meta.append({"name": name, "strength": str_model})
+                    except Exception as e:
+                        print(f"UmeAiRT Sampler Warning: Failed to apply LoRA {name}: {e}")
+
+            # Update Wireless State with PATCHED model/clip and Metadata
+            UME_SHARED_STATE[KEY_MODEL] = model
+            UME_SHARED_STATE[KEY_CLIP] = clip
+            UME_SHARED_STATE[KEY_LORAS] = loaded_loras_meta
+        
+        # Ensure we have everything
+        if not model or not vae or not clip:
+             raise ValueError("UmeAiRT Block Sampler: Missing Model, VAE, or CLIP. Connect a 'Files' block or load a Checkpoint wirelessly.")
+
+        # 2. Expand Settings (Prioritize Bundle > Wireless)
+        if settings:
+            width = settings.get("width", 1024)
+            height = settings.get("height", 1024)
+            steps = settings.get("steps", 20)
+            cfg = settings.get("cfg", 8.0)
+            sampler_name = settings.get("sampler", "euler")
+            scheduler = settings.get("scheduler", "normal")
+            seed = settings.get("seed", 0)
+        else:
+            # Fallback to Wireless state
+            size = UME_SHARED_STATE.get(KEY_IMAGESIZE, {"width": 1024, "height": 1024})
+            width = size.get("width", 1024)
+            height = size.get("height", 1024)
+            steps = UME_SHARED_STATE.get(KEY_STEPS, 20)
+            cfg = UME_SHARED_STATE.get(KEY_CFG, 8.0)
+            sampler_name = UME_SHARED_STATE.get(KEY_SAMPLER, "euler")
+            scheduler = UME_SHARED_STATE.get(KEY_SCHEDULER, "normal")
+            seed = UME_SHARED_STATE.get(KEY_SEED, 0)
+        
+        # Denoise: Get from image bundle if present, otherwise 1.0 (Txt2Img)
+        if image is not None and isinstance(image, dict):
+            denoise = image.get("denoise", 1.0)
+        else:
+            denoise = 1.0
+
+        # 3. Expand Prompts (Prioritize Bundle > Wireless)
+        if prompts:
+            pos_text = prompts.get("positive", "")
+            neg_text = prompts.get("negative", "")
+        else:
+            pos_text = str(UME_SHARED_STATE.get(KEY_POSITIVE, ""))
+            neg_text = str(UME_SHARED_STATE.get(KEY_NEGATIVE, ""))
+
+        # 4. Latent Logic (Image Input -> VAE Encode OR Empty Latent)
+        latent_image = None
+        
+        # Priority 1: Wired UME_IMAGE Bundle (Img2Img / Inpaint)
+        if image is not None:
+            try:
+                # Extract from bundle
+                if isinstance(image, dict):
+                    # UME_IMAGE bundle format
+                    raw_image = image.get("image")
+                    source_mask = image.get("mask")
+                    mode = image.get("mode", "img2img")
+                else:
+                    # Legacy: raw IMAGE tensor
+                    raw_image = image
+                    source_mask = UME_SHARED_STATE.get(KEY_SOURCE_MASK)
+                    mode = "img2img"
+                
+                # VAE Encode
+                latent_image = comfy_nodes.VAEEncode().encode(vae, raw_image)[0]
+                
+                # Apply mask for Inpaint mode
+                if mode == "inpaint" and source_mask is not None:
+                    if torch.any(source_mask > 0):
+                        latent_image["noise_mask"] = source_mask
+            except Exception as e:
+                print(f"UmeAiRT Block Error: VAE Encode failed: {e}")
+
+        # Priority 2: Wireless Latent (Fallback if no image wired)
+        if latent_image is None:
+            wireless_latent = UME_SHARED_STATE.get(KEY_LATENT)
+            if wireless_latent is not None:
+                latent_image = wireless_latent
+
+        # Priority 3: Empty Latent (Txt2Img)
+        if latent_image is None:
+            batch_size = 1
+            l = torch.zeros([batch_size, 4, height // 8, width // 8])
+            latent_image = {"samples": l}
+
+        # 5. Encode Prompts
+        tokens = clip.tokenize(pos_text)
+        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
+        positive = [[cond, {"pooled_output": pooled}]]
+
+        tokens = clip.tokenize(neg_text)
+        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
+        negative = [[cond, {"pooled_output": pooled}]]
+
+        # 6. Sample
+        mode_str = "img2img" if image is not None else "txt2img"
+        if image is not None and isinstance(image, dict) and image.get("mode") == "inpaint":
+            mode_str = "inpaint"
+        
+        print(f"\n{'='*60}")
+        print(f"🎨 UmeAiRT Block Sampler")
+        print(f"{'='*60}")
+        print(f"  Mode: {mode_str}")
+        print(f"  Size: {width}x{height}")
+        print(f"  Steps: {steps} | CFG: {cfg} | Denoise: {denoise}")
+        print(f"  Sampler: {sampler_name} | Scheduler: {scheduler}")
+        print(f"  Seed: {seed}")
+        print(f"  Positive: {pos_text}")
+        print(f"  Negative: {neg_text}")
+        print(f"{'='*60}\n")
+        
+        result_latent = comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise)[0]
+
+        # 7. Decode
+        return comfy_nodes.VAEDecode().decode(vae, result_latent)
+
+
+class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
+    """
+    Block version of UltimateSDUpscale.
+    Accepts settings/models/loras/prompts bundles with fallback to Wireless.
+    """
+    def __init__(self):
+        self.lora_loader = comfy_nodes.LoraLoader()
+
+    @classmethod
+    def INPUT_TYPES(s):
+        usdu_modes = ["Linear", "Chess", "None"]
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "model": (folder_paths.get_filename_list("upscale_models"),),
+                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider"}),
+            },
+            "optional": {
+                "settings": ("UME_SETTINGS",),
+                "models": ("UME_FILES",),
+                "loras": ("UME_LORA_STACK",),
+                "prompts": ("UME_PROMPTS",),
+                "mode_type": (usdu_modes, {"default": "Linear"}),
+                "tile_padding": ("INT", {"default": 32, "min": 0, "max": 128}),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "upscale"
+    CATEGORY = "UmeAiRT/Blocks"
+
+    def upscale(self, image, model, upscale_by, settings=None, models=None, loras=None, prompts=None, mode_type="Linear", tile_padding=32):
+        # Note: 'model' here is the upscale model filename, 'models' is the SD models bundle
+        upscale_model_file = model  # Rename to avoid confusion with SD model
+        
+        # 1. Expand Models (Prioritize Bundle > Wireless)
+        if models:
+            sd_model = models.get("model")
+            vae = models.get("vae")
+            clip = models.get("clip")
+        else:
+            sd_model = UME_SHARED_STATE.get(KEY_MODEL)
+            vae = UME_SHARED_STATE.get(KEY_VAE)
+            clip = UME_SHARED_STATE.get(KEY_CLIP)
+
+        # 2. Apply LoRA Stack
+        if loras:
+            if not sd_model or not clip:
+                raise ValueError("Block USDU: Cannot apply LoRAs without Model/CLIP.")
+            loaded_loras_meta = []
+            for lora_def in loras:
+                name, str_model, str_clip = lora_def
+                if name != "None":
+                    try:
+                        sd_model, clip = self.lora_loader.load_lora(sd_model, clip, name, str_model, str_clip)
+                        loaded_loras_meta.append({"name": name, "strength": str_model})
+                    except Exception as e:
+                        print(f"Block USDU Warning: LoRA {name} failed: {e}")
+            UME_SHARED_STATE[KEY_MODEL] = sd_model
+            UME_SHARED_STATE[KEY_CLIP] = clip
+            UME_SHARED_STATE[KEY_LORAS] = loaded_loras_meta
+
+        if not sd_model or not vae or not clip:
+            raise ValueError("Block USDU: Missing Model, VAE, or CLIP.")
+
+        # 3. Expand Settings
+        if settings:
+            steps = settings.get("steps", 20)
+            cfg = settings.get("cfg", 1.0)
+            sampler_name = settings.get("sampler", "euler")
+            scheduler = settings.get("scheduler", "normal")
+            seed = settings.get("seed", 0)
+            tile_width = settings.get("width", 512)
+            tile_height = settings.get("height", 512)
+        else:
+            steps = int(UME_SHARED_STATE.get(KEY_STEPS, 20))
+            cfg = 1.0  # Default for USDU
+            sampler_name = UME_SHARED_STATE.get(KEY_SAMPLER, "euler")
+            scheduler = UME_SHARED_STATE.get(KEY_SCHEDULER, "normal")
+            seed = int(UME_SHARED_STATE.get(KEY_SEED, 0))
+            size = UME_SHARED_STATE.get(KEY_IMAGESIZE, {"width": 512, "height": 512})
+            tile_width = int(size.get("width", 512))
+            tile_height = int(size.get("height", 512))
+
+        # 4. Expand Prompts
+        if prompts:
+            pos_text = prompts.get("positive", "")
+            neg_text = prompts.get("negative", "")
+        else:
+            pos_text = str(UME_SHARED_STATE.get(KEY_POSITIVE, ""))
+            neg_text = str(UME_SHARED_STATE.get(KEY_NEGATIVE, ""))
+
+        positive, negative = self.encode_prompts(clip, pos_text, neg_text)
+
+        # 5. Load Upscale Model
+        try:
+            from comfy_extras.nodes_upscale_model import UpscaleModelLoader
+            upscale_model = UpscaleModelLoader().load_model(upscale_model_file)[0]
+        except ImportError:
+            raise ImportError("UmeAiRT: Could not import UpscaleModelLoader.")
+
+        # 6. Execute USDU
+        usdu_node = self.get_usdu_node()
+        denoise = 0.35  # Fixed for upscale
+        steps = max(5, steps // 4)  # 1/4 of normal steps
+        mask_blur = 16
+
+        return usdu_node.upscale(
+            image=image, model=sd_model, positive=positive, negative=negative, vae=vae,
+            upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
+            sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
+            upscale_model=upscale_model, mode_type=mode_type,
+            tile_width=tile_width, tile_height=tile_height, mask_blur=mask_blur, tile_padding=tile_padding,
+            seam_fix_mode="None", seam_fix_denoise=1.0,
+            seam_fix_mask_blur=8, seam_fix_width=64, seam_fix_padding=16,
+            force_uniform_tiles=True, tiled_decode=False,
+            suppress_preview=True,
+        )
+
+
+class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
+    """
+    Block version of FaceDetailer.
+    Accepts settings/models/loras/prompts bundles with fallback to Wireless.
+    """
+    def __init__(self):
+        self.lora_loader = comfy_nodes.LoraLoader()
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "model": (folder_paths.get_filename_list("bbox"),),
+                "denoise": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
+            },
+            "optional": {
+                "settings": ("UME_SETTINGS",),
+                "models": ("UME_FILES",),
+                "loras": ("UME_LORA_STACK",),
+                "prompts": ("UME_PROMPTS",),
+                "guide_size": ("INT", {"default": 512, "min": 64, "max": 4096, "step": 8}),
+                "max_size": ("INT", {"default": 1024, "min": 64, "max": 4096, "step": 8}),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "face_detail"
+    CATEGORY = "UmeAiRT/Blocks"
+
+    def face_detail(self, image, model, denoise, settings=None, models=None, loras=None, prompts=None, guide_size=512, max_size=1024):
+        # Note: 'model' here is the bbox detector filename, 'models' is the SD models bundle
+        bbox_model_file = model  # Rename to avoid confusion with SD model
+        
+        # 1. Expand Models
+        if models:
+            sd_model = models.get("model")
+            vae = models.get("vae")
+            clip = models.get("clip")
+        else:
+            sd_model = UME_SHARED_STATE.get(KEY_MODEL)
+            vae = UME_SHARED_STATE.get(KEY_VAE)
+            clip = UME_SHARED_STATE.get(KEY_CLIP)
+
+        # 2. Apply LoRA Stack
+        if loras:
+            if not sd_model or not clip:
+                raise ValueError("Block FaceDetailer: Cannot apply LoRAs without Model/CLIP.")
+            loaded_loras_meta = []
+            for lora_def in loras:
+                name, str_model, str_clip = lora_def
+                if name != "None":
+                    try:
+                        sd_model, clip = self.lora_loader.load_lora(sd_model, clip, name, str_model, str_clip)
+                        loaded_loras_meta.append({"name": name, "strength": str_model})
+                    except Exception as e:
+                        print(f"Block FaceDetailer Warning: LoRA {name} failed: {e}")
+            UME_SHARED_STATE[KEY_MODEL] = sd_model
+            UME_SHARED_STATE[KEY_CLIP] = clip
+            UME_SHARED_STATE[KEY_LORAS] = loaded_loras_meta
+
+        if not sd_model or not vae or not clip:
+            raise ValueError("Block FaceDetailer: Missing Model, VAE, or CLIP.")
+
+        # 3. Expand Settings
+        if settings:
+            steps = settings.get("steps", 20)
+            cfg = settings.get("cfg", 8.0)
+            sampler_name = settings.get("sampler", "euler")
+            scheduler = settings.get("scheduler", "normal")
+            seed = settings.get("seed", 0)
+        else:
+            steps = int(UME_SHARED_STATE.get(KEY_STEPS, 20))
+            cfg = float(UME_SHARED_STATE.get(KEY_CFG, 8.0))
+            sampler_name = UME_SHARED_STATE.get(KEY_SAMPLER, "euler")
+            scheduler = UME_SHARED_STATE.get(KEY_SCHEDULER, "normal")
+            seed = int(UME_SHARED_STATE.get(KEY_SEED, 0))
+
+        # 4. Expand Prompts
+        if prompts:
+            pos_text = prompts.get("positive", "")
+            neg_text = prompts.get("negative", "")
+        else:
+            pos_text = str(UME_SHARED_STATE.get(KEY_POSITIVE, ""))
+            neg_text = str(UME_SHARED_STATE.get(KEY_NEGATIVE, ""))
+
+        positive, negative = self.encode_prompts(clip, pos_text, neg_text)
+
+        # 5. Import & Load Detector
+        try:
+            from .facedetailer_core import logic as fd_logic
+            from .facedetailer_core import detector
+        except ImportError:
+            import facedetailer_core.logic as fd_logic
+            import facedetailer_core.detector as detector
+
+        bbox_detector = detector.load_bbox_model(bbox_model_file)
+
+        # 6. Detect & Detail
+        bbox_threshold = 0.5
+        bbox_dilation = 10
+        bbox_crop_factor = 3.0
+        drop_size = 10
+        feather = 5
+        noise_mask = True
+        force_inpaint = True
+        guide_size_for_bbox = True
+
+        segs = bbox_detector.detect(image, bbox_threshold, bbox_dilation, bbox_crop_factor, drop_size)
+
+        result = fd_logic.do_detail(
+            image=image, segs=segs, model=sd_model, clip=clip, vae=vae,
+            guide_size=guide_size, guide_size_for_bbox=guide_size_for_bbox, max_size=max_size,
+            seed=seed, steps=steps, cfg=cfg, sampler_name=sampler_name, scheduler=scheduler,
+            positive=positive, negative=negative, denoise=denoise,
+            feather=feather, noise_mask=noise_mask, force_inpaint=force_inpaint,
+            drop_size=drop_size
+        )
+
+        return result

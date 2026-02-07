@@ -43,7 +43,10 @@ from .nodes import (
     UmeAiRT_WirelessFaceDetailer_Advanced, UmeAiRT_WirelessFaceDetailer_Simple,
     UmeAiRT_BboxDetectorLoader, UmeAiRT_WirelessImageSaver, UmeAiRT_WirelessCheckpointLoader,
     UmeAiRT_WirelessImageLoader, UmeAiRT_SourceImage_Output,
-    UmeAiRT_Label
+    UmeAiRT_Label,
+    UmeAiRT_GenerationSettings, UmeAiRT_FilesSettings_Checkpoint, UmeAiRT_FilesSettings_Checkpoint_Advanced, UmeAiRT_FilesSettings_FLUX, UmeAiRT_BlockSampler, UmeAiRT_PromptBlock,
+    UmeAiRT_LoraBlock_1, UmeAiRT_LoraBlock_3, UmeAiRT_LoraBlock_5, UmeAiRT_LoraBlock_10,
+    UmeAiRT_BlockUltimateSDUpscale, UmeAiRT_BlockFaceDetailer, UmeAiRT_BlockImageLoader
 )
 
 # Register internal 'bbox' folder for standalone usage
@@ -60,6 +63,7 @@ except:
     pass
 
 NODE_CLASS_MAPPINGS = {
+    # Inputs/Outputs (Raw)
     "UmeAiRT_Guidance_Input": UmeAiRT_Guidance_Input,
     "UmeAiRT_Guidance_Output": UmeAiRT_Guidance_Output,
     "UmeAiRT_ImageSize_Input": UmeAiRT_ImageSize_Input,
@@ -81,10 +85,6 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_Positive_Output": UmeAiRT_Positive_Output,
     "UmeAiRT_Negative_Input": UmeAiRT_Negative_Input,
     "UmeAiRT_Negative_Output": UmeAiRT_Negative_Output,
-    "UmeAiRT_WirelessCheckpointLoader": UmeAiRT_WirelessCheckpointLoader,
-    "UmeAiRT_WirelessImageLoader": UmeAiRT_WirelessImageLoader,
-    "UmeAiRT_SourceImage_Output": UmeAiRT_SourceImage_Output,
-    "UmeAiRT_Label": UmeAiRT_Label,
     "UmeAiRT_Model_Input": UmeAiRT_Model_Input,
     "UmeAiRT_Model_Output": UmeAiRT_Model_Output,
     "UmeAiRT_VAE_Input": UmeAiRT_VAE_Input,
@@ -93,6 +93,8 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_CLIP_Output": UmeAiRT_CLIP_Output,
     "UmeAiRT_Latent_Input": UmeAiRT_Latent_Input,
     "UmeAiRT_Latent_Output": UmeAiRT_Latent_Output,
+    
+    # Wireless (Getters/Processors)
     "UmeAiRT_WirelessKSampler": UmeAiRT_WirelessKSampler,
     "UmeAiRT_Wireless_Debug": UmeAiRT_Wireless_Debug,
     "UmeAiRT_MultiLoraLoader": UmeAiRT_MultiLoraLoader,
@@ -101,7 +103,26 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_WirelessFaceDetailer_Advanced": UmeAiRT_WirelessFaceDetailer_Advanced,
     "UmeAiRT_WirelessFaceDetailer_Simple": UmeAiRT_WirelessFaceDetailer_Simple,
     "UmeAiRT_BboxDetectorLoader": UmeAiRT_BboxDetectorLoader,
-    "UmeAiRT_WirelessImageSaver": UmeAiRT_WirelessImageSaver
+    "UmeAiRT_WirelessImageSaver": UmeAiRT_WirelessImageSaver,
+    "UmeAiRT_WirelessCheckpointLoader": UmeAiRT_WirelessCheckpointLoader,
+    "UmeAiRT_WirelessImageLoader": UmeAiRT_WirelessImageLoader,
+    "UmeAiRT_SourceImage_Output": UmeAiRT_SourceImage_Output,
+    "UmeAiRT_Label": UmeAiRT_Label,
+
+    # Block Nodes
+    "UmeAiRT_GenerationSettings": UmeAiRT_GenerationSettings,
+    "UmeAiRT_FilesSettings_Checkpoint": UmeAiRT_FilesSettings_Checkpoint,
+    "UmeAiRT_FilesSettings_Checkpoint_Advanced": UmeAiRT_FilesSettings_Checkpoint_Advanced,
+    "UmeAiRT_FilesSettings_FLUX": UmeAiRT_FilesSettings_FLUX,
+    "UmeAiRT_LoraBlock_1": UmeAiRT_LoraBlock_1,
+    "UmeAiRT_LoraBlock_3": UmeAiRT_LoraBlock_3,
+    "UmeAiRT_LoraBlock_5": UmeAiRT_LoraBlock_5,
+    "UmeAiRT_LoraBlock_10": UmeAiRT_LoraBlock_10,
+    "UmeAiRT_PromptBlock": UmeAiRT_PromptBlock,
+    "UmeAiRT_BlockSampler": UmeAiRT_BlockSampler,
+    "UmeAiRT_BlockUltimateSDUpscale": UmeAiRT_BlockUltimateSDUpscale,
+    "UmeAiRT_BlockFaceDetailer": UmeAiRT_BlockFaceDetailer,
+    "UmeAiRT_BlockImageLoader": UmeAiRT_BlockImageLoader,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -134,7 +155,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_CLIP_Output": "CLIP Output",
     "UmeAiRT_Latent_Input": "Latent Input",
     "UmeAiRT_Latent_Output": "Latent Output",
-    "UmeAiRT_WirelessKSampler": "Wireless KSampler",
+    "UmeAiRT_WirelessKSampler": "KSampler (Wireless)",
     "UmeAiRT_Wireless_Debug": "Wireless Debug",
     "UmeAiRT_MultiLoraLoader": "Multi-LoRA Loader",
     "UmeAiRT_WirelessUltimateUpscale": "Wireless UltimateSDUpscale",
@@ -146,7 +167,22 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_WirelessCheckpointLoader": "Wireless Checkpoint Loader",
     "UmeAiRT_WirelessImageLoader": "Wireless Image Loader",
     "UmeAiRT_SourceImage_Output": "Wireless Source Image",
-    "UmeAiRT_Label": "Label"
+    "UmeAiRT_Label": "Label",
+    "UmeAiRT_GenerationSettings": "Generation Settings (Block)",
+    "UmeAiRT_FilesSettings_Checkpoint": "Model Loader (Block)",
+    "UmeAiRT_FilesSettings_Checkpoint_Advanced": "Model Loader - Advanced (Block)",
+    "UmeAiRT_FilesSettings_FLUX": "Model Loader - FLUX (Block)",
+    "UmeAiRT_PromptBlock": "Prompts (Block)",
+    "UmeAiRT_LoraBlock_1": "LoRA 1x (Block)",
+    "UmeAiRT_LoraBlock_3": "LoRA 3x (Block)",
+    "UmeAiRT_LoraBlock_5": "LoRA 5x (Block)",
+    "UmeAiRT_LoraBlock_10": "LoRA 10x (Block)",
+    "UmeAiRT_BlockSampler": "Block Sampler",
+    "UmeAiRT_BlockUltimateSDUpscale": "UltimateSD Upscale (Block)",
+    "UmeAiRT_BlockFaceDetailer": "Face Detailer (Block)",
+    "UmeAiRT_BlockImageLoader": "Image Loader (Block)",
 }
 
-__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
+WEB_DIRECTORY = "./web"
+
+__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]
