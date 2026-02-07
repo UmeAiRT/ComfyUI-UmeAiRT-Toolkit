@@ -59,7 +59,7 @@ class UmeAiRT_Guidance_Input:
 
     RETURN_TYPES = ()
     FUNCTION = "set_value"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
     OUTPUT_NODE = True
 
     def set_value(self, guidance):
@@ -76,7 +76,7 @@ class UmeAiRT_Guidance_Output:
     RETURN_TYPES = ("FLOAT",)
     RETURN_NAMES = ("cfg",)
     FUNCTION = "get_value"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -101,7 +101,7 @@ class UmeAiRT_ImageSize_Input:
 
     RETURN_TYPES = ()
     FUNCTION = "set_size"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
     OUTPUT_NODE = True
 
     def set_size(self, width, height):
@@ -118,7 +118,7 @@ class UmeAiRT_ImageSize_Output:
     RETURN_TYPES = ("INT", "INT")
     RETURN_NAMES = ("width", "height")
     FUNCTION = "get_size"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -142,7 +142,7 @@ class UmeAiRT_FPS_Input:
 
     RETURN_TYPES = ()
     FUNCTION = "set_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
     OUTPUT_NODE = True
 
     def set_val(self, fps):
@@ -157,7 +157,7 @@ class UmeAiRT_FPS_Output:
     RETURN_TYPES = ("INT",)
     RETURN_NAMES = ("fps",)
     FUNCTION = "get_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -181,7 +181,7 @@ class UmeAiRT_Steps_Input:
 
     RETURN_TYPES = ()
     FUNCTION = "set_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
     OUTPUT_NODE = True
 
     def set_val(self, steps):
@@ -196,7 +196,7 @@ class UmeAiRT_Steps_Output:
     RETURN_TYPES = ("INT",)
     RETURN_NAMES = ("steps",)
     FUNCTION = "get_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -220,7 +220,7 @@ class UmeAiRT_Denoise_Input:
 
     RETURN_TYPES = ()
     FUNCTION = "set_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
     OUTPUT_NODE = True
 
     def set_val(self, denoise):
@@ -235,7 +235,7 @@ class UmeAiRT_Denoise_Output:
     RETURN_TYPES = ("FLOAT",)
     RETURN_NAMES = ("denoise",)
     FUNCTION = "get_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -259,7 +259,7 @@ class UmeAiRT_Seed_Input:
 
     RETURN_TYPES = ()
     FUNCTION = "set_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
     OUTPUT_NODE = True
 
     def set_val(self, seed):
@@ -274,7 +274,7 @@ class UmeAiRT_Seed_Output:
     RETURN_TYPES = ("INT",)
     RETURN_NAMES = ("seed",)
     FUNCTION = "get_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -298,7 +298,7 @@ class UmeAiRT_Scheduler_Input:
 
     RETURN_TYPES = ()
     FUNCTION = "set_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
     OUTPUT_NODE = True
 
     def set_val(self, scheduler):
@@ -313,7 +313,7 @@ class UmeAiRT_Scheduler_Output:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("scheduler",)
     FUNCTION = "get_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -339,7 +339,7 @@ class UmeAiRT_Sampler_Input:
 
     RETURN_TYPES = ()
     FUNCTION = "set_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
     OUTPUT_NODE = True
 
     def set_val(self, sampler_name):
@@ -354,7 +354,7 @@ class UmeAiRT_Sampler_Output:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("sampler_name",)
     FUNCTION = "get_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -379,7 +379,7 @@ class UmeAiRT_SamplerScheduler_Input:
 
     RETURN_TYPES = ()
     FUNCTION = "set_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
     OUTPUT_NODE = True
 
     def set_val(self, sampler, scheduler):
@@ -401,7 +401,7 @@ class UmeAiRT_Positive_Input:
 
     RETURN_TYPES = ()
     FUNCTION = "set_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
     OUTPUT_NODE = True
 
     def set_val(self, text):
@@ -416,7 +416,7 @@ class UmeAiRT_Positive_Output:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("text",)
     FUNCTION = "get_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -440,7 +440,7 @@ class UmeAiRT_Negative_Input:
 
     RETURN_TYPES = ()
     FUNCTION = "set_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
     OUTPUT_NODE = True
 
     def set_val(self, text):
@@ -455,7 +455,7 @@ class UmeAiRT_Negative_Output:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("text",)
     FUNCTION = "get_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -479,7 +479,7 @@ class UmeAiRT_Model_Input:
 
     RETURN_TYPES = ()
     FUNCTION = "set_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
     OUTPUT_NODE = True
 
     def set_val(self, model):
@@ -494,7 +494,7 @@ class UmeAiRT_Model_Output:
     RETURN_TYPES = ("MODEL",)
     RETURN_NAMES = ("model",)
     FUNCTION = "get_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -517,7 +517,7 @@ class UmeAiRT_VAE_Input:
 
     RETURN_TYPES = ()
     FUNCTION = "set_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
     OUTPUT_NODE = True
 
     def set_val(self, vae):
@@ -532,7 +532,7 @@ class UmeAiRT_VAE_Output:
     RETURN_TYPES = ("VAE",)
     RETURN_NAMES = ("vae",)
     FUNCTION = "get_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -555,7 +555,7 @@ class UmeAiRT_CLIP_Input:
 
     RETURN_TYPES = ()
     FUNCTION = "set_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
     OUTPUT_NODE = True
 
     def set_val(self, clip):
@@ -570,7 +570,7 @@ class UmeAiRT_CLIP_Output:
     RETURN_TYPES = ("CLIP",)
     RETURN_NAMES = ("clip",)
     FUNCTION = "get_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -599,7 +599,7 @@ class UmeAiRT_WirelessCheckpointLoader(comfy_nodes.CheckpointLoaderSimple):
         }
     RETURN_TYPES = ("MODEL", "CLIP", "VAE")
     FUNCTION = "load_checkpoint_wireless"
-    CATEGORY = "UmeAiRT/Loaders"
+    CATEGORY = "UmeAiRT/Wireless/Loaders"
     OUTPUT_NODE = True 
     
     def load_checkpoint_wireless(self, ckpt_name):
@@ -632,7 +632,7 @@ class UmeAiRT_WirelessImageLoader(comfy_nodes.LoadImage):
 
     RETURN_TYPES = ()
     FUNCTION = "load_image_wireless"
-    CATEGORY = "UmeAiRT/Loaders"
+    CATEGORY = "UmeAiRT/Wireless/Loaders"
     OUTPUT_NODE = True
 
     def load_image_wireless(self, image, resize, mode):
@@ -731,7 +731,7 @@ class UmeAiRT_SourceImage_Output:
     RETURN_TYPES = ("IMAGE", "MASK")
     RETURN_NAMES = ("image", "mask")
     FUNCTION = "get_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -817,7 +817,7 @@ class UmeAiRT_WirelessKSampler:
     
     RETURN_TYPES = ("LATENT",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Generation"
+    CATEGORY = "UmeAiRT/Wireless/Samplers"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -926,7 +926,7 @@ class UmeAiRT_Label:
 
     RETURN_TYPES = ()
     FUNCTION = "do_nothing"
-    CATEGORY = "UmeAiRT/Tools"
+    CATEGORY = "UmeAiRT/Utilities"
 
     def do_nothing(self, **kwargs):
         return ()
@@ -944,7 +944,7 @@ class UmeAiRT_Wireless_Debug:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("debug_info",)
     FUNCTION = "debug_state"
-    CATEGORY = "UmeAiRT/Tools"
+    CATEGORY = "UmeAiRT/Utilities"
     OUTPUT_NODE = True
 
     @classmethod
@@ -1131,7 +1131,7 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
 
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "upscale"
-    CATEGORY = "UmeAiRT/Generation"
+    CATEGORY = "UmeAiRT/Wireless/Post-Process"
 
     def upscale(self, image, enabled, model, upscale_by):
         print(f"DEBUG: UmeAiRT Wireless Upscale Simple - Enabled: {enabled}")
@@ -1282,7 +1282,7 @@ class UmeAiRT_WirelessFaceDetailer_Simple(UmeAiRT_WirelessUltimateUpscale_Base):
 
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "face_detail_simple"
-    CATEGORY = "UmeAiRT/Generation"
+    CATEGORY = "UmeAiRT/Wireless/Post-Process"
 
     def face_detail_simple(self, image, enabled, model, denoise):
         
@@ -1360,7 +1360,7 @@ class UmeAiRT_WirelessImageSaver(UmeAiRT_WirelessUltimateUpscale_Base):
     RETURN_NAMES = ()
     OUTPUT_NODE = True
     FUNCTION = "save_images"
-    CATEGORY = "UmeAiRT/Tools"
+    CATEGORY = "UmeAiRT/Wireless/Output"
 
     def save_images(self, images, filename, prompt=None, extra_pnginfo=None):
         
@@ -1504,7 +1504,7 @@ class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_B
 
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "upscale"
-    CATEGORY = "UmeAiRT/Generation"
+    CATEGORY = "UmeAiRT/Wireless/Post-Process"
 
     def upscale(self, image, upscale_model, upscale_by, steps, cfg, denoise, mode_type, mask_blur, tile_padding, seam_fix_mode, seam_fix_denoise):
         usdu_node = self.get_usdu_node()
@@ -1549,7 +1549,7 @@ class UmeAiRT_GenerationSettings:
     RETURN_TYPES = ("UME_SETTINGS",)
     RETURN_NAMES = ("settings",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Blocks"
+    CATEGORY = "UmeAiRT/Blocks/Generation"
     OUTPUT_NODE = True
 
     def process(self, width, height, sampler, scheduler, steps, guidance, seed):
@@ -1588,7 +1588,7 @@ class UmeAiRT_FilesSettings:
     RETURN_TYPES = ("UME_FILES",)
     RETURN_NAMES = ("files",)
     FUNCTION = "load_files"
-    CATEGORY = "UmeAiRT/Blocks"
+    CATEGORY = "UmeAiRT/Blocks/Models"
     OUTPUT_NODE = True
 
 class UmeAiRT_FilesSettings_Checkpoint:
@@ -1607,7 +1607,7 @@ class UmeAiRT_FilesSettings_Checkpoint:
     RETURN_TYPES = ("UME_FILES",)
     RETURN_NAMES = ("models",)
     FUNCTION = "load_files"
-    CATEGORY = "UmeAiRT/Blocks"
+    CATEGORY = "UmeAiRT/Blocks/Models"
 
     def load_files(self, ckpt_name):
         # 1. Load Checkpoint
@@ -1713,7 +1713,7 @@ class UmeAiRT_FilesSettings_FLUX:
     RETURN_TYPES = ("UME_FILES",)
     RETURN_NAMES = ("models",)
     FUNCTION = "load_files"
-    CATEGORY = "UmeAiRT/Blocks"
+    CATEGORY = "UmeAiRT/Blocks/Models"
 
     def load_files(self, unet_name, weight_dtype, clip_name1, clip_name2, vae_name):
         # 1. Load UNET
@@ -1859,7 +1859,7 @@ class UmeAiRT_PromptBlock:
     RETURN_TYPES = ("UME_PROMPTS",)
     RETURN_NAMES = ("prompts",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Blocks"
+    CATEGORY = "UmeAiRT/Blocks/Generation"
 
     def process(self, positive, negative):
         # 1. Update Global State
@@ -1897,7 +1897,7 @@ class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
     RETURN_TYPES = ("UME_IMAGE",)
     RETURN_NAMES = ("image",)
     FUNCTION = "load_block_image"
-    CATEGORY = "UmeAiRT/Blocks"
+    CATEGORY = "UmeAiRT/Blocks/Images"
 
     @classmethod
     def IS_CHANGED(cls, image, **kwargs):
@@ -1979,7 +1979,7 @@ class UmeAiRT_BlockSampler:
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("image",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Blocks"
+    CATEGORY = "UmeAiRT/Blocks/Samplers"
 
     def __init__(self):
         self.lora_loader = comfy_nodes.LoraLoader()
@@ -2158,7 +2158,7 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
 
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "upscale"
-    CATEGORY = "UmeAiRT/Blocks"
+    CATEGORY = "UmeAiRT/Blocks/Post-Process"
 
     def upscale(self, image, model, upscale_by, settings=None, models=None, loras=None, prompts=None, mode_type="Linear", tile_padding=32):
         # Note: 'model' here is the upscale model filename, 'models' is the SD models bundle
@@ -2277,7 +2277,7 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
 
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "face_detail"
-    CATEGORY = "UmeAiRT/Blocks"
+    CATEGORY = "UmeAiRT/Blocks/Post-Process"
 
     def face_detail(self, image, model, denoise, settings=None, models=None, loras=None, prompts=None, guide_size=512, max_size=1024):
         # Note: 'model' here is the bbox detector filename, 'models' is the SD models bundle

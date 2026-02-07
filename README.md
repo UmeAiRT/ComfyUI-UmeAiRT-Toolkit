@@ -1,68 +1,119 @@
 # 🌌 ComfyUI UmeAiRT Toolkit
 
-**A Wireless, Nodes 2.0 Ready, and Aesthetic Toolkit for ComfyUI.**
+**A Wireless, Block-Based, and Aesthetic Toolkit for ComfyUI.**
 
-Stop fighting with "noodle soup"! The UmeAiRT Toolkit provides a suite of "Wireless" nodes that share a global state, allowing you to build clean, professional, and readable workflows.
+Stop fighting with "noodle soup"! The UmeAiRT Toolkit provides two workflow paradigms:
 
-![Banner](https://github.com/user-attachments/assets/placeholder.png)
+- **Wireless Nodes**: Share global state for ultra-clean workflows
+- **Block Nodes**: Self-contained bundles that connect via typed sockets
+
+![Workflow Example](https://github.com/user-attachments/assets/placeholder.png)
+
+---
 
 ## ✨ Key Features
 
 ### 📡 Wireless Architecture
-- **Setters & Getters**: Define your inputs (Model, VAE, CLIP, Steps, CFG, etc.) in one place using "Setter" nodes. Retrieve them anywhere using "Getter" nodes or autonomous Processors.
-- **Global State**: All parameters are synchronized globally. No need to drag long wires across your canvas.
 
-### 🧠 Smart Automation
-- **Autonomous KSampler**: Automatically detects your workflow mode:
-    - **Txt2Img**: If normal generation.
-    - **Img2Img**: Automatically switches if `denoise < 1.0`, fetching the source image and encoding it without manual wiring.
-- **Smart Image Saver**: Automatically resolves efficient paths (`SDXL/Date/Time_Model_Seed`) and fetches generation metadata (Steps, CFG, Model Name, LoRAs) without connecting distinct inputs.
+- **Global State**: Define inputs (Model, VAE, CLIP, Steps, CFG, etc.) once with "Setter" nodes
+- **Autonomous Processors**: KSampler, Upscaler, FaceDetailer automatically fetch from global state
+- **Zero Wires**: No need to drag wires across your canvas
 
-### 🎨 Clean & Future-Proof UI
-- **Nodes 2.0 Ready**: Built using standard ComfyUI widgets (Python-based) to ensure 100% compatibility with future ComfyUI updates (Frontend V2).
-- **Minimalist Design**: Custom "Label" nodes and hidden widget labels create a sleek, professional look.
+### 🧱 Block Architecture
+
+- **Self-Contained Bundles**: Each block outputs a typed bundle (Models, Settings, Prompts, LoRAs)
+- **Clean Connections**: Just connect blocks together - each handles its own complexity
+- **Hybrid Ready**: Blocks also update global state for Wireless compatibility
+
+### 🎨 Custom Color Theme
+
+Each node family has its own color for instant visual recognition:
+
+- 🔵 **Blue**: Model Loaders
+- 🟢 **Green**: Prompts
+- 🟤 **Amber**: Settings
+- 🟣 **Violet**: LoRAs
+- ⬛ **Gray**: Samplers
+- 🔷 **Pale Blue**: Upscale/Detailer
+- 🔴 **Rust Red**: Image Loader
+- 🩵 **Teal**: Image Saver
+
+---
 
 ## 📦 Nodes Overview
 
+### Wireless Nodes
+
 | Category | Node | Description |
-| :--- | :--- | :--- |
-| **Variables** | `Wireless Checkpoint Loader` | Loads Model/CLIP/VAE and broadcasts them wirelessly. |
-| **Loaders** | `Wireless Image Loader` | Loads a source image for Img2Img/ControlNet. |
-| **Variables** | `Global Params` | Nodes to set Steps, CFG, Sampler, Scheduler, ISO, etc. |
-| **Generation** | `Wireless KSampler` | The magic node. Auto-generates based on global state. |
-| | `Wireless UltimateUpscale` | Wrapper for USDU using wireless inputs. |
-| | `Wireless FaceDetailer` | Wrapper for FaceDetailer using wireless inputs. |
-| **Tools** | `Label` | Aesthetic minimal sticky notes for documentation. |
-| | `Wireless Image Saver` | Saves images with auto-generated paths and metadata. |
-| | `Wireless Debug` | Inspect the current state of your global variables. |
+|:---|:---|:---|
+| **Variables** | Input/Output nodes | Get/Set Steps, CFG, Seed, Sampler, etc. |
+| **Loaders** | `Wireless Checkpoint Loader` | Load Model/CLIP/VAE wirelessly |
+| **Loaders** | `Wireless Image Loader` | Load source image for Img2Img |
+| **Samplers** | `Wireless KSampler` | Auto-detect Txt2Img/Img2Img mode |
+| **Post-Process** | `Wireless Ultimate Upscale` | USDU with wireless inputs |
+| **Post-Process** | `Wireless FaceDetailer` | Face enhancement with wireless inputs |
+| **Output** | `Wireless Image Saver` | Auto-path and metadata saving |
+
+### Block Nodes
+
+| Category | Node | Description |
+|:---|:---|:---|
+| **Models** | `Model Loader (Block)` | Checkpoint loader with bundle output |
+| **Models** | `FLUX Loader (Block)` | UNET + Dual CLIP + VAE loader |
+| **Generation** | `Generation Settings` | Width, Height, Steps, CFG, Seed bundle |
+| **Generation** | `Prompt (Block)` | Positive/Negative prompt bundle |
+| **LoRA** | `LoRA 1x/3x/5x/10x` | Stackable LoRA loaders |
+| **Images** | `Image Loader (Block)` | Load image with mode selection |
+| **Samplers** | `Block Sampler` | Full sampler with bundle inputs |
+| **Post-Process** | `Block Ultimate Upscale` | USDU with bundle inputs |
+| **Post-Process** | `Block FaceDetailer` | Face enhancement with bundle inputs |
+
+### Utilities
+
+| Node | Description |
+|:---|:---|
+| `Label` | Aesthetic sticky notes for documentation |
+| `Debug` | Inspect current global wireless state |
+| `Bbox Detector Loader` | Load face detection models |
+
+---
 
 ## 🚀 Installation
 
 ### Option A: ComfyUI Manager (Recommended)
-1.  Open **ComfyUI Manager**.
-2.  Search for `UmeAiRT Toolkit`.
-3.  Click **Install**.
+
+1. Open **ComfyUI Manager**
+2. Search for `UmeAiRT Toolkit`
+3. Click **Install**
 
 ### Option B: Manual Installation
-1.  Navigate to your ComfyUI `custom_nodes` directory.
-2.  Clone this repository:
-    ```bash
-    git clone https://github.com/your-username/ComfyUI-UmeAiRT-Toolkit.git
-    ```
-3.  Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-4.  Restart ComfyUI.
 
-## 🛠️ Usage Guide
+```bash
+cd ComfyUI/custom_nodes
+git clone https://github.com/UmeAiRT/ComfyUI-UmeAiRT-Toolkit.git
+pip install -r ComfyUI-UmeAiRT-Toolkit/requirements.txt
+```
 
-1.  **Setup Phase**: Place "Setter" nodes (Checkpoint Loader, Steps, Image Size, etc.) on the left side of your workflow.
-2.  **Logic Phase**: Place a `Wireless KSampler` on the right.
-    *   *No wires needed between them!*
-3.  **Img2Img**: To switch to Img2Img, simply add a `Wireless Image Loader` and lower the `Denoise` slider below 1.0. The Sampler handles the rest.
+---
+
+## 🛠️ Usage
+
+### Wireless Workflow
+
+1. Place **Setter** nodes (Checkpoint, Settings, Prompts)
+2. Place **Wireless KSampler** - it auto-fetches everything
+3. For Img2Img: Add `Wireless Image Loader` with `denoise < 1.0`
+
+### Block Workflow
+
+1. Connect `Model Loader` → `Block Sampler`
+2. Connect `Generation Settings` → `Block Sampler`
+3. Connect `Prompt Block` → `Block Sampler`
+4. Optionally chain `LoRA` blocks between Model and Sampler
+
+---
 
 ## ❤️ Credits
 
-Developed by **UmeAiRT Team**.
-Designed to simplify complex workflows while maintaining maximum power and flexibility.
+Developed by **UmeAiRT Team**.  
+License: MIT
