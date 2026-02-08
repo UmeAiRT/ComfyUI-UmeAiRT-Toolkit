@@ -42,11 +42,11 @@ from .nodes import (
     UmeAiRT_WirelessUltimateUpscale_Advanced,
     UmeAiRT_WirelessFaceDetailer_Advanced, UmeAiRT_WirelessFaceDetailer_Simple,
     UmeAiRT_BboxDetectorLoader, UmeAiRT_WirelessImageSaver, UmeAiRT_WirelessCheckpointLoader,
-    UmeAiRT_WirelessImageLoader, UmeAiRT_SourceImage_Output,
-    UmeAiRT_Label,
+    UmeAiRT_WirelessImageLoader, UmeAiRT_SourceImage_Output, UmeAiRT_WirelessInpaintComposite,
+    UmeAiRT_Label, UmeAiRT_WirelessImageProcess,
     UmeAiRT_GenerationSettings, UmeAiRT_FilesSettings_Checkpoint, UmeAiRT_FilesSettings_Checkpoint_Advanced, UmeAiRT_FilesSettings_FLUX, UmeAiRT_BlockSampler, UmeAiRT_PromptBlock,
     UmeAiRT_LoraBlock_1, UmeAiRT_LoraBlock_3, UmeAiRT_LoraBlock_5, UmeAiRT_LoraBlock_10,
-    UmeAiRT_BlockUltimateSDUpscale, UmeAiRT_BlockFaceDetailer, UmeAiRT_BlockImageLoader
+    UmeAiRT_BlockUltimateSDUpscale, UmeAiRT_BlockFaceDetailer, UmeAiRT_BlockImageLoader, UmeAiRT_BlockImageLoader_Advanced, UmeAiRT_BlockImageProcess
 )
 
 # Register internal 'bbox' folder for standalone usage
@@ -107,7 +107,9 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_WirelessCheckpointLoader": UmeAiRT_WirelessCheckpointLoader,
     "UmeAiRT_WirelessImageLoader": UmeAiRT_WirelessImageLoader,
     "UmeAiRT_SourceImage_Output": UmeAiRT_SourceImage_Output,
+    "UmeAiRT_WirelessInpaintComposite": UmeAiRT_WirelessInpaintComposite,
     "UmeAiRT_Label": UmeAiRT_Label,
+    "UmeAiRT_WirelessImageProcess": UmeAiRT_WirelessImageProcess,
 
     # Block Nodes
     "UmeAiRT_GenerationSettings": UmeAiRT_GenerationSettings,
@@ -123,6 +125,8 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_BlockUltimateSDUpscale": UmeAiRT_BlockUltimateSDUpscale,
     "UmeAiRT_BlockFaceDetailer": UmeAiRT_BlockFaceDetailer,
     "UmeAiRT_BlockImageLoader": UmeAiRT_BlockImageLoader,
+    "UmeAiRT_BlockImageLoader_Advanced": UmeAiRT_BlockImageLoader_Advanced,
+    "UmeAiRT_BlockImageProcess": UmeAiRT_BlockImageProcess,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -167,7 +171,9 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_WirelessCheckpointLoader": "Wireless Checkpoint Loader",
     "UmeAiRT_WirelessImageLoader": "Wireless Image Loader",
     "UmeAiRT_SourceImage_Output": "Wireless Source Image",
+    "UmeAiRT_WirelessInpaintComposite": "Wireless Inpaint Composite",
     "UmeAiRT_Label": "Label",
+    "UmeAiRT_WirelessImageProcess": "Wireless Image Process",
     "UmeAiRT_GenerationSettings": "Generation Settings (Block)",
     "UmeAiRT_FilesSettings_Checkpoint": "Model Loader (Block)",
     "UmeAiRT_FilesSettings_Checkpoint_Advanced": "Model Loader - Advanced (Block)",
@@ -181,6 +187,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_BlockUltimateSDUpscale": "UltimateSD Upscale (Block)",
     "UmeAiRT_BlockFaceDetailer": "Face Detailer (Block)",
     "UmeAiRT_BlockImageLoader": "Image Loader (Block)",
+    "UmeAiRT_BlockImageLoader_Advanced": "Image Loader - Advanced (Block)",
+    "UmeAiRT_BlockImageProcess": "Image Process (Block)",
 }
 
 WEB_DIRECTORY = "./web"

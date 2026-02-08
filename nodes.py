@@ -831,9 +831,12 @@ class UmeAiRT_WirelessKSampler:
         vae = UME_SHARED_STATE.get(KEY_VAE)
         clip = UME_SHARED_STATE.get(KEY_CLIP)
         
-        if model is None: raise ValueError("Wireless KSampler: No Model linked (Use Model Input)")
-        if vae is None: raise ValueError("Wireless KSampler: No VAE linked (Use VAE Input)")
-        if clip is None: raise ValueError("Wireless KSampler: No CLIP linked (Use CLIP Input)")
+        if model is None:
+            raise ValueError("❌ Wireless KSampler: No MODEL found!\n\n💡 Solution: Add a 'Wireless Checkpoint Loader' or 'Model Loader (Block)' node to load your model.")
+        if vae is None:
+            raise ValueError("❌ Wireless KSampler: No VAE found!\n\n💡 Solution: Add a 'Wireless Checkpoint Loader' or 'Model Loader (Block)' node (VAE is included with checkpoints).")
+        if clip is None:
+            raise ValueError("❌ Wireless KSampler: No CLIP found!\n\n💡 Solution: Add a 'Wireless Checkpoint Loader' or 'Model Loader (Block)' node (CLIP is included with checkpoints).")
 
         # 2. Fetch Params
         seed = int(UME_SHARED_STATE.get(KEY_SEED, 0))
@@ -912,6 +915,96 @@ class UmeAiRT_WirelessKSampler:
         # 5. Sample
         # We reuse the standard KSampler function
         return comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise)
+
+
+class UmeAiRT_WirelessInpaintComposite:
+    """
+    Composites the generated image with the source image using the Inpaint Mask.
+    Auto-fetches 'Wireless Source Image' and 'Wireless Source Mask'.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+            },
+            "optional": {}
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
+    FUNCTION = "composite"
+    CATEGORY = "UmeAiRT/Wireless/Post-Process"
+
+    def composite(self, image):
+        # 1. Fetch Wireless Inputs
+        source_image = UME_SHARED_STATE.get(KEY_SOURCE_IMAGE)
+        source_mask = UME_SHARED_STATE.get(KEY_SOURCE_MASK)
+
+        if source_image is None:
+             print("UmeAiRT Composite Warning: No Wireless Source Image found. Returning generated image.")
+             return (image,)
+        
+        if source_mask is None:
+             print("UmeAiRT Composite Warning: No Wireless Source Mask found. Returning generated image.")
+             return (image,)
+
+        # 2. Logic: Similar to ImageCompositeMasked
+        # Resize source_image and mask to match generated image [B, H, W, C]
+        B, H, W, C = image.shape
+        
+        # --- Source Image Resize ---
+        source_resized = source_image
+        # Check if source needs resize (B, H, W, C)
+        sB, sH, sW, sC = source_resized.shape
+        if sH != H or sW != W:
+             # Permute to [B, C, H, W] for interpolate
+             s_p = source_resized.permute(0, 3, 1, 2)
+             s_resized = torch.nn.functional.interpolate(s_p, size=(H, W), mode="bilinear", align_corners=False)
+             source_resized = s_resized.permute(0, 2, 3, 1)
+
+        # --- Mask Resize ---
+        mask_resized = source_mask
+        # Mask can be [H, W] or [B, H, W]
+        if len(mask_resized.shape) == 2:
+            mask_resized = mask_resized.unsqueeze(0) # [1, H, W]
+        
+        mB, mH, mW = mask_resized.shape
+        if mH != H or mW != W:
+            # Add channel dim for interpolate: [B, 1, H, W]
+            m_p = mask_resized.unsqueeze(1)
+            m_resized = torch.nn.functional.interpolate(m_p, size=(H, W), mode="bilinear", align_corners=False)
+            mask_resized = m_resized.squeeze(1)
+
+        # --- Composite ---
+        # source * (1 - mask) + dest * mask
+        
+        # Ensure mask has [B, H, W, 1] shape
+        m = mask_resized
+        # If [B, H, W], unsqueeze last
+        if len(m.shape) == 3:
+            m = m.unsqueeze(-1)
+        elif len(m.shape) == 2:
+            m = m.unsqueeze(0).unsqueeze(-1)
+        
+        # Repeat batch if needed
+        if m.shape[0] < B:
+            m = m.repeat(B, 1, 1, 1)
+        
+        # Ensure source batch match
+        if source_resized.shape[0] < B:
+            source_resized = source_resized.repeat(B, 1, 1, 1)    
+
+        # Clamp mask
+        m = torch.clamp(m, 0.0, 1.0)
+        
+        # Composite
+        # Areas with Mask=1 -> Generated Image (Inpainted Area)
+        # Areas with Mask=0 -> Source Image (Original Area)
+        
+        result = source_resized * (1.0 - m) + image * m
+        
+        return (result,)
 
 
 class UmeAiRT_Label:
@@ -1099,7 +1192,11 @@ class UmeAiRT_WirelessUltimateUpscale_Base:
         tile_height = int(size.get("height", 512))
 
         if not model or not vae or not clip:
-            raise ValueError("UmeAiRT Wireless USDU: Model, VAE, or CLIP is missing from wireless state.")
+            missing = []
+            if not model: missing.append("MODEL")
+            if not vae: missing.append("VAE")
+            if not clip: missing.append("CLIP")
+            raise ValueError(f"❌ Wireless Upscale: Missing {', '.join(missing)}!\n\n💡 Solution: Add a 'Wireless Checkpoint Loader' or 'Model Loader (Block)' node to load your model.")
             
         return model, vae, clip, pos_text, neg_text, seed, gen_steps, sampler_name, scheduler, tile_width, tile_height, cfg, denoise
 
@@ -1126,17 +1223,22 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
                 "enabled": ("BOOLEAN", {"default": True}),
                 "model": (folder_paths.get_filename_list("upscale_models"),),
                 "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider"}),
+                "clean_prompt": ("BOOLEAN", {"default": True, "label_on": "Reduces Hallucinations", "label_off": "Use Global Prompt"}),
             }
         }
 
     RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
     FUNCTION = "upscale"
     CATEGORY = "UmeAiRT/Wireless/Post-Process"
 
-    def upscale(self, image, enabled, model, upscale_by):
+    def upscale(self, image, enabled, model, upscale_by, clean_prompt=True):
         print(f"DEBUG: UmeAiRT Wireless Upscale Simple - Enabled: {enabled}")
         if not enabled:
             return (image,)
+
+        # Hardcoded recommended denoise for simple mode
+        denoise = 0.35
 
         # Load Upscale Model Internally
         try:
@@ -1147,19 +1249,31 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
              
         usdu_node = self.get_usdu_node()
         model, vae, clip, pos_text, neg_text, seed, gen_steps, sampler_name, scheduler, t_w, t_h, wireless_cfg, wireless_denoise = self.fetch_wireless_common()
-        positive, negative = self.encode_prompts(clip, pos_text, neg_text)
+        
+        # Clean Prompt Logic
+        if clean_prompt:
+            print("UmeAiRT Upscale: Using Clean Prompt (Empty Positive) to prevent hallucinations.")
+            # Use empty positive prompt
+            target_pos_text = ""
+        else:
+            target_pos_text = pos_text
+            
+        positive, negative = self.encode_prompts(clip, target_pos_text, neg_text)
         
         # Logic: 1/4 steps, rounded up
         steps = math.ceil(gen_steps / 4)
         
-        # Hardcoded Simple Settings
-        cfg = 1.0
-        denoise = 0.35
+        # Settings
+        cfg = 1.0 # Force 1.0 for texture enhancing
+        # denoise is passed as arg
         mode_type = "Linear"
         mask_blur = 16
         tile_padding = 32
         seam_fix_mode = "None"
         seam_fix_denoise = 1.0
+        
+        # Force uniform tiles to prevent artifacts
+        force_uniform = True
 
         return usdu_node.upscale(
             image=image, model=model, positive=positive, negative=negative, vae=vae,
@@ -1169,8 +1283,83 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
             tile_width=t_w, tile_height=t_h, mask_blur=mask_blur, tile_padding=tile_padding,
             seam_fix_mode=seam_fix_mode, seam_fix_denoise=seam_fix_denoise,
             seam_fix_mask_blur=8, seam_fix_width=64, seam_fix_padding=16,
-            force_uniform_tiles=True, tiled_decode=False,
-            suppress_preview=True, # Explicitly disable tile previews
+            force_uniform_tiles=force_uniform, tiled_decode=False,
+            suppress_preview=True,
+        )
+
+
+class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_Base):
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "enabled": ("BOOLEAN", {"default": True}),
+                "model": (folder_paths.get_filename_list("upscale_models"),),
+                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider"}),
+                
+                # Advanced Settings
+                "denoise": ("FLOAT", {"default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
+                "clean_prompt": ("BOOLEAN", {"default": True, "label_on": "Reduces Hallucinations", "label_off": "Use Global Prompt"}),
+                
+                "mode_type": (["Linear", "Chess", "None"], {"default": "Linear"}),
+                "tile_width": ("INT", {"default": 512, "min": 64, "max": 4096, "step": 64}),
+                "tile_height": ("INT", {"default": 512, "min": 64, "max": 4096, "step": 64}),
+                "mask_blur": ("INT", {"default": 8, "min": 0, "max": 64, "step": 1}),
+                "tile_padding": ("INT", {"default": 32, "min": 0, "max": 256, "step": 8}),
+                
+                "seam_fix_mode": (["None", "Band Pass", "Half Tile", "Half Tile + Intersections"], {"default": "None"}),
+                "seam_fix_denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "seam_fix_width": ("INT", {"default": 64, "min": 0, "max": 256, "step": 8}),
+                "seam_fix_mask_blur": ("INT", {"default": 8, "min": 0, "max": 64, "step": 1}),
+                "seam_fix_padding": ("INT", {"default": 16, "min": 0, "max": 128, "step": 8}),
+                
+                "force_uniform_tiles": ("BOOLEAN", {"default": True}),
+                "tiled_decode": ("BOOLEAN", {"default": False}),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
+    FUNCTION = "upscale_advanced"
+    CATEGORY = "UmeAiRT/Wireless/Post-Process"
+
+    def upscale_advanced(self, image, enabled, model, upscale_by, denoise, clean_prompt, 
+                         mode_type, tile_width, tile_height, mask_blur, tile_padding,
+                         seam_fix_mode, seam_fix_denoise, seam_fix_width, seam_fix_mask_blur, seam_fix_padding,
+                         force_uniform_tiles, tiled_decode):
+        
+        if not enabled:
+            return (image,)
+
+        # Load Upscale Model
+        try:
+             from comfy_extras.nodes_upscale_model import UpscaleModelLoader
+             upscale_model = UpscaleModelLoader().load_model(model)[0]
+        except ImportError:
+             raise ImportError("UmeAiRT: Could not import UpscaleModelLoader.")
+             
+        usdu_node = self.get_usdu_node()
+        model, vae, clip, pos_text, neg_text, seed, gen_steps, sampler_name, scheduler, _, _, wireless_cfg, wireless_denoise = self.fetch_wireless_common()
+        
+        # Clean Prompt
+        target_pos_text = "" if clean_prompt else pos_text
+        positive, negative = self.encode_prompts(clip, target_pos_text, neg_text)
+        
+        # Logic
+        steps = math.ceil(gen_steps / 4)
+        cfg = 1.0 # Force 1.0
+
+        return usdu_node.upscale(
+            image=image, model=model, positive=positive, negative=negative, vae=vae,
+            upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
+            sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
+            upscale_model=upscale_model, mode_type=mode_type,
+            tile_width=tile_width, tile_height=tile_height, mask_blur=mask_blur, tile_padding=tile_padding,
+            seam_fix_mode=seam_fix_mode, seam_fix_denoise=seam_fix_denoise,
+            seam_fix_mask_blur=seam_fix_mask_blur, seam_fix_width=seam_fix_width, seam_fix_padding=seam_fix_padding,
+            force_uniform_tiles=force_uniform_tiles, tiled_decode=tiled_decode,
+            suppress_preview=True,
         )
 
 
@@ -1197,6 +1386,7 @@ class UmeAiRT_WirelessFaceDetailer_Advanced(UmeAiRT_WirelessUltimateUpscale_Base
         }
 
     RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
     FUNCTION = "face_detail"
     CATEGORY = "UmeAiRT/Generation"
 
@@ -1281,6 +1471,7 @@ class UmeAiRT_WirelessFaceDetailer_Simple(UmeAiRT_WirelessUltimateUpscale_Base):
         }
 
     RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
     FUNCTION = "face_detail_simple"
     CATEGORY = "UmeAiRT/Wireless/Post-Process"
 
@@ -1503,6 +1694,7 @@ class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_B
         }
 
     RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
     FUNCTION = "upscale"
     CATEGORY = "UmeAiRT/Wireless/Post-Process"
 
@@ -1873,10 +2065,405 @@ class UmeAiRT_PromptBlock:
         }
         return (prompts,)
 
+class UmeAiRT_WirelessImageProcess:
+    """
+    Central node for Wireless Image Editing (Inpaint, Outpaint, Img2Img, Txt2Img).
+    Handles Resizing, Padding (Outpaint), Mask Blurring (Inpaint), and Denoise.
+    Updates Wireless Global State.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
+                "mode": (["img2img", "inpaint", "outpaint", "txt2img"], {"default": "img2img"}),
+            },
+            "optional": {
+                "image": ("IMAGE",), # Optional input overrides wireless source
+                "mask": ("MASK",),   # Optional input overrides wireless mask
+                "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF"}),
+                "mask_blur": ("INT", {"default": 10, "min": 0, "max": 200, "step": 1}),
+                # Outpaint Params
+                "padding_left": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
+                "padding_top": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
+                "padding_right": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
+                "padding_bottom": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
+                "feathering": ("INT", {"default": 40, "min": 0, "max": 200, "step": 1}),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE", "MASK")
+    RETURN_NAMES = ("image", "mask")
+    FUNCTION = "process_image"
+    CATEGORY = "UmeAiRT/Wireless/Pre-Process"
+
+    def process_image(self, denoise=1.0, mode="img2img", image=None, mask=None, resize=False, mask_blur=0, 
+                      padding_left=0, padding_top=0, padding_right=0, padding_bottom=0, feathering=40):
+        
+        # Priority logic for txt2img: Ignore input image/mask? 
+        # Actually txt2img usually implies we want to GENERATE from scratch using dimensions.
+        # But if image is provided, maybe we use it for size?
+        # User request: "forcer le denoise a 1 et ignore les option de mask"
+        
+        if mode == "txt2img":
+             print("UmeAiRT Wireless Process: Txt2Img Mode (Forcing Denoise=1.0, Ignoring Mask).")
+             # Force Denoise
+             UME_SHARED_STATE[KEY_DENOISE] = 1.0
+             # Hide Mask
+             UME_SHARED_STATE[KEY_SOURCE_MASK] = None
+             
+             # Image? If provided, maybe user wants to use it as reference sizing or latent upscale?
+             # Standard txt2img doesn't use source image in KSampler unless going for img2img loop.
+             # If we pass image, Sampler might try to encode it.
+             # Let's honor the image update if provided (e.g. for workflow coherence) but Denoise 1.0 makes it effectively ignored by standard KSampler (destruction).
+             if image is not None:
+                  UME_SHARED_STATE[KEY_SOURCE_IMAGE] = image
+             
+             return (image, None)
+
+        # 1. Fetch Input (Priority: Wired > Wireless)
+        if image is None:
+            image = UME_SHARED_STATE.get(KEY_SOURCE_IMAGE)
+        if mask is None:
+            mask = UME_SHARED_STATE.get(KEY_SOURCE_MASK)
+        
+        if image is None:
+            UME_SHARED_STATE[KEY_DENOISE] = denoise
+            return (None, None)
+
+        B, H, W, C = image.shape
+        
+        # Determine Target Size (Wireless State)
+        target_w = W
+        target_h = H
+        if resize:
+             size = UME_SHARED_STATE.get(KEY_IMAGESIZE, {"width": 1024, "height": 1024})
+             target_w = int(size.get("width", 1024))
+             target_h = int(size.get("height", 1024))
+
+        # Helper: Resize
+        def resize_tensor(tensor, tH, tW, interp_mode="bilinear", is_mask=False):
+             if is_mask:
+                 t = tensor.unsqueeze(1)
+             else:
+                 t = tensor.permute(0, 3, 1, 2)
+             
+             t_resized = torch.nn.functional.interpolate(t, size=(tH, tW), mode=interp_mode, align_corners=False if interp_mode!="nearest" else None)
+             
+             if is_mask:
+                 return t_resized.squeeze(1)
+             else:
+                 return t_resized.permute(0, 2, 3, 1)
+
+        # 2. Process based on Mode
+        final_image = image
+        final_mask = mask
+        
+        # RESIZE (Pre-Outpaint)
+        if resize:
+             final_image = resize_tensor(final_image, target_h, target_w, interp_mode="bilinear", is_mask=False)
+             if final_mask is not None:
+                 final_mask = resize_tensor(final_mask, target_h, target_w, interp_mode="nearest", is_mask=True)
+             
+             # Update dims
+             B, H, W, C = final_image.shape
+
+        # OUTPAINT
+        if mode == "outpaint":
+             pad_l, pad_t, pad_r, pad_b = padding_left, padding_top, padding_right, padding_bottom
+             
+             if pad_l > 0 or pad_t > 0 or pad_r > 0 or pad_b > 0:
+                 # Pad Image (Constant 0)
+                 img_p = final_image.permute(0, 3, 1, 2)
+                 img_padded = torch.nn.functional.pad(img_p, (pad_l, pad_r, pad_t, pad_b), mode='constant', value=0)
+                 final_image = img_padded.permute(0, 2, 3, 1)
+                 
+                 new_h = H + pad_t + pad_b
+                 new_w = W + pad_l + pad_r
+                 
+                 # Create Mask logic for Outpaint
+                 
+                 # Start with Zeros (Keep everything)
+                 new_mask = torch.zeros((B, new_h, new_w), dtype=torch.float32, device=final_image.device)
+                 
+                 # If original mask existed, pad it
+                 if final_mask is not None:
+                     # final_mask is [B, H, W]
+                     # Check dims
+                     if len(final_mask.shape) == 2: m_in = final_mask.unsqueeze(0)
+                     else: m_in = final_mask
+                     
+                     # Pad original mask with 0 (preserve existing mask content)
+                     m_padded = torch.nn.functional.pad(m_in, (pad_l, pad_r, pad_t, pad_b), mode='constant', value=0)
+                     if len(final_mask.shape) == 2: new_mask = m_padded.squeeze(0)
+                     else: new_mask = m_padded
+
+                 # Set Padded Areas to 1.0 (Inpaint)
+                 if pad_t > 0: new_mask[:, :pad_t, :] = 1.0
+                 if pad_b > 0: new_mask[:, -pad_b:, :] = 1.0
+                 if pad_l > 0: new_mask[:, :, :pad_l] = 1.0
+                 if pad_r > 0: new_mask[:, :, -pad_r:] = 1.0
+                 
+                 # Feathering logic
+                 if feathering > 0:
+                      import torchvision.transforms.functional as TF
+                      k = feathering
+                      if k % 2 == 0: k += 1
+                      sig = float(k) / 3.0
+                      
+                      if len(new_mask.shape) == 2: m_b = new_mask.unsqueeze(0).unsqueeze(0)
+                      else: m_b = new_mask.unsqueeze(1)
+                      
+                      m_b = TF.gaussian_blur(m_b, kernel_size=k, sigma=sig)
+                      
+                      if len(new_mask.shape) == 2: new_mask = m_b.squeeze(0).squeeze(0)
+                      else: new_mask = m_b.squeeze(1)
+                 
+                 final_mask = new_mask
+
+        # INPAINT / COMPOSITE BLUR logic preparation
+        # Blur mask if requested (Inpaint typically, or cleanup)
+        # Note: If Outpaint feathered heavily, manual blur might be redundant but safe.
+        
+        if mask_blur > 0 and final_mask is not None:
+             if len(final_mask.shape) == 2: m = final_mask.unsqueeze(0).unsqueeze(0)
+             elif len(final_mask.shape) == 3: m = final_mask.unsqueeze(1)
+             else: m = final_mask
+             
+             import torchvision.transforms.functional as TF
+             k = mask_blur
+             if k % 2 == 0: k += 1
+             m = TF.gaussian_blur(m, kernel_size=k)
+             
+             if len(final_mask.shape) == 2: final_mask = m.squeeze(0).squeeze(0)
+             elif len(final_mask.shape) == 3: final_mask = m.squeeze(1)
+
+        # MODE HANDLING (State Update)
+        state_mask = final_mask
+        if mode == "img2img":
+            state_mask = None # Hide mask from state
+            print("UmeAiRT Wireless Process: Img2Img Mode (State Mask Hidden).")
+        
+        # 6. Update State
+        UME_SHARED_STATE[KEY_SOURCE_IMAGE] = final_image
+        UME_SHARED_STATE[KEY_SOURCE_MASK] = state_mask
+        UME_SHARED_STATE[KEY_DENOISE] = denoise
+
+        return (final_image, final_mask)
+
+
+class UmeAiRT_WirelessImageLoader(comfy_nodes.LoadImage):
+    @classmethod
+    def INPUT_TYPES(s):
+        input_dir = folder_paths.get_input_directory()
+        files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
+        files.sort()
+        return {
+            "required": {
+                "image": (sorted(files), {"image_upload": True}),
+            },
+            "optional": {}
+        }
+
+    RETURN_TYPES = ("IMAGE", "MASK")
+    RETURN_NAMES = ("image", "mask")
+    FUNCTION = "load_wireless_image"
+    CATEGORY = "UmeAiRT/Wireless/Loaders"
+
+    def load_wireless_image(self, image):
+        # Load Image (from parent LoadImage)
+        out = super().load_image(image)
+        img = out[0]
+        mask = out[1]
+
+        # Update Wireless Global State (Raw)
+        UME_SHARED_STATE[KEY_SOURCE_IMAGE] = img
+        UME_SHARED_STATE[KEY_SOURCE_MASK] = mask
+        
+        return (img, mask)
+
+class UmeAiRT_BlockImageProcess:
+    """
+    Central node for Block Image Editing.
+    Outputs UME_IMAGE bundle for Block Sampler.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image_bundle": ("UME_IMAGE",),
+                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
+                "mode": (["img2img", "inpaint", "outpaint", "txt2img"], {"default": "img2img"}),
+            },
+            "optional": {
+                "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF"}),
+                "mask_blur": ("INT", {"default": 10, "min": 0, "max": 200, "step": 1}),
+                # Outpaint Params
+                "padding_left": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
+                "padding_top": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
+                "padding_right": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
+                "padding_bottom": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
+                "feathering": ("INT", {"default": 40, "min": 0, "max": 200, "step": 1}),
+            }
+        }
+
+    RETURN_TYPES = ("UME_IMAGE",)
+    RETURN_NAMES = ("image_bundle",)
+    FUNCTION = "process_image"
+    CATEGORY = "UmeAiRT/Blocks/Images"
+
+    def process_image(self, image_bundle, denoise=0.75, mode="img2img", resize=False, mask_blur=0, 
+                      padding_left=0, padding_top=0, padding_right=0, padding_bottom=0, feathering=40):
+        
+        # Unpack Bundle
+        image = image_bundle.get("image")
+        mask = image_bundle.get("mask") # Can be None
+
+        if image is None:
+            raise ValueError("UmeAiRT: Block Image Process received a bundle with no image.")
+
+        # TXT2IMG Logic
+        if mode == "txt2img":
+             print("UmeAiRT Block Process: Txt2Img Mode (Forcing Denoise=1.0, Ignoring Mask).")
+             denoise = 1.0
+             mask = None 
+             # Just pass through image logic (potentially for size reference if resized) but mask is killed.
+        
+        # 1. Base Logic
+        B, H, W, C = image.shape
+        
+        # Determine Target Size
+        target_w = W
+        target_h = H
+        if resize:
+             size = UME_SHARED_STATE.get(KEY_IMAGESIZE, {"width": 1024, "height": 1024})
+             target_w = int(size.get("width", 1024))
+             target_h = int(size.get("height", 1024))
+
+        # Helper: Resize
+        def resize_tensor(tensor, tH, tW, interp_mode="bilinear", is_mask=False):
+             if is_mask:
+                 t = tensor.unsqueeze(1)
+             else:
+                 t = tensor.permute(0, 3, 1, 2)
+             
+             t_resized = torch.nn.functional.interpolate(t, size=(tH, tW), mode=interp_mode, align_corners=False if interp_mode!="nearest" else None)
+             
+             if is_mask:
+                 return t_resized.squeeze(1)
+             else:
+                 return t_resized.permute(0, 2, 3, 1)
+
+        # 2. Process
+        final_image = image
+        final_mask = mask
+        
+        # RESIZE
+        if resize:
+             final_image = resize_tensor(final_image, target_h, target_w, interp_mode="bilinear", is_mask=False)
+             if final_mask is not None:
+                 final_mask = resize_tensor(final_mask, target_h, target_w, interp_mode="nearest", is_mask=True)
+             
+             B, H, W, C = final_image.shape
+
+        # OUTPAINT
+        if mode == "outpaint":
+             pad_l, pad_t, pad_r, pad_b = padding_left, padding_top, padding_right, padding_bottom
+             
+             if pad_l > 0 or pad_t > 0 or pad_r > 0 or pad_b > 0:
+                 # Pad Image (Constant 0)
+                 img_p = final_image.permute(0, 3, 1, 2)
+                 img_padded = torch.nn.functional.pad(img_p, (pad_l, pad_r, pad_t, pad_b), mode='constant', value=0)
+                 final_image = img_padded.permute(0, 2, 3, 1)
+                 
+                 new_h = H + pad_t + pad_b
+                 new_w = W + pad_l + pad_r
+                 
+                 new_mask = torch.zeros((B, new_h, new_w), dtype=torch.float32, device=final_image.device)
+                 
+                 # Pad original mask
+                 if final_mask is not None:
+                     if len(final_mask.shape) == 2: m_in = final_mask.unsqueeze(0)
+                     else: m_in = final_mask
+                     
+                     m_padded = torch.nn.functional.pad(m_in, (pad_l, pad_r, pad_t, pad_b), mode='constant', value=0)
+                     if len(final_mask.shape) == 2: new_mask = m_padded.squeeze(0)
+                     else: new_mask = m_padded
+
+                 # Set Padded Areas to 1.0
+                 if pad_t > 0: new_mask[:, :pad_t, :] = 1.0
+                 if pad_b > 0: new_mask[:, -pad_b:, :] = 1.0
+                 if pad_l > 0: new_mask[:, :, :pad_l] = 1.0
+                 if pad_r > 0: new_mask[:, :, -pad_r:] = 1.0
+                 
+                 # Feathering
+                 if feathering > 0:
+                      import torchvision.transforms.functional as TF
+                      k = feathering
+                      if k % 2 == 0: k += 1
+                      sig = float(k) / 3.0
+                      
+                      if len(new_mask.shape) == 2: m_b = new_mask.unsqueeze(0).unsqueeze(0)
+                      else: m_b = new_mask.unsqueeze(1)
+                      m_b = TF.gaussian_blur(m_b, kernel_size=k, sigma=sig)
+                      if len(new_mask.shape) == 2: new_mask = m_b.squeeze(0).squeeze(0)
+                      else: new_mask = m_b.squeeze(1)
+                 
+                 final_mask = new_mask
+
+        # INPAINT / BLUR
+        if (mode == "inpaint" or mode == "outpaint") and final_mask is not None:
+             if mask_blur > 0:
+                 if len(final_mask.shape) == 2: m = final_mask.unsqueeze(0).unsqueeze(0)
+                 elif len(final_mask.shape) == 3: m = final_mask.unsqueeze(1)
+                 else: m = final_mask
+                 
+                 import torchvision.transforms.functional as TF
+                 k = mask_blur
+                 if k % 2 == 0: k += 1
+                 m = TF.gaussian_blur(m, kernel_size=k)
+                 
+                 if len(final_mask.shape) == 2: final_mask = m.squeeze(0).squeeze(0)
+                 elif len(final_mask.shape) == 3: final_mask = m.squeeze(1)
+        
+        # Mode Handling for Sampler
+        final_mode = "img2img"
+        state_mask = final_mask
+        
+        if mode == "txt2img":
+             final_mode = "txt2img"
+             final_mask = None
+             state_mask = None
+        elif mode == "img2img":
+             final_mask = None # For Bundle
+             state_mask = None # For Wireless State
+             print("UmeAiRT Block Process: Img2Img Mode (Masks Hidden).")
+        elif mode == "outpaint":
+             final_mode = "inpaint" # Sampler treats outpaint as inpaint
+        elif mode == "inpaint":
+             final_mode = "inpaint"
+
+        # Create Bundle
+        image_bundle = {
+            "image": final_image,
+            "mask": final_mask,
+            "mode": final_mode,
+            "denoise": denoise,
+        }
+
+        # Also update Wireless state for synergy
+        UME_SHARED_STATE[KEY_SOURCE_IMAGE] = final_image
+        UME_SHARED_STATE[KEY_SOURCE_MASK] = state_mask
+        UME_SHARED_STATE[KEY_DENOISE] = denoise
+
+        return (image_bundle,)
+
+
 class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
     """
     Block version of Image Loader.
-    Outputs an UME_IMAGE bundle (image, mask, mode) for the Block Sampler.
+    Outputs UME_IMAGE bundle (Default mode=img2img, denoise=0.75).
+    For raw outputs + bundle, use 'Block Image Loader (Advanced)'.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -1887,74 +2474,77 @@ class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
             "required": {
                 "image": (sorted(files), {"image_upload": True}),
             },
-            "optional": {
-                "mode": (["img2img", "inpaint"], {"default": "img2img"}),
-                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
-                "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF"}),
-            }
+            "optional": {}
         }
 
     RETURN_TYPES = ("UME_IMAGE",)
-    RETURN_NAMES = ("image",)
+    RETURN_NAMES = ("image_bundle",)
     FUNCTION = "load_block_image"
     CATEGORY = "UmeAiRT/Blocks/Images"
 
-    @classmethod
-    def IS_CHANGED(cls, image, **kwargs):
-        # Override parent IS_CHANGED to ignore extra kwargs like denoise
-        return super().IS_CHANGED(image)
-
-    def load_block_image(self, image, denoise=0.75, resize=False, mode="img2img"):
+    def load_block_image(self, image):
         # Load Image (from parent LoadImage)
         out = super().load_image(image)
         img = out[0]
         mask = out[1]
+        
+        # Also update Wireless state for synergy (Raw)
+        UME_SHARED_STATE[KEY_SOURCE_IMAGE] = img
+        UME_SHARED_STATE[KEY_SOURCE_MASK] = mask
 
-        # Resize Logic (same as Wireless)
-        if resize:
-            size = UME_SHARED_STATE.get(KEY_IMAGESIZE, {"width": 1024, "height": 1024})
-            target_w = int(size.get("width", 1024))
-            target_h = int(size.get("height", 1024))
-
-            def resize_and_crop(tensor, interp_mode="bilinear", is_mask=False):
-                if is_mask:
-                    t = tensor.unsqueeze(1)
-                else:
-                    t = tensor.permute(0, 3, 1, 2)
-                b, c, h, w = t.shape
-                scale = max(target_w / w, target_h / h)
-                new_w = int(w * scale)
-                new_h = int(h * scale)
-                if interp_mode == "bilinear":
-                    t_resized = torch.nn.functional.interpolate(t, size=(new_h, new_w), mode=interp_mode, align_corners=False)
-                else:
-                    t_resized = torch.nn.functional.interpolate(t, size=(new_h, new_w), mode=interp_mode)
-                h_start = max(0, (new_h - target_h) // 2)
-                w_start = max(0, (new_w - target_w) // 2)
-                t_cropped = t_resized[:, :, h_start:h_start+target_h, w_start:w_start+target_w]
-                if is_mask:
-                    return t_cropped.squeeze(1)
-                else:
-                    return t_cropped.permute(0, 2, 3, 1)
-
-            img = resize_and_crop(img, interp_mode="bilinear", is_mask=False)
-            if mask is not None:
-                mask = resize_and_crop(mask, interp_mode="nearest", is_mask=True)
-
-        # Create Bundle
+        # Create Default Bundle
         image_bundle = {
             "image": img,
-            "mask": mask if mode == "inpaint" else None,
-            "mode": mode,
-            "denoise": denoise,
+            "mask": mask,
+            "mode": "img2img",
+            "denoise": 0.75, # Standard Default
         }
 
-        # Also update Wireless state for synergy
-        UME_SHARED_STATE[KEY_SOURCE_IMAGE] = img
-        UME_SHARED_STATE[KEY_SOURCE_MASK] = mask if mode == "inpaint" else None
-        UME_SHARED_STATE[KEY_DENOISE] = denoise
-
+        # Return Bundle ONLY
         return (image_bundle,)
+
+
+class UmeAiRT_BlockImageLoader_Advanced(comfy_nodes.LoadImage):
+    """
+    Advanced Block Image Loader.
+    Outputs UME_IMAGE bundle + Raw Image + Raw Mask.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        input_dir = folder_paths.get_input_directory()
+        files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
+        files.sort()
+        return {
+            "required": {
+                "image": (sorted(files), {"image_upload": True}),
+            },
+            "optional": {}
+        }
+
+    RETURN_TYPES = ("UME_IMAGE", "IMAGE", "MASK")
+    RETURN_NAMES = ("image_bundle", "image", "mask")
+    FUNCTION = "load_block_image"
+    CATEGORY = "UmeAiRT/Blocks/Images"
+
+    def load_block_image(self, image):
+        # Load Image (from parent LoadImage)
+        out = super().load_image(image)
+        img = out[0]
+        mask = out[1]
+        
+        # Also update Wireless state for synergy (Raw)
+        UME_SHARED_STATE[KEY_SOURCE_IMAGE] = img
+        UME_SHARED_STATE[KEY_SOURCE_MASK] = mask
+
+        # Create Default Bundle
+        image_bundle = {
+            "image": img,
+            "mask": mask,
+            "mode": "img2img",
+            "denoise": 0.75,
+        }
+
+        return (image_bundle, img, mask)
 
 
 class UmeAiRT_BlockSampler:
@@ -2021,7 +2611,11 @@ class UmeAiRT_BlockSampler:
         
         # Ensure we have everything
         if not model or not vae or not clip:
-             raise ValueError("UmeAiRT Block Sampler: Missing Model, VAE, or CLIP. Connect a 'Files' block or load a Checkpoint wirelessly.")
+            missing = []
+            if not model: missing.append("MODEL")
+            if not vae: missing.append("VAE")
+            if not clip: missing.append("CLIP")
+            raise ValueError(f"❌ Block Sampler: Missing {', '.join(missing)}!\n\n💡 Solution: Connect a 'Model Loader (Block)' node to the 'models' input, or add a 'Wireless Checkpoint Loader' node.")
 
         # 2. Expand Settings (Prioritize Bundle > Wireless)
         if settings:
@@ -2078,8 +2672,8 @@ class UmeAiRT_BlockSampler:
                 # VAE Encode
                 latent_image = comfy_nodes.VAEEncode().encode(vae, raw_image)[0]
                 
-                # Apply mask for Inpaint mode
-                if mode == "inpaint" and source_mask is not None:
+                 # Apply mask for Inpaint mode
+                if source_mask is not None:
                     if torch.any(source_mask > 0):
                         latent_image["noise_mask"] = source_mask
             except Exception as e:
@@ -2126,7 +2720,70 @@ class UmeAiRT_BlockSampler:
         result_latent = comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise)[0]
 
         # 7. Decode
-        return comfy_nodes.VAEDecode().decode(vae, result_latent)
+        generated_image = comfy_nodes.VAEDecode().decode(vae, result_latent)[0]
+
+        # 8. Auto-Composite for Inpaint
+        # If we are in inpaint mode (mask present), we almost always want to composite the result
+        # onto the original image to ensure seamless edges, especially since we have the source image and mask.
+        
+        if mode_str == "inpaint" and image is not None:
+             # We need raw_source_image and source_mask
+             # They are retrieved earlier: raw_image, source_mask
+             
+             if raw_image is not None and source_mask is not None:
+                 try:
+                     # Resize Source Image & Mask to match Generated Image [B, H, W, C]
+                     B, H, W, C = generated_image.shape
+                     
+                     # --- Source Resize ---
+                     source_resized = raw_image
+                     sB, sH, sW, sC = source_resized.shape
+                     if sH != H or sW != W:
+                         s_p = source_resized.permute(0, 3, 1, 2)
+                         s_resized = torch.nn.functional.interpolate(s_p, size=(H, W), mode="bilinear", align_corners=False)
+                         source_resized = s_resized.permute(0, 2, 3, 1)
+
+                     # --- Mask Resize ---
+                     mask_resized = source_mask
+                     if len(mask_resized.shape) == 2:
+                         mask_resized = mask_resized.unsqueeze(0)
+                     
+                     mB, mH, mW = mask_resized.shape
+                     if mH != H or mW != W:
+                         m_p = mask_resized.unsqueeze(1)
+                         m_resized = torch.nn.functional.interpolate(m_p, size=(H, W), mode="nearest") # Mask uses nearest usually, but Composite node used bilinear? 
+                         # Let's use bilinear for softer mask edges during resize if it was already blurred?
+                         # Actually standard resize for mask is usually nearest to preserve crispness, 
+                         # BUT here we want soft edges. Let's stick to bilinear for mask resize too to be safe/smooth.
+                         m_resized = torch.nn.functional.interpolate(m_p, size=(H, W), mode="bilinear", align_corners=False)
+                         mask_resized = m_resized.squeeze(1)
+
+                     # --- Composite ---
+                     m = mask_resized
+                     if len(m.shape) == 3:
+                         m = m.unsqueeze(-1)
+                     elif len(m.shape) == 2:
+                         m = m.unsqueeze(0).unsqueeze(-1)
+                     
+                     if m.shape[0] < B:
+                         m = m.repeat(B, 1, 1, 1)
+                     
+                     if source_resized.shape[0] < B:
+                         source_resized = source_resized.repeat(B, 1, 1, 1)
+
+                     m = torch.clamp(m, 0.0, 1.0)
+                     
+                     # Result = Source * (1-M) + Generated * M
+                     composite_image = source_resized * (1.0 - m) + generated_image * m
+                     
+                     print("🎨 UmeAiRT Block Inpaint: Automatically composited result with source.")
+                     return (composite_image,)
+
+                 except Exception as e:
+                     print(f"UmeAiRT Block Warning: Auto-Composite failed ({e}). Returning generated image.")
+                     return (generated_image,)
+        
+        return (generated_image,)
 
 
 class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
@@ -2151,16 +2808,20 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
                 "models": ("UME_FILES",),
                 "loras": ("UME_LORA_STACK",),
                 "prompts": ("UME_PROMPTS",),
+                "denoise": ("FLOAT", {"default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
+                "clean_prompt": ("BOOLEAN", {"default": True, "label_on": "Reduces Hallucinations", "label_off": "Use Global Prompt"}),
                 "mode_type": (usdu_modes, {"default": "Linear"}),
                 "tile_padding": ("INT", {"default": 32, "min": 0, "max": 128}),
             }
         }
 
     RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
     FUNCTION = "upscale"
     CATEGORY = "UmeAiRT/Blocks/Post-Process"
 
-    def upscale(self, image, model, upscale_by, settings=None, models=None, loras=None, prompts=None, mode_type="Linear", tile_padding=32):
+    def upscale(self, image, model, upscale_by, settings=None, models=None, loras=None, prompts=None, 
+                denoise=0.35, clean_prompt=True, mode_type="Linear", tile_padding=32):
         # Note: 'model' here is the upscale model filename, 'models' is the SD models bundle
         upscale_model_file = model  # Rename to avoid confusion with SD model
         
@@ -2177,7 +2838,7 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         # 2. Apply LoRA Stack
         if loras:
             if not sd_model or not clip:
-                raise ValueError("Block USDU: Cannot apply LoRAs without Model/CLIP.")
+                raise ValueError("❌ Block Upscale: Cannot apply LoRAs without Model/CLIP!\n\n💡 Solution: Connect a 'Model Loader (Block)' node to the 'models' input first.")
             loaded_loras_meta = []
             for lora_def in loras:
                 name, str_model, str_clip = lora_def
@@ -2192,7 +2853,11 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
             UME_SHARED_STATE[KEY_LORAS] = loaded_loras_meta
 
         if not sd_model or not vae or not clip:
-            raise ValueError("Block USDU: Missing Model, VAE, or CLIP.")
+            missing = []
+            if not sd_model: missing.append("MODEL")
+            if not vae: missing.append("VAE")
+            if not clip: missing.append("CLIP")
+            raise ValueError(f"❌ Block Upscale: Missing {', '.join(missing)}!\n\n💡 Solution: Connect a 'Model Loader (Block)' node to the 'models' input, or add a 'Wireless Checkpoint Loader' node.")
 
         # 3. Expand Settings
         if settings:
@@ -2221,7 +2886,9 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
             pos_text = str(UME_SHARED_STATE.get(KEY_POSITIVE, ""))
             neg_text = str(UME_SHARED_STATE.get(KEY_NEGATIVE, ""))
 
-        positive, negative = self.encode_prompts(clip, pos_text, neg_text)
+        # Clean Prompt Logic
+        target_pos_text = "" if clean_prompt else pos_text
+        positive, negative = self.encode_prompts(clip, target_pos_text, neg_text)
 
         # 5. Load Upscale Model
         try:
@@ -2232,7 +2899,7 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
 
         # 6. Execute USDU
         usdu_node = self.get_usdu_node()
-        denoise = 0.35  # Fixed for upscale
+        # denoise is passed as arg
         steps = max(5, steps // 4)  # 1/4 of normal steps
         mask_blur = 16
 
@@ -2276,6 +2943,7 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
         }
 
     RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
     FUNCTION = "face_detail"
     CATEGORY = "UmeAiRT/Blocks/Post-Process"
 
@@ -2296,7 +2964,7 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
         # 2. Apply LoRA Stack
         if loras:
             if not sd_model or not clip:
-                raise ValueError("Block FaceDetailer: Cannot apply LoRAs without Model/CLIP.")
+                raise ValueError("❌ Block FaceDetailer: Cannot apply LoRAs without Model/CLIP!\n\n💡 Solution: Connect a 'Model Loader (Block)' node to the 'models' input first.")
             loaded_loras_meta = []
             for lora_def in loras:
                 name, str_model, str_clip = lora_def
@@ -2311,7 +2979,11 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
             UME_SHARED_STATE[KEY_LORAS] = loaded_loras_meta
 
         if not sd_model or not vae or not clip:
-            raise ValueError("Block FaceDetailer: Missing Model, VAE, or CLIP.")
+            missing = []
+            if not sd_model: missing.append("MODEL")
+            if not vae: missing.append("VAE")
+            if not clip: missing.append("CLIP")
+            raise ValueError(f"❌ Block FaceDetailer: Missing {', '.join(missing)}!\n\n💡 Solution: Connect a 'Model Loader (Block)' node to the 'models' input, or add a 'Wireless Checkpoint Loader' node.")
 
         # 3. Expand Settings
         if settings:

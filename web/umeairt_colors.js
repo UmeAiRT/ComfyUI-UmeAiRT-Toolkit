@@ -49,12 +49,6 @@ const UME_NODE_COLORS = {
         bgcolor: "#25122D"
     },
 
-    // Image Loader Block - Rust Red (input, distinct from amber settings)
-    "UmeAiRT_BlockImageLoader": {
-        color: "#6B2D1A",
-        bgcolor: "#35160D"
-    },
-
     // Block Sampler - Slate Gray (neutral main processor)
     "UmeAiRT_BlockSampler": {
         color: "#2C3E50",
@@ -95,6 +89,11 @@ const UME_NODE_COLORS = {
         bgcolor: "#123851"
     },
     "UmeAiRT_WirelessFaceDetailer_Advanced": {
+        color: "#2471A3",
+        bgcolor: "#123851"
+    },
+    // Wireless Inpaint Composite - Pale Blue (Post-Process family)
+    "UmeAiRT_WirelessInpaintComposite": {
         color: "#2471A3",
         bgcolor: "#123851"
     },
@@ -141,6 +140,27 @@ const UME_NODE_COLORS = {
     "UmeAiRT_SourceImage_Output": {
         color: "#6B2D1A",
         bgcolor: "#35160D"
+    },
+
+    // Block Image Loader Block - Rust Red
+    "UmeAiRT_BlockImageLoader": {
+        color: "#6B2D1A",
+        bgcolor: "#35160D"
+    },
+    "UmeAiRT_BlockImageLoader_Advanced": {
+        color: "#6B2D1A",
+        bgcolor: "#35160D"
+    },
+
+    // Wireless Image Process - Pale Blue
+    "UmeAiRT_WirelessImageProcess": {
+        color: "#2471A3",
+        bgcolor: "#123851"
+    },
+    // Block Image Process - Amber/Bronze (Settings family)
+    "UmeAiRT_BlockImageProcess": {
+        color: "#935116",
+        bgcolor: "#4A290B"
     },
 
     // Label - Dark Gray (utility)
