@@ -13,6 +13,7 @@ import os
 import sys
 import math
 import random
+import re
 import numpy as np
 from PIL import Image
 
@@ -1563,6 +1564,10 @@ class UmeAiRT_WirelessImageSaver(UmeAiRT_WirelessUltimateUpscale_Base):
         else:
              path = ""
              filename = full_pattern
+             
+        # Sanitize Filename (Manager Request)
+        # Remove invalid characters: < > : " / \ | ? *
+        filename = re.sub(r'[<>:"/\\|?*]', '', filename)
              
         # Import Logic Locally
         try:
