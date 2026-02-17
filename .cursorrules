@@ -1,0 +1,18 @@
+# UmeAiRT Toolkit - System Instructions
+
+You are working on the **UmeAiRT Toolkit** for ComfyUI.
+**CRITICAL**: This project uses a **Wireless Architecture** based on a global dictionary (`UME_SHARED_STATE`).
+
+## Context Loading
+- **ALWAYS** read `AGENTS.md` first if you are new to the session.
+- **Refer to** `docs/codemaps/wireless.md` when working with Wireless nodes.
+
+## Rules
+1. **Wireless First**: Prefer using `UME_SHARED_STATE` key-value storage over standard node linking.
+2. **Naming**: All classes must start with `UmeAiRT_`.
+3. **Registration**: Never forget to add new nodes to `__init__.py` mappings.
+4. **UI**: If Javascript is needed, place it in `web/` and ensure it's loaded.
+
+## Key Files
+- `nodes.py`: Core logic.
+- `__init__.py`: Node registration.
