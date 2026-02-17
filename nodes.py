@@ -46,6 +46,31 @@ KEY_MODEL_NAME = "ume_internal_model_name"
 KEY_LORAS = "ume_internal_loras"
 KEY_SOURCE_IMAGE = "ume_internal_source_image"
 KEY_SOURCE_MASK = "ume_internal_source_mask"
+KEY_CONTROLNETS = "ume_internal_controlnets"
+
+# --- HELPER FUNCTIONS ---
+
+def resize_tensor(tensor, target_h, target_w, interp_mode="bilinear", is_mask=False):
+    """
+    Helper function to resize image or mask tensors.
+    Handles dimension permutations for ComfyUI (B,H,W,C) -> Torch (B,C,H,W) -> Resize -> Back.
+    """
+    if is_mask:
+        # Mask: [B, H, W] -> [B, 1, H, W]
+        t = tensor.unsqueeze(1)
+    else:
+        # Image: [B, H, W, C] -> [B, C, H, W]
+        t = tensor.permute(0, 3, 1, 2)
+    
+    t_resized = torch.nn.functional.interpolate(t, size=(target_h, target_w), mode=interp_mode, align_corners=False if interp_mode!="nearest" else None)
+    
+    if is_mask:
+        # [B, 1, H, W] -> [B, H, W]
+        return t_resized.squeeze(1)
+    else:
+        # [B, C, H, W] -> [B, H, W, C]
+        return t_resized.permute(0, 2, 3, 1)
+
 
 # --- GUIDANCE NODES ---
 
@@ -761,7 +786,7 @@ class UmeAiRT_Latent_Input:
 
     RETURN_TYPES = ()
     FUNCTION = "set_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
     OUTPUT_NODE = True
 
     def set_val(self, latent):
@@ -776,7 +801,7 @@ class UmeAiRT_Latent_Output:
     RETURN_TYPES = ("LATENT",)
     RETURN_NAMES = ("latent",)
     FUNCTION = "get_val"
-    CATEGORY = "UmeAiRT/Variables"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
@@ -826,7 +851,34 @@ class UmeAiRT_WirelessKSampler:
         # But since we access globals that fluctuate, we return NaN to force update.
         return float("nan")
 
+    def __init__(self):
+        self.cnet_loader = comfy_nodes.ControlNetLoader()
+        self.cnet_apply = comfy_nodes.ControlNetApplyAdvanced()
+
     def process(self, signal=None):
+        # 0. Check Wireless Image Bundle for ControlNets (Implicit Linear support)
+        # Note: Wireless KSampler normally consumes global state. 
+        # But for ControlNets to work here from the linear workflow, 
+        # the user must have used 'ControlNet Image Apply' which outputs a bundle.
+        # The 'Wireless Image Process' updates global KEY_SOURCE_IMAGE but does NOT store the bundle stack globally.
+        # So... pure wireless sampling won't see these ControlNets unless we updated global state with them.
+        # BUT: The user asked to remove the 'controlnets' input. 
+        # This implies they might only use this with 'Block Sampler' OR they expect the bundle data to be available globally?
+        # WAIT: If they use 'Wireless KSampler', they usually don't pipe anything into it except Signal.
+        # If they rely on 'ControlNet Image Apply', that node outputs a bundle.
+        # If that bundle isn't connected to KSampler, KSampler can't see it.
+        # 'Wireless Image Process' does NOT output 'UME_IMAGE' bundle by default unless we change it?
+        # Actually `ControlNet Image Apply` takes `UME_IMAGE` and outputs `UME_IMAGE`.
+        # If the user uses `Wireless KSampler`, it has no `image` input.
+        # So `Wireless KSampler` effectively LOSES ControlNet support with this removal, UNLESS:
+        # 1. We start storing `controlnets` stack in `UME_SHARED_STATE`.
+        # 2. `ControlNet Image Apply` is updated to write to `UME_SHARED_STATE`.
+        
+        # Assumption: I will update `ControlNet Image Apply` to write to global state in the next step.
+        # So here I will read from Global State.
+        
+        controlnets = UME_SHARED_STATE.get(KEY_CONTROLNETS, [])
+        
         # 1. Fetch Objects
         model = UME_SHARED_STATE.get(KEY_MODEL)
         vae = UME_SHARED_STATE.get(KEY_VAE)
@@ -908,10 +960,23 @@ class UmeAiRT_WirelessKSampler:
         cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
         positive = [[cond, {"pooled_output": pooled}]]
 
-        # Negative
         tokens = clip.tokenize(neg_text)
         cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
         negative = [[cond, {"pooled_output": pooled}]]
+
+        # 4.5 Apply ControlNets (Wireless Injection)
+        if controlnets:
+            print(f"UmeAiRT Wireless KSampler: Applying {len(controlnets)} ControlNets...")
+            for cnet_def in controlnets:
+                c_name, c_image, c_str, c_start, c_end = cnet_def
+                if c_name != "None" and c_image is not None:
+                    try:
+                         print(f"  - ControlNet: {c_name} | Str: {c_str}")
+                         cnet_model = self.cnet_loader.load_controlnet(c_name)[0]
+                         # ControlNetApplyAdvanced takes both pos and neg
+                         positive, negative = self.cnet_apply.apply_controlnet(positive, negative, cnet_model, c_image, c_str, c_start, c_end)
+                    except Exception as e:
+                        print(f"  - Failed to apply {c_name}: {e}")
 
         # 5. Sample
         # We reuse the standard KSampler function
@@ -2039,6 +2104,207 @@ class UmeAiRT_LoraBlock_10:
         return process_lora_stack(loras, **kwargs)
 
 
+
+
+
+class UmeAiRT_ControlNetImageApply_Advanced:
+    """
+    Advanced Linear ControlNet Node.
+    Full control over Start/End percent.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image_bundle": ("UME_IMAGE",),
+                "control_net_name": (folder_paths.get_filename_list("controlnet"),),
+                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.01}),
+                "start_percent": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001}),
+                "end_percent": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.001}),
+            },
+            "optional": {
+                "optional_control_image": ("IMAGE",), 
+            }
+        }
+
+    RETURN_TYPES = ("UME_IMAGE",)
+    RETURN_NAMES = ("image_bundle",)
+    FUNCTION = "apply_controlnet"
+    CATEGORY = "UmeAiRT/Blocks/ControlNet"
+
+    def apply_controlnet(self, image_bundle, control_net_name, strength, start_percent, end_percent, optional_control_image=None):
+        if not isinstance(image_bundle, dict):
+            raise ValueError("ControlNet Image Apply: Input is not a valid UME_IMAGE bundle.")
+
+        new_bundle = image_bundle.copy()
+        cnet_stack = new_bundle.get("controlnets", [])
+        if not isinstance(cnet_stack, list): cnet_stack = []
+        
+        if control_net_name != "None":
+            control_use_image = optional_control_image if optional_control_image is not None else new_bundle.get("image")
+            
+            if control_use_image is None:
+                raise ValueError("ControlNet Image Apply: No Image found in bundle and no optional image provided.")
+                
+            cnet_stack.append((control_net_name, control_use_image, strength, start_percent, end_percent))
+            
+        new_bundle["controlnets"] = cnet_stack
+        
+        # Update Global State for Wireless KSampler support
+        UME_SHARED_STATE[KEY_CONTROLNETS] = cnet_stack
+
+        return (new_bundle,)
+
+
+
+class UmeAiRT_ControlNetImageProcess:
+    """
+    Unified Node: Image Process + ControlNet Apply (Simple).
+    Resizes image, sets denoise (txt2img/img2img), and applies ControlNet.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image_bundle": ("UME_IMAGE",),
+                # Image Process Params
+                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
+                "mode": (["img2img", "txt2img"], {"default": "img2img"}),
+                
+                # ControlNet Params
+                "control_net_name": (folder_paths.get_filename_list("controlnet"),),
+                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05, "display": "slider"}),
+            },
+            "optional": {
+                "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF"}),
+            }
+        }
+
+    RETURN_TYPES = ("UME_IMAGE",)
+    RETURN_NAMES = ("image_bundle",)
+    FUNCTION = "process"
+    CATEGORY = "UmeAiRT/Blocks/ControlNet"
+
+    def process(self, image_bundle, denoise, mode, control_net_name, strength, resize=False):
+        if not isinstance(image_bundle, dict):
+            raise ValueError("ControlNet Image Process: Input is not a valid UME_IMAGE bundle.")
+
+        # --- 1. Image Processing Logic (Simplified) ---
+        
+        # Unpack
+        image = image_bundle.get("image")
+        mask = image_bundle.get("mask") # Can be None in bundle
+
+        if image is None:
+             raise ValueError("ControlNet Image Process: Bundle has no image.")
+
+        # TXT2IMG Logic
+        if mode == "txt2img":
+             print("UmeAiRT Unified CNet: Txt2Img Mode (Forcing Denoise=1.0, Ignoring Mask).")
+             denoise = 1.0
+             mask = None 
+
+        # RESIZE
+        final_image = image
+        final_mask = mask
+        
+        if resize:
+             size = UME_SHARED_STATE.get(KEY_IMAGESIZE, {"width": 1024, "height": 1024})
+             target_w = int(size.get("width", 1024))
+             target_h = int(size.get("height", 1024))
+
+             final_image = resize_tensor(final_image, target_h, target_w, interp_mode="bilinear", is_mask=False)
+             if final_mask is not None:
+                 final_mask = resize_tensor(final_mask, target_h, target_w, interp_mode="nearest", is_mask=True)
+
+        # Mode Handling for Bundle
+        final_mode = "img2img"
+        if mode == "txt2img":
+             final_mode = "txt2img"
+             final_mask = None
+        elif mode == "img2img":
+             final_mask = None # For Bundle (mask is hidden effectively for linear img2img unless used in inpaint)
+
+        # Create New Bundle Base
+        new_bundle = {
+            "image": final_image,
+            "mask": final_mask,
+            "mode": final_mode,
+            "denoise": denoise,
+            "controlnets": image_bundle.get("controlnets", []).copy() if image_bundle.get("controlnets") else []
+        }
+
+        # --- 2. ControlNet Apply Logic (Simple) ---
+        
+        cnet_stack = new_bundle["controlnets"]
+        
+        if control_net_name != "None":
+            # Always use the PROCESSED image as the control image
+            control_use_image = final_image
+            
+            # Fixed Start/End
+            start_percent = 0.0
+            end_percent = 1.0
+            
+            cnet_stack.append((control_net_name, control_use_image, strength, start_percent, end_percent))
+            
+        new_bundle["controlnets"] = cnet_stack
+        
+        # Update Global State for Wireless KSampler support
+        UME_SHARED_STATE[KEY_CONTROLNETS] = cnet_stack
+
+        return (new_bundle,)
+
+
+class UmeAiRT_ControlNetImageApply_Simple:
+    """
+    Simple Linear ControlNet Node.
+    Strength 0.0 - 2.0. Start=0.0, End=1.0 hardcoded.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image_bundle": ("UME_IMAGE",),
+                "control_net_name": (folder_paths.get_filename_list("controlnet"),),
+                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05, "display": "slider"}),
+            },
+            "optional": {}
+        }
+
+    RETURN_TYPES = ("UME_IMAGE",)
+    RETURN_NAMES = ("image_bundle",)
+    FUNCTION = "apply_controlnet"
+    CATEGORY = "UmeAiRT/Blocks/ControlNet"
+
+    def apply_controlnet(self, image_bundle, control_net_name, strength):
+        if not isinstance(image_bundle, dict):
+            raise ValueError("ControlNet Image Apply: Input is not a valid UME_IMAGE bundle.")
+
+        new_bundle = image_bundle.copy()
+        cnet_stack = new_bundle.get("controlnets", [])
+        if not isinstance(cnet_stack, list): cnet_stack = []
+        
+        if control_net_name != "None":
+            control_use_image = new_bundle.get("image")
+            
+            if control_use_image is None:
+                raise ValueError("ControlNet Image Apply: No Image found in bundle.")
+                
+            # Fixed Start/End
+            start_percent = 0.0
+            end_percent = 1.0
+            
+            cnet_stack.append((control_net_name, control_use_image, strength, start_percent, end_percent))
+            
+        new_bundle["controlnets"] = cnet_stack
+        
+        # Update Global State for Wireless KSampler support
+        UME_SHARED_STATE[KEY_CONTROLNETS] = cnet_stack
+
+        return (new_bundle,)
+
+
 class UmeAiRT_PromptBlock:
     """
     Bundles Positive and Negative Prompts.
@@ -2334,6 +2600,7 @@ class UmeAiRT_BlockImageProcess:
              mask = None 
              # Just pass through image logic (potentially for size reference if resized) but mask is killed.
         
+
         # 1. Base Logic
         B, H, W, C = image.shape
         
@@ -2344,20 +2611,6 @@ class UmeAiRT_BlockImageProcess:
              size = UME_SHARED_STATE.get(KEY_IMAGESIZE, {"width": 1024, "height": 1024})
              target_w = int(size.get("width", 1024))
              target_h = int(size.get("height", 1024))
-
-        # Helper: Resize
-        def resize_tensor(tensor, tH, tW, interp_mode="bilinear", is_mask=False):
-             if is_mask:
-                 t = tensor.unsqueeze(1)
-             else:
-                 t = tensor.permute(0, 3, 1, 2)
-             
-             t_resized = torch.nn.functional.interpolate(t, size=(tH, tW), mode=interp_mode, align_corners=False if interp_mode!="nearest" else None)
-             
-             if is_mask:
-                 return t_resized.squeeze(1)
-             else:
-                 return t_resized.permute(0, 2, 3, 1)
 
         # 2. Process
         final_image = image
@@ -2578,8 +2831,15 @@ class UmeAiRT_BlockSampler:
 
     def __init__(self):
         self.lora_loader = comfy_nodes.LoraLoader()
+        self.cnet_loader = comfy_nodes.ControlNetLoader()
+        self.cnet_apply = comfy_nodes.ControlNetApplyAdvanced()
 
     def process(self, settings, models=None, loras=None, prompts=None, image=None):
+        # 0. Extract ControlNets from Image Bundle (Linear Workflow)
+        controlnets = []
+        if image and isinstance(image, dict):
+            controlnets = image.get("controlnets", [])
+
         # 1. Expand Files/Models (Prioritize Bundle > Wireless)
         if models:
             model = models.get("model")
@@ -2704,6 +2964,26 @@ class UmeAiRT_BlockSampler:
         tokens = clip.tokenize(neg_text)
         cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
         negative = [[cond, {"pooled_output": pooled}]]
+
+        # 5.5 Apply ControlNets (if present)
+        # We need to apply them to the conditioning (positive/negative)
+        if controlnets:
+            for cnet_def in controlnets:
+                # Format: (cnet_name, image, strength, start, end)
+                c_name, c_image, c_str, c_start, c_end = cnet_def
+                
+                if c_name != "None" and c_image is not None:
+                    try:
+                        # Load ControlNet Model
+                        cnet_model = self.cnet_loader.load_controlnet(c_name)[0]
+                        
+                        # Apply to Positive & Negative (Advanced)
+                        positive, negative = self.cnet_apply.apply_controlnet(
+                            positive, negative, cnet_model, c_image, c_str, c_start, c_end
+                        )
+                        
+                    except Exception as e:
+                        print(f"UmeAiRT Sampler Warning: Failed to apply ControlNet {c_name}: {e}")
 
         # 6. Sample
         mode_str = "img2img" if image is not None else "txt2img"
@@ -3046,3 +3326,123 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
         )
 
         return result
+
+# --- UNPACK NODES (Bundle -> Raw) ---
+
+class UmeAiRT_Unpack_ImageBundle:
+    """
+    Unpacks UME_IMAGE bundle into Image and Mask.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image_bundle": ("UME_IMAGE",),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE", "MASK")
+    RETURN_NAMES = ("image", "mask")
+    FUNCTION = "unpack"
+    CATEGORY = "UmeAiRT/Unpack"
+
+    def unpack(self, image_bundle):
+        if not isinstance(image_bundle, dict):
+            raise ValueError("UmeAiRT Unpack: Input is not a valid UME_IMAGE bundle.")
+        
+        image = image_bundle.get("image")
+        mask = image_bundle.get("mask")
+        
+        # If mask is None, return empty mask? Or just None?
+        # ComfyUI usually handles None gracefully in some nodes, but let's be safe.
+        # If mask is missing, standard nodes might expect it.
+        # For now, return what is in the bundle.
+        
+        return (image, mask)
+
+class UmeAiRT_Unpack_FilesBundle:
+    """
+    Unpacks UME_FILES bundle into Model, Clip, VAE, and Name.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "models_bundle": ("UME_FILES",),
+            }
+        }
+
+    RETURN_TYPES = ("MODEL", "CLIP", "VAE", "STRING")
+    RETURN_NAMES = ("model", "clip", "vae", "model_name")
+    FUNCTION = "unpack"
+    CATEGORY = "UmeAiRT/Unpack"
+
+    def unpack(self, models_bundle):
+        if not isinstance(models_bundle, dict):
+            raise ValueError("UmeAiRT Unpack: Input is not a valid UME_FILES bundle.")
+        
+        return (
+            models_bundle.get("model"),
+            models_bundle.get("clip"),
+            models_bundle.get("vae"),
+            models_bundle.get("model_name", "")
+        )
+
+class UmeAiRT_Unpack_SettingsBundle:
+    """
+    Unpacks UME_SETTINGS bundle into individual parameters.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "settings_bundle": ("UME_SETTINGS",),
+            }
+        }
+
+    RETURN_TYPES = ("INT", "INT", "INT", "FLOAT", "FLOAT", "INT", "INT", "INT", "INT")
+    RETURN_NAMES = ("width", "height", "steps", "cfg", "denoise", "seed", "sampler_name", "scheduler", "guidance")
+    FUNCTION = "unpack"
+    CATEGORY = "UmeAiRT/Unpack"
+
+    def unpack(self, settings_bundle):
+        if not isinstance(settings_bundle, dict):
+             raise ValueError("UmeAiRT Unpack: Input is not a valid UME_SETTINGS bundle.")
+
+        return (
+            settings_bundle.get("width", 1024),
+            settings_bundle.get("height", 1024),
+            settings_bundle.get("steps", 20),
+            settings_bundle.get("cfg", 8.0),
+            settings_bundle.get("denoise", 1.0), # Often not in settings bundle, default to 1.0
+            settings_bundle.get("seed", 0),
+            settings_bundle.get("sampler", "euler"),
+            settings_bundle.get("scheduler", "normal"),
+            settings_bundle.get("cfg", 8.0), # guidance alias
+        )
+
+class UmeAiRT_Unpack_PromptsBundle:
+    """
+    Unpacks UME_PROMPTS bundle into Positive and Negative strings.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "prompts_bundle": ("UME_PROMPTS",),
+            }
+        }
+
+    RETURN_TYPES = ("STRING", "STRING")
+    RETURN_NAMES = ("positive", "negative")
+    FUNCTION = "unpack"
+    CATEGORY = "UmeAiRT/Unpack"
+
+    def unpack(self, prompts_bundle):
+        if not isinstance(prompts_bundle, dict):
+            raise ValueError("UmeAiRT Unpack: Input is not a valid UME_PROMPTS bundle.")
+
+        return (
+            prompts_bundle.get("positive", ""),
+            prompts_bundle.get("negative", "")
+        )

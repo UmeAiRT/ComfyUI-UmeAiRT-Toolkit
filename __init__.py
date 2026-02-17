@@ -46,7 +46,9 @@ from .nodes import (
     UmeAiRT_Label, UmeAiRT_WirelessImageProcess,
     UmeAiRT_GenerationSettings, UmeAiRT_FilesSettings_Checkpoint, UmeAiRT_FilesSettings_Checkpoint_Advanced, UmeAiRT_FilesSettings_FLUX, UmeAiRT_BlockSampler, UmeAiRT_PromptBlock,
     UmeAiRT_LoraBlock_1, UmeAiRT_LoraBlock_3, UmeAiRT_LoraBlock_5, UmeAiRT_LoraBlock_10,
-    UmeAiRT_BlockUltimateSDUpscale, UmeAiRT_BlockFaceDetailer, UmeAiRT_BlockImageLoader, UmeAiRT_BlockImageLoader_Advanced, UmeAiRT_BlockImageProcess
+    UmeAiRT_BlockUltimateSDUpscale, UmeAiRT_BlockFaceDetailer, UmeAiRT_BlockImageLoader, UmeAiRT_BlockImageLoader_Advanced, UmeAiRT_BlockImageProcess,
+    UmeAiRT_Unpack_ImageBundle, UmeAiRT_Unpack_FilesBundle, UmeAiRT_Unpack_SettingsBundle, UmeAiRT_Unpack_PromptsBundle,
+    UmeAiRT_ControlNetImageApply_Simple, UmeAiRT_ControlNetImageApply_Advanced, UmeAiRT_ControlNetImageProcess
 )
 
 # Register internal 'bbox' folder for standalone usage
@@ -127,6 +129,18 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_BlockImageLoader": UmeAiRT_BlockImageLoader,
     "UmeAiRT_BlockImageLoader_Advanced": UmeAiRT_BlockImageLoader_Advanced,
     "UmeAiRT_BlockImageProcess": UmeAiRT_BlockImageProcess,
+
+    # Unpack Nodes
+    "UmeAiRT_Unpack_ImageBundle": UmeAiRT_Unpack_ImageBundle,
+    "UmeAiRT_Unpack_FilesBundle": UmeAiRT_Unpack_FilesBundle,
+    "UmeAiRT_Unpack_SettingsBundle": UmeAiRT_Unpack_SettingsBundle,
+    "UmeAiRT_Unpack_SettingsBundle": UmeAiRT_Unpack_SettingsBundle,
+    "UmeAiRT_Unpack_PromptsBundle": UmeAiRT_Unpack_PromptsBundle,
+    
+    # ControlNet
+    "UmeAiRT_ControlNetImageApply_Simple": UmeAiRT_ControlNetImageApply_Simple,
+    "UmeAiRT_ControlNetImageApply_Advanced": UmeAiRT_ControlNetImageApply_Advanced,
+    "UmeAiRT_ControlNetImageProcess": UmeAiRT_ControlNetImageProcess,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -189,6 +203,14 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_BlockImageLoader": "Image Loader (Block)",
     "UmeAiRT_BlockImageLoader_Advanced": "Image Loader - Advanced (Block)",
     "UmeAiRT_BlockImageProcess": "Image Process (Block)",
+    "UmeAiRT_Unpack_ImageBundle": "Unpack Image Bundle",
+    "UmeAiRT_Unpack_FilesBundle": "Unpack Models Bundle",
+    "UmeAiRT_Unpack_SettingsBundle": "Unpack Settings Bundle",
+    "UmeAiRT_Unpack_SettingsBundle": "Unpack Settings Bundle",
+    "UmeAiRT_Unpack_PromptsBundle": "Unpack Prompts Bundle",
+    "UmeAiRT_ControlNetImageApply_Simple": "ControlNet Apply (Simple)",
+    "UmeAiRT_ControlNetImageApply_Advanced": "ControlNet Apply (Advanced)",
+    "UmeAiRT_ControlNetImageProcess": "ControlNet Process (Unified)",
 }
 
 WEB_DIRECTORY = "./web"

@@ -163,6 +163,20 @@ const UME_NODE_COLORS = {
         bgcolor: "#4A290B"
     },
 
+    // ControlNet - Amber/Bronze (Same as Image Process)
+    "UmeAiRT_ControlNetImageApply_Simple": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    },
+    "UmeAiRT_ControlNetImageApply_Advanced": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    },
+    "UmeAiRT_ControlNetImageProcess": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    },
+
     // Label - Dark Gray (utility)
     "UmeAiRT_Label": {
         color: "#34495E",

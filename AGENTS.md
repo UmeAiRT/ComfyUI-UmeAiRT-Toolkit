@@ -58,6 +58,21 @@ def get_val(self):
 - `web/`: Javascript extensions (UI tweaks).
 - `*/core/`: Sub-modules for complex logic (e.g., `usdu_core`).
 
+## UI & Styling (Node Colors)
+
+Nodes are color-coded by category in `web/umeairt_colors.js`:
+
+| Category | Color Family | Hex (Bg/Fg) | Examples |
+|----------|--------------|-------------|----------|
+| **Settings / Controls**   | Amber / Bronze | `#4A290B` / `#935116` | Generation Settings, Image Process, ControlNet |
+| **Model / Files**         | Deep Blue      | `#0A2130` / `#154360` | Checkpoint Loader, VAE, CLIP |
+| **Prompts**               | Dark Green     | `#0A2D19` / `#145A32` | Prompt Block, Wireless Prompts |
+| **LoRA**                  | Violet         | `#25122D` / `#4A235A` | LoRA Stacks, Multi-LoRA |
+| **Samplers (Processors)** | Slate Gray     | `#1A252F` / `#2C3E50` | Wireless KSampler, Block Sampler |
+| **Upscale / Detailer**    | Pale Blue      | `#123851` / `#2471A3` | Ultimate Upscale, Face Detailer, Inpaint Composite |
+| **Utilities**             | Dark Gray      | `#1A252F` / `#34495E` | Debug, Label |
+| **Image Inputs**          | Rust Red       | `#35160D` / `#6B2D1A` | Image Loaders |
+
 ## Critical Files
 
 | File | Notes |
