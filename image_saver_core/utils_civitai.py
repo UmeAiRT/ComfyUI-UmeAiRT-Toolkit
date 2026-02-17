@@ -6,6 +6,13 @@ import folder_paths
 
 from .utils import http_get_json
 
+try:
+    from ..logger import log_node
+except ImportError:
+    def log_node(msg, color=None, prefix="UmeAiRT"):
+        print(f"[UmeAiRT] {msg}")
+
+
 MAX_HASH_LENGTH = 16 # skip larger unshortened hashes, such as full sha256 or blake3
 
 """
@@ -110,8 +117,10 @@ def get_civitai_metadata(
 def get_civitai_info(path: Path | str | None, model_hash: str) -> dict[str, Any] | None:
     try:
         if not model_hash:
-            print("ComfyUI-Image-Saver: Error: Missing hash.")
+            # print("ComfyUI-Image-Saver: Error: Missing hash.")
+            log_node("ImageSaver Error: Missing hash for Civitai info.", color="RED")
             return None
+
 
         # path is None for additional hashes added by the user - caches manually added hash data in the "image-saver" folder
         if path is None:
@@ -125,8 +134,10 @@ def get_civitai_info(path: Path | str | None, model_hash: str) -> dict[str, Any]
                 # dynamically receive filename from the website to save the metadata
                 file = next((file for file in content["files"] if any(len(value) <= MAX_HASH_LENGTH and value.upper() == model_hash.upper() for value in file["hashes"].values())), None)
                 if file is None:
-                    print(f"ComfyUI-Image-Saver: ({model_hash}) No file hash matched in metadata (should be impossible)")
+                    # print(f"ComfyUI-Image-Saver: ({model_hash}) No file hash matched in metadata (should be impossible)")
+                    log_node(f"ImageSaver ({model_hash}) No file hash matched in metadata.", color="RED")
                     return content
+
                 filename = file["name"]
 
                 # Cache data in a local file, removing the need for repeat http requests
@@ -145,12 +156,17 @@ def get_civitai_info(path: Path | str | None, model_hash: str) -> dict[str, Any]
     except FileNotFoundError:
         return download_model_info(path, model_hash)
     except Exception as e:
-        print(f"ComfyUI-Image-Saver: Civitai info error: {e}")
+        # print(f"ComfyUI-Image-Saver: Civitai info error: {e}")
+        log_node(f"ImageSaver Civitai info error: {e}", color="RED")
     return None
+
+
 
 def download_model_info(path: Path | str | None, model_hash: str) -> dict[str, object] | None:
     model_label = model_hash if path is None else f"{Path(path).stem}:{model_hash}"
-    print(f"ComfyUI-Image-Saver: Downloading model info for '{model_label}'.")
+    # print(f"ComfyUI-Image-Saver: Downloading model info for '{model_label}'.")
+    log_node(f"ImageSaver Downloading info for '{model_label}'", color="CYAN")
+
 
     content = http_get_json(f'https://civitai.com/api/v1/model-versions/by-hash/{model_hash.upper()}')
     if content is None:
@@ -175,8 +191,11 @@ def save_civitai_info_file(content: dict[str, object], path: Path | str) -> bool
         with open(Path(path).with_suffix(".civitai.info").absolute(), 'w') as info_file:
             info_file.write(json.dumps(content, indent=4))
     except Exception as e:
-        print(f"ComfyUI-Image-Saver: Save Civitai info error '{path}': {e}")
+        # print(f"ComfyUI-Image-Saver: Save Civitai info error '{path}': {e}")
+        log_node(f"ImageSaver Save Civitai info error '{path}': {e}", color="RED")
         return False
+
+
     return True
 
 def get_manual_folder() -> Path:
@@ -192,8 +211,11 @@ def get_manual_list() -> dict[str, dict[str, Any]]:
     except FileNotFoundError:
         return {}
     except Exception as e:
-        print(f"ComfyUI-Image-Saver: Manual list get error: {e}")
+        # print(f"ComfyUI-Image-Saver: Manual list get error: {e}")
+        log_node(f"ImageSaver Manual list get error: {e}", color="RED")
     return {}
+
+
 
 def append_manual_list(key: str, value: dict[str, Any]) -> dict[str, dict[str, Any]]:
     manual_list = get_manual_list() | { key: value }
@@ -201,5 +223,8 @@ def append_manual_list(key: str, value: dict[str, Any]) -> dict[str, dict[str, A
         with open((get_manual_folder() / "manual-hashes.json").absolute(), 'w') as file:
             file.write(json.dumps(manual_list, indent=4))
     except Exception as e:
-        print(f"ComfyUI-Image-Saver: Manual list append error: {e}")
+        # print(f"ComfyUI-Image-Saver: Manual list append error: {e}")
+        log_node(f"ImageSaver Manual list append error: {e}", color="RED")
     return manual_list
+
+

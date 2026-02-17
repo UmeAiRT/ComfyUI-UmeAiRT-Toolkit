@@ -7,7 +7,14 @@ from . import utils
 import logging
 
 # Define SEG locally to match expected structure
+try:
+    from ..logger import log_node
+except ImportError:
+    def log_node(msg, color=None, prefix="UmeAiRT"):
+        print(f"[UmeAiRT] {msg}")
+
 SEG = namedtuple("SEG",
+
                  ['cropped_image', 'cropped_mask', 'confidence', 'crop_region', 'bbox', 'label', 'control_net_wrapper'],
                  defaults=[None])
 
@@ -149,8 +156,10 @@ def do_detail(image, segs, model, clip, vae, guide_size, guide_size_for_bbox, ma
                 noise_mask_feather
             )
         except Exception as e:
-            print(f"Error enhancing segment {i}: {e}")
+            # print(f"Error enhancing segment {i}: {e}")
+            log_node(f"FaceDetailer Error enhancing segment {i}: {e}", color="RED")
             enhanced_patch = None
+
 
         if enhanced_patch is not None:
              # Ensure devices match before pasting

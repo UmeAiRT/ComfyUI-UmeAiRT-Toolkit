@@ -9,6 +9,13 @@ try:
 except ImportError:
     piexif = None
 
+try:
+    from ..logger import log_node
+except ImportError:
+    def log_node(msg, color=None, prefix="UmeAiRT"):
+        print(f"[UmeAiRT] {msg}")
+
+
 def save_image(image: Image, filepath: str, extension: str, quality_jpeg_or_webp: int, lossless_webp: bool, optimize_png: bool, a111_params: str, prompt: dict[str, Any] | None, extra_pnginfo: dict[str, Any] | None, embed_workflow: bool) -> None:
     if extension == 'png':
         metadata = PngInfo()
@@ -27,8 +34,10 @@ def save_image(image: Image, filepath: str, extension: str, quality_jpeg_or_webp
         image.save(filepath, optimize=True, quality=quality_jpeg_or_webp, lossless=lossless_webp)
 
         if piexif is None:
-            print("ComfyUI-Image-Saver: Warning - piexif module not found. Skipping metadata embedding for JPEG/WEBP.")
+            # print("ComfyUI-Image-Saver: Warning - piexif module not found. Skipping metadata embedding for JPEG/WEBP.")
+            log_node("ImageSaver Warning - piexif module not found. Skipping metadata for JPEG/WEBP.", color="YELLOW")
             return
+
 
         # Native example adding workflow to exif:
         # https://github.com/comfyanonymous/ComfyUI/blob/095610717000bffd477a7e72988d1fb2299afacb/comfy_extras/nodes_images.py#L113
@@ -56,15 +65,21 @@ def save_image(image: Image, filepath: str, extension: str, quality_jpeg_or_webp
         if extension == "jpg" or extension == "jpeg":
             MAX_EXIF_SIZE = 65535
             if len(exif_bytes) > MAX_EXIF_SIZE and embed_workflow:
-                print("ComfyUI-Image-Saver: Error: Workflow is too large, removing client request prompt.")
+                # print("ComfyUI-Image-Saver: Error: Workflow is too large, removing client request prompt.")
+                log_node("ImageSaver Error: Workflow too large, removing prompt.", color="RED")
                 prompt_json = {}
+
                 exif_bytes = get_exif_bytes()
                 if len(exif_bytes) > MAX_EXIF_SIZE:
-                    print("ComfyUI-Image-Saver: Error: Workflow is still too large, cannot embed workflow!")
+                    # print("ComfyUI-Image-Saver: Error: Workflow is still too large, cannot embed workflow!")
+                    log_node("ImageSaver Error: Workflow still too large, skipping embed!", color="RED")
                     pnginfo_json = {}
+
                     exif_bytes = get_exif_bytes()
             if len(exif_bytes) > MAX_EXIF_SIZE:
-                print("ComfyUI-Image-Saver: Error: Metadata exceeds maximum size for JPEG. Cannot save metadata.")
+                # print("ComfyUI-Image-Saver: Error: Metadata exceeds maximum size for JPEG. Cannot save metadata.")
+                log_node("ImageSaver Error: Metadata exceeds max size for JPEG.", color="RED")
                 return
+
 
         piexif.insert(exif_bytes, filepath)

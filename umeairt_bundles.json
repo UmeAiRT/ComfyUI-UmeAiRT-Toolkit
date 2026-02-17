@@ -1,0 +1,613 @@
+{
+    "FLUX": {
+        "fp16": {
+            "min_vram": 30,
+            "files": [
+                {
+                    "url": "/diffusion_models/FLUX/flux1-dev-fp16.safetensors",
+                    "path_type": "flux_diff",
+                    "filename": "flux1-dev-fp16.safetensors"
+                },
+                {
+                    "url": "/clip/t5xxl_fp16.safetensors",
+                    "path_type": "clip",
+                    "filename": "t5xxl_fp16.safetensors"
+                },
+                {
+                    "url": "/clip/clip_l.safetensors",
+                    "path_type": "clip",
+                    "filename": "clip_l.safetensors"
+                },
+                {
+                    "url": "/vae/ae.safetensors",
+                    "path_type": "vae",
+                    "filename": "ae.safetensors"
+                }
+            ]
+        },
+        "fp8": {
+            "min_vram": 18,
+            "files": [
+                {
+                    "url": "/diffusion_models/FLUX/flux1-dev-fp8.safetensors",
+                    "path_type": "flux_diff",
+                    "filename": "flux1-dev-fp8.safetensors"
+                },
+                {
+                    "url": "/clip/t5xxl_fp8_e4m3fn.safetensors",
+                    "path_type": "clip",
+                    "filename": "t5xxl_fp8_e4m3fn.safetensors"
+                },
+                {
+                    "url": "/clip/clip_l.safetensors",
+                    "path_type": "clip",
+                    "filename": "clip_l.safetensors"
+                },
+                {
+                    "url": "/vae/ae.safetensors",
+                    "path_type": "vae",
+                    "filename": "ae.safetensors"
+                }
+            ]
+        },
+        "GGUF_Q8": {
+            "min_vram": 18,
+            "files": [
+                {
+                    "url": "/unet/FLUX/flux1-dev-Q8_0.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-dev-Q8_0.gguf"
+                },
+                {
+                    "url": "/clip/t5-v1_1-xxl-encoder-Q8_0.gguf",
+                    "path_type": "clip",
+                    "filename": "t5-v1_1-xxl-encoder-Q8_0.gguf"
+                },
+                {
+                    "url": "/clip/clip_l.safetensors",
+                    "path_type": "clip",
+                    "filename": "clip_l.safetensors"
+                },
+                {
+                    "url": "/vae/ae.safetensors",
+                    "path_type": "vae",
+                    "filename": "ae.safetensors"
+                }
+            ]
+        },
+        "GGUF_Q6": {
+            "min_vram": 16,
+            "files": [
+                {
+                    "url": "/unet/FLUX/flux1-dev-Q6_K.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-dev-Q6_K.gguf"
+                },
+                {
+                    "url": "/clip/t5-v1_1-xxl-encoder-Q6_K.gguf",
+                    "path_type": "clip",
+                    "filename": "t5-v1_1-xxl-encoder-Q6_K.gguf"
+                },
+                {
+                    "url": "/clip/clip_l.safetensors",
+                    "path_type": "clip",
+                    "filename": "clip_l.safetensors"
+                },
+                {
+                    "url": "/vae/ae.safetensors",
+                    "path_type": "vae",
+                    "filename": "ae.safetensors"
+                }
+            ]
+        },
+        "GGUF_Q5": {
+            "min_vram": 14,
+            "files": [
+                {
+                    "url": "/unet/FLUX/flux1-dev-Q5_K_S.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-dev-Q5_K_S.gguf"
+                },
+                {
+                    "url": "/clip/t5-v1_1-xxl-encoder-Q5_K_M.gguf",
+                    "path_type": "clip",
+                    "filename": "t5-v1_1-xxl-encoder-Q5_K_M.gguf"
+                },
+                {
+                    "url": "/clip/clip_l.safetensors",
+                    "path_type": "clip",
+                    "filename": "clip_l.safetensors"
+                },
+                {
+                    "url": "/vae/ae.safetensors",
+                    "path_type": "vae",
+                    "filename": "ae.safetensors"
+                }
+            ]
+        },
+        "GGUF_Q4": {
+            "min_vram": 12,
+            "files": [
+                {
+                    "url": "/unet/FLUX/flux1-dev-Q4_K_S.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-dev-Q4_K_S.gguf"
+                },
+                {
+                    "url": "/clip/t5-v1_1-xxl-encoder-Q4_K_S.gguf",
+                    "path_type": "clip",
+                    "filename": "t5-v1_1-xxl-encoder-Q4_K_S.gguf"
+                },
+                {
+                    "url": "/clip/clip_l.safetensors",
+                    "path_type": "clip",
+                    "filename": "clip_l.safetensors"
+                },
+                {
+                    "url": "/vae/ae.safetensors",
+                    "path_type": "vae",
+                    "filename": "ae.safetensors"
+                }
+            ]
+        },
+        "GGUF_Q3": {
+            "min_vram": 8,
+            "files": [
+                {
+                    "url": "/unet/FLUX/flux1-dev-Q3_K_S.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-dev-Q3_K_S.gguf"
+                },
+                {
+                    "url": "/clip/t5-v1_1-xxl-encoder-Q3_K_S.gguf",
+                    "path_type": "clip",
+                    "filename": "t5-v1_1-xxl-encoder-Q3_K_S.gguf"
+                },
+                {
+                    "url": "/clip/clip_l.safetensors",
+                    "path_type": "clip",
+                    "filename": "clip_l.safetensors"
+                },
+                {
+                    "url": "/vae/ae.safetensors",
+                    "path_type": "vae",
+                    "filename": "ae.safetensors"
+                }
+            ]
+        },
+        "GGUF_Q2": {
+            "min_vram": 4,
+            "files": [
+                {
+                    "url": "/unet/FLUX/flux1-dev-Q2_K.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-dev-Q2_K.gguf"
+                },
+                {
+                    "url": "/clip/clip_l.safetensors",
+                    "path_type": "clip",
+                    "filename": "clip_l.safetensors"
+                },
+                {
+                    "url": "/vae/ae.safetensors",
+                    "path_type": "vae",
+                    "filename": "ae.safetensors"
+                }
+            ]
+        }
+    },
+    "FLUX_FILL": {
+        "fp16": {
+            "min_vram": 30,
+            "files": [
+                {
+                    "url": "/diffusion_models/FLUX/flux1-fill-dev-fp16.safetensors",
+                    "path_type": "flux_diff",
+                    "filename": "flux1-fill-dev-fp16.safetensors"
+                }
+            ]
+        },
+        "fp8": {
+            "min_vram": 18,
+            "files": [
+                {
+                    "url": "/diffusion_models/FLUX/flux1-fill-dev-fp8.safetensors",
+                    "path_type": "flux_diff",
+                    "filename": "flux1-fill-dev-fp8.safetensors"
+                }
+            ]
+        },
+        "GGUF_Q8": {
+            "min_vram": 18,
+            "files": [
+                {
+                    "url": "/unet/FLUX/flux1-fill-dev-Q8_0.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-fill-dev-Q8_0.gguf"
+                }
+            ]
+        },
+        "GGUF_Q6": {
+            "min_vram": 16,
+            "files": [
+                {
+                    "url": "/unet/FLUX/flux1-fill-dev-Q6_K.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-fill-dev-Q6_K.gguf"
+                }
+            ]
+        },
+        "GGUF_Q5": {
+            "min_vram": 14,
+            "files": [
+                {
+                    "url": "/unet/FLUX/flux1-fill-dev-Q5_K_S.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-fill-dev-Q5_K_S.gguf"
+                }
+            ]
+        },
+        "GGUF_Q4": {
+            "min_vram": 12,
+            "files": [
+                {
+                    "url": "/unet/FLUX/flux1-fill-dev-Q4_K_S.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-fill-dev-Q4_K_S.gguf"
+                }
+            ]
+        },
+        "GGUF_Q3": {
+            "min_vram": 8,
+            "files": [
+                {
+                    "url": "/unet/FLUX/flux1-fill-dev-Q3_K_S.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-fill-dev-Q3_K_S.gguf"
+                }
+            ]
+        }
+    },
+    "FLUX_NUNCHAKU": {
+        "Base": {
+            "min_vram": 8,
+            "files": [
+                {
+                    "url": "/diffusion_models/FLUX/svdq-int4_r32-flux.1-dev.safetensors",
+                    "path_type": "flux_diff",
+                    "filename": "svdq-int4_r32-flux.1-dev.safetensors"
+                },
+                {
+                    "url": "/clip/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+                    "path_type": "clip",
+                    "filename": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"
+                }
+            ]
+        },
+        "Fill": {
+            "min_vram": 8,
+            "files": [
+                {
+                    "url": "/diffusion_models/FLUX/svdq-int4_r32-flux.1-fill-dev.safetensors",
+                    "path_type": "flux_diff",
+                    "filename": "svdq-int4_r32-flux.1-fill-dev.safetensors"
+                },
+                {
+                    "url": "/clip/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+                    "path_type": "clip",
+                    "filename": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"
+                }
+            ]
+        },
+        "KONTEXT": {
+            "min_vram": 8,
+            "files": [
+                {
+                    "url": "/diffusion_models/FLUX/svdq-int4_r32-flux.1-kontext-dev.safetensors",
+                    "path_type": "flux_diff",
+                    "filename": "svdq-int4_r32-flux.1-kontext-dev.safetensors"
+                },
+                {
+                    "url": "/clip/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+                    "path_type": "clip",
+                    "filename": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"
+                }
+            ]
+        },
+        "Krea": {
+            "min_vram": 8,
+            "files": [
+                {
+                    "url": "/diffusion_models/FLUX/svdq-int4_r32-flux.1-krea-dev.safetensors",
+                    "path_type": "flux_diff",
+                    "filename": "svdq-int4_r32-flux.1-krea-dev.safetensors"
+                },
+                {
+                    "url": "/clip/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+                    "path_type": "clip",
+                    "filename": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"
+                }
+            ]
+        }
+    },
+    "FLUX_PULID": {
+        "Standard": {
+            "min_vram": 10,
+            "files": [
+                {
+                    "url": "/pulid/pulid_flux_v0.9.0.safetensors",
+                    "path_type": "pulid",
+                    "filename": "pulid_flux_v0.9.0.safetensors"
+                },
+                {
+                    "url": "/style_models/flux1-redux-dev.safetensors",
+                    "path_type": "style",
+                    "filename": "flux1-redux-dev.safetensors"
+                }
+            ]
+        }
+    },
+    "FLUX_LORA": {
+        "All": {
+            "min_vram": 4,
+            "files": [
+                {
+                    "url": "https://huggingface.co/UmeAiRT/FLUX.1-dev-LoRA-Ume_Sky/resolve/main/ume_sky_v2.safetensors",
+                    "path_type": "lora_flux",
+                    "filename": "ume_sky_v2.safetensors"
+                },
+                {
+                    "url": "https://huggingface.co/UmeAiRT/FLUX.1-dev-LoRA-Modern_Pixel_art/resolve/main/ume_modern_pixelart.safetensors",
+                    "path_type": "lora_flux",
+                    "filename": "ume_modern_pixelart.safetensors"
+                },
+                {
+                    "url": "https://huggingface.co/UmeAiRT/FLUX.1-dev-LoRA-Romanticism/resolve/main/ume_classic_Romanticism.safetensors",
+                    "path_type": "lora_flux",
+                    "filename": "ume_classic_Romanticism.safetensors"
+                },
+                {
+                    "url": "https://huggingface.co/UmeAiRT/FLUX.1-dev-LoRA-Impressionism/resolve/main/ume_classic_impressionist.safetensors",
+                    "path_type": "lora_flux",
+                    "filename": "ume_classic_impressionist.safetensors"
+                }
+            ]
+        }
+    },
+    "CONTROLNET_FLUX": {
+        "fp16": {
+            "min_vram": 24,
+            "files": [
+                {
+                    "url": "/xlabs/controlnets/flux-canny-controlnet-v3.safetensors",
+                    "path_type": "xlabs",
+                    "filename": "flux-canny-controlnet-v3.safetensors"
+                },
+                {
+                    "url": "/xlabs/controlnets/flux-depth-controlnet-v3.safetensors",
+                    "path_type": "xlabs",
+                    "filename": "flux-depth-controlnet-v3.safetensors"
+                },
+                {
+                    "url": "/diffusion_models/FLUX/flux1-canny-dev-fp16.safetensors",
+                    "path_type": "flux_diff",
+                    "filename": "flux1-canny-dev-fp16.safetensors"
+                },
+                {
+                    "url": "/diffusion_models/FLUX/flux1-depth-dev-fp16.safetensors",
+                    "path_type": "flux_diff",
+                    "filename": "flux1-depth-dev-fp16.safetensors"
+                }
+            ]
+        },
+        "fp8": {
+            "min_vram": 16,
+            "files": [
+                {
+                    "url": "/xlabs/controlnets/flux-canny-controlnet-v3.safetensors",
+                    "path_type": "xlabs",
+                    "filename": "flux-canny-controlnet-v3.safetensors"
+                },
+                {
+                    "url": "/xlabs/controlnets/flux-depth-controlnet-v3.safetensors",
+                    "path_type": "xlabs",
+                    "filename": "flux-depth-controlnet-v3.safetensors"
+                },
+                {
+                    "url": "/diffusion_models/FLUX/flux1-canny-dev-fp8.safetensors",
+                    "path_type": "flux_diff",
+                    "filename": "flux1-canny-dev-fp8.safetensors"
+                },
+                {
+                    "url": "/diffusion_models/FLUX/flux1-depth-dev-fp8.safetensors",
+                    "path_type": "flux_diff",
+                    "filename": "flux1-depth-dev-fp8.safetensors"
+                }
+            ]
+        },
+        "GGUF_Q8": {
+            "min_vram": 14,
+            "files": [
+                {
+                    "url": "/unet/FLUX/flux1-canny-dev-fp16-Q8_0-GGUF.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-canny-dev-fp16-Q8_0-GGUF.gguf"
+                },
+                {
+                    "url": "/unet/FLUX/flux1-depth-dev-fp16-Q8_0-GGUF.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-depth-dev-fp16-Q8_0-GGUF.gguf"
+                }
+            ]
+        },
+        "GGUF_Q5": {
+            "min_vram": 12,
+            "files": [
+                {
+                    "url": "/unet/FLUX/flux1-canny-dev-fp16-Q5_0-GGUF.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-canny-dev-fp16-Q5_0-GGUF.gguf"
+                },
+                {
+                    "url": "/unet/FLUX/flux1-depth-dev-fp16-Q5_0-GGUF.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-depth-dev-fp16-Q5_0-GGUF.gguf"
+                }
+            ]
+        },
+        "GGUF_Q4": {
+            "min_vram": 8,
+            "files": [
+                {
+                    "url": "/unet/FLUX/flux1-canny-dev-fp16-Q4_0-GGUF.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-canny-dev-fp16-Q4_0-GGUF.gguf"
+                },
+                {
+                    "url": "/unet/FLUX/flux1-depth-dev-fp16-Q4_0-GGUF.gguf",
+                    "path_type": "flux_unet",
+                    "filename": "flux1-depth-dev-fp16-Q4_0-GGUF.gguf"
+                }
+            ]
+        }
+    },
+    "Z_IMAGE": {
+        "fp16": {
+            "min_vram": 22,
+            "files": [
+                {
+                    "url": "/diffusion_models/Z-IMG/z_image_turbo_bf16.safetensors",
+                    "path_type": "zimg_diff",
+                    "filename": "z_image_turbo_bf16.safetensors"
+                },
+                {
+                    "url": "/clip/qwen_3_4b.safetensors",
+                    "path_type": "clip",
+                    "filename": "qwen_3_4b.safetensors"
+                },
+                {
+                    "url": "/vae/ae.safetensors",
+                    "path_type": "vae",
+                    "filename": "ae.safetensors"
+                }
+            ]
+        },
+        "GGUF_Q8": {
+            "min_vram": 14,
+            "files": [
+                {
+                    "url": "/unet/Z-IMG/z_image_turbo-Q8_0.gguf",
+                    "path_type": "zimg_unet",
+                    "filename": "z_image_turbo-Q8_0.gguf"
+                },
+                {
+                    "url": "/clip/Qwen3-4B-UD-Q8_K_XL.gguf",
+                    "path_type": "clip",
+                    "filename": "Qwen3-4B-UD-Q8_K_XL.gguf"
+                },
+                {
+                    "url": "/vae/ae.safetensors",
+                    "path_type": "vae",
+                    "filename": "ae.safetensors"
+                }
+            ]
+        },
+        "GGUF_Q6": {
+            "min_vram": 10,
+            "files": [
+                {
+                    "url": "/unet/Z-IMG/z_image_turbo-Q6_K.gguf",
+                    "path_type": "zimg_unet",
+                    "filename": "z_image_turbo-Q6_K.gguf"
+                },
+                {
+                    "url": "/clip/Qwen3-4B-UD-Q6_K_XL.gguf",
+                    "path_type": "clip",
+                    "filename": "Qwen3-4B-UD-Q6_K_XL.gguf"
+                },
+                {
+                    "url": "/vae/ae.safetensors",
+                    "path_type": "vae",
+                    "filename": "ae.safetensors"
+                }
+            ]
+        },
+        "GGUF_Q5": {
+            "min_vram": 8,
+            "files": [
+                {
+                    "url": "/unet/Z-IMG/z_image_turbo-Q5_K_S.gguf",
+                    "path_type": "zimg_unet",
+                    "filename": "z_image_turbo-Q5_K_S.gguf"
+                },
+                {
+                    "url": "/clip/Qwen3-4B-UD-Q5_K_XL.gguf",
+                    "path_type": "clip",
+                    "filename": "Qwen3-4B-UD-Q5_K_XL.gguf"
+                },
+                {
+                    "url": "/vae/ae.safetensors",
+                    "path_type": "vae",
+                    "filename": "ae.safetensors"
+                }
+            ]
+        },
+        "GGUF_Q4": {
+            "min_vram": 6,
+            "files": [
+                {
+                    "url": "/unet/Z-IMG/z_image_turbo-Q4_K_S.gguf",
+                    "path_type": "zimg_unet",
+                    "filename": "z_image_turbo-Q4_K_S.gguf"
+                },
+                {
+                    "url": "/clip/Qwen3-4B-UD-Q4_K_XL.gguf",
+                    "path_type": "clip",
+                    "filename": "Qwen3-4B-UD-Q4_K_XL.gguf"
+                },
+                {
+                    "url": "/vae/ae.safetensors",
+                    "path_type": "vae",
+                    "filename": "ae.safetensors"
+                }
+            ]
+        }
+    },
+    "UPSCALERS": {
+        "All_Upscalers": {
+            "min_vram": 4,
+            "files": [
+                {
+                    "url": "/upscale_models/4x-UltraSharp.pth",
+                    "path_type": "upscale",
+                    "filename": "4x-UltraSharp.pth"
+                },
+                {
+                    "url": "/upscale_models/4x_NMKD-Siax_200k.pth",
+                    "path_type": "upscale",
+                    "filename": "4x_NMKD-Siax_200k.pth"
+                },
+                {
+                    "url": "/upscale_models/RealESRGAN_x4plus.pth",
+                    "path_type": "upscale",
+                    "filename": "RealESRGAN_x4plus.pth"
+                },
+                {
+                    "url": "/upscale_models/RealESRGAN_x4plus_anime_6B.pth",
+                    "path_type": "upscale",
+                    "filename": "RealESRGAN_x4plus_anime_6B.pth"
+                },
+                {
+                    "url": "/upscale_models/4x-AnimeSharp.pth",
+                    "path_type": "upscale",
+                    "filename": "4x-AnimeSharp.pth"
+                },
+                {
+                    "url": "/upscale_models/RealESRGAN_x4.pth",
+                    "path_type": "upscale",
+                    "filename": "RealESRGAN_x4.pth"
+                }
+            ]
+        }
+    }
+}

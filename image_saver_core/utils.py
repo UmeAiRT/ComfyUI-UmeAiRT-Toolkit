@@ -8,6 +8,13 @@ from tqdm import tqdm
 import folder_paths
 import re
 
+try:
+    from ..logger import log_node
+except ImportError:
+    def log_node(msg, color=None, prefix="UmeAiRT"):
+        print(f"[UmeAiRT] {msg}")
+
+
 def sanitize_filename(filename: str) -> str:
     """Remove characters that are unsafe for filenames."""
     # Remove characters that are generally unsafe across file systems
@@ -31,14 +38,20 @@ def get_sha256(file_path: str) -> str:
             with open(hash_file, "r") as f:
                 return f.read().strip()
         except OSError as e:
-            print(f"ComfyUI-Image-Saver: Error reading existing hash file: {e}")
+            # print(f"ComfyUI-Image-Saver: Error reading existing hash file: {e}")
+            log_node(f"ImageSaver Error reading existing hash file: {e}", color="RED")
+
+
 
     sha256_hash = hashlib.sha256()
     with open(file_path, "rb") as f:
         file_size = os.fstat(f.fileno()).st_size
         block_size = 1048576 # 1 MB
 
-        print(f"ComfyUI-Image-Saver: Calculating sha256 for '{Path(file_path).stem}'")
+        # print(f"ComfyUI-Image-Saver: Calculating sha256 for '{Path(file_path).stem}'")
+        log_node(f"Calculating sha256 for '{Path(file_path).stem}'", color="CYAN")
+
+
         with tqdm(None, None, file_size, unit="B", unit_scale=True, unit_divisor=1024) as progress_bar:
             for byte_block in iter(lambda: f.read(block_size), b""):
                 progress_bar.update(len(byte_block))
@@ -48,7 +61,10 @@ def get_sha256(file_path: str) -> str:
         with open(hash_file, "w") as f:
             f.write(sha256_hash.hexdigest())
     except OSError as e:
-        print(f"ComfyUI-Image-Saver: Error writing hash to {hash_file}: {e}")
+        # print(f"ComfyUI-Image-Saver: Error writing hash to {hash_file}: {e}")
+        log_node(f"ImageSaver Error writing hash to {hash_file}: {e}", color="RED")
+
+
 
     return sha256_hash.hexdigest()
 
@@ -58,8 +74,9 @@ def full_embedding_path_for(embedding: str) -> Optional[str]:
     """
     matching_embedding = get_file_path_match("embeddings", embedding)
     if matching_embedding is None:
-        print(f'ComfyUI-Image-Saver: could not find full path to embedding "{embedding}"')
+        # print(f'ComfyUI-Image-Saver: could not find full path to embedding "{embedding}"')
         return None
+
     return folder_paths.get_full_path("embeddings", matching_embedding)
 
 def full_lora_path_for(lora: str) -> Optional[str]:
@@ -69,8 +86,9 @@ def full_lora_path_for(lora: str) -> Optional[str]:
     # Find the matching lora path
     matching_lora = get_file_path_match("loras", lora)
     if matching_lora is None:
-        print(f'ComfyUI-Image-Saver: could not find full path to lora "{lora}"')
+        # print(f'ComfyUI-Image-Saver: could not find full path to lora "{lora}"')
         return None
+
     return folder_paths.get_full_path("loras", matching_lora)
 
 def full_checkpoint_path_for(model_name: str) -> str:
@@ -87,8 +105,9 @@ def full_checkpoint_path_for(model_name: str) -> str:
     if matching_model:
         return folder_paths.get_full_path("diffusion_models", matching_model)
 
-    print(f'Could not find full path to checkpoint "{model_name}"')
+    # print(f'Could not find full path to checkpoint "{model_name}"')
     return ''
+
 
 def get_file_path_iterator(folder_name: str, supported_extensions: Optional[Collection[str]] = None) -> Iterator[Path]:
     """
@@ -140,15 +159,21 @@ def http_get_json(url: str) ->  dict[str, Any] | None:
         print(f"ComfyUI-Image-Saver: HTTP GET Request timed out for {url}")
         return None
     except requests.exceptions.ConnectionError as e:
-        print(f"ComfyUI-Image-Saver: Warning - Network connection error for {url}: {e}")
+        # print(f"ComfyUI-Image-Saver: Warning - Network connection error for {url}: {e}")
+        log_node(f"ImageSaver Network error for {url}: {e}", color="RED")
         return None
 
+
     if not response.ok:
-        print(f"ComfyUI-Image-Saver: HTTP GET Request failed with error code: {response.status_code}: {response.reason}")
+        # print(f"ComfyUI-Image-Saver: HTTP GET Request failed with error code: {response.status_code}: {response.reason}")
+        log_node(f"ImageSaver HTTP error {response.status_code}: {response.reason}", color="RED")
         return None
+
 
     try:
         return response.json()
     except ValueError as e:
-        print(f"ComfyUI-Image-Saver: HTTP Response JSON error: {e}")
+        # print(f"ComfyUI-Image-Saver: HTTP Response JSON error: {e}")
+        log_node(f"ImageSaver JSON error: {e}", color="RED")
+
     return None

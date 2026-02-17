@@ -22,6 +22,19 @@ import folder_paths
 import nodes as comfy_nodes
 import comfy.samplers
 import comfy.utils
+from server import PromptServer
+
+from server import PromptServer
+
+# --- UmeAiRT Logger ---
+try:
+    from .logger import log_node, CYAN, GREEN, RED, RESET
+except ImportError:
+    # Fallback if relative import fails (e.g. running script directly)
+    # But usually unnecessary in ComfyUI context
+    from logger import log_node, CYAN, GREEN, RED, RESET
+
+
 
 # Global Storage
 UME_SHARED_STATE = {}
@@ -1008,12 +1021,16 @@ class UmeAiRT_WirelessInpaintComposite:
         source_mask = UME_SHARED_STATE.get(KEY_SOURCE_MASK)
 
         if source_image is None:
-             print("UmeAiRT Composite Warning: No Wireless Source Image found. Returning generated image.")
+             # print("UmeAiRT Composite Warning: No Wireless Source Image found. Returning generated image.")
+             log_node("Composite Warning: No Wireless Source Image found. Returning generated image.", color="RED")
              return (image,)
+
         
         if source_mask is None:
-             print("UmeAiRT Composite Warning: No Wireless Source Mask found. Returning generated image.")
+             # print("UmeAiRT Composite Warning: No Wireless Source Mask found. Returning generated image.")
+             log_node("Composite Warning: No Wireless Source Mask found. Returning generated image.", color="RED")
              return (image,)
+
 
         # 2. Logic: Similar to ImageCompositeMasked
         # Resize source_image and mask to match generated image [B, H, W, C]
@@ -1151,7 +1168,10 @@ Positive: {pos[:50]}...
 Negative: {neg[:50]}...
 ------------------------------"""
         
-        print(info) # Also print to console
+        # print(info) # Also print to console
+        log_node("Wireless State Debug:", color="CYAN")
+        print(info)
+
         
         # Return text to UI and as output
         return {"ui": {"text": (info,)}, "result": (info,)}
@@ -1299,7 +1319,9 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
     CATEGORY = "UmeAiRT/Wireless/Post-Process"
 
     def upscale(self, image, enabled, model, upscale_by, clean_prompt=True):
-        print(f"DEBUG: UmeAiRT Wireless Upscale Simple - Enabled: {enabled}")
+        # print(f"DEBUG: UmeAiRT Wireless Upscale Simple - Enabled: {enabled}")
+        # log_node(f"DEBUG: Wireless Upscale Simple - Enabled: {enabled}", color="CYAN")
+
         if not enabled:
             return (image,)
 
@@ -1318,7 +1340,9 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         
         # Clean Prompt Logic
         if clean_prompt:
-            print("UmeAiRT Upscale: Using Clean Prompt (Empty Positive) to prevent hallucinations.")
+            # print("UmeAiRT Upscale: Using Clean Prompt (Empty Positive) to prevent hallucinations.")
+            log_node("Upscale: Using Clean Prompt (Empty Positive) to prevent hallucinations.", color="CYAN")
+
             # Use empty positive prompt
             target_pos_text = ""
         else:
@@ -1674,7 +1698,9 @@ class UmeAiRT_WirelessImageSaver(UmeAiRT_WirelessUltimateUpscale_Base):
                 if hash_list:
                     additional_hashes = ",".join(hash_list)
             except Exception as e:
-                print(f"UmeAiRT Error processing LoRAs: {e}")
+                # print(f"UmeAiRT Error processing LoRAs: {e}")
+                log_node(f"Error processing LoRAs: {e}", color="RED")
+
 
         metadata_obj = ImageSaverLogic.make_metadata(
             modelname=modelname,
@@ -2200,8 +2226,10 @@ class UmeAiRT_ControlNetImageProcess:
 
         # TXT2IMG Logic
         if mode == "txt2img":
-             print("UmeAiRT Unified CNet: Txt2Img Mode (Forcing Denoise=1.0, Ignoring Mask).")
+             # print("UmeAiRT Unified CNet: Txt2Img Mode (Forcing Denoise=1.0, Ignoring Mask).")
+             log_node("Unified CNet: Txt2Img Mode (Forcing Denoise=1.0, Ignoring Mask).", color="CYAN")
              denoise = 1.0
+
              mask = None 
 
         # RESIZE
@@ -2552,6 +2580,381 @@ class UmeAiRT_WirelessImageLoader(comfy_nodes.LoadImage):
         UME_SHARED_STATE[KEY_SOURCE_MASK] = mask
         
         return (img, mask)
+
+
+# --- TOOLS NODES ---
+
+class UmeAiRT_Bundle_Downloader:
+    """
+    Downloads curated model bundles from Hugging Face based on UmeAiRT Auto-Installer scripts.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        # Load bundles from JSON
+        s.bundles_data = {}
+        json_path = os.path.join(os.path.dirname(__file__), "umeairt_bundles.json")
+        if os.path.exists(json_path):
+            try:
+                import json
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    s.bundles_data = json.load(f)
+            except Exception as e:
+                print(f"UmeAiRT: Error loading bundles.json: {e}")
+        
+        categories = list(s.bundles_data.keys()) if s.bundles_data else ["Error: No Bundles"]
+        # Collect all unique versions for the dropdown
+        all_versions = set()
+        for cat in s.bundles_data.values():
+            all_versions.update(cat.keys())
+        versions = sorted(list(all_versions)) if all_versions else ["None"]
+        # Always add Auto
+        versions.insert(0, "Auto")
+
+        return {
+            "required": {
+                "bundle_category": (categories,),
+                "bundle_version": (versions,),
+            },
+            "optional": {
+                "hf_token": ("STRING", {"default": "", "multiline": False}),
+            }
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("log_report",)
+    FUNCTION = "download_bundle"
+    CATEGORY = "UmeAiRT/Tools"
+    OUTPUT_NODE = True
+
+    def get_vram_gb(self):
+        try:
+            import torch
+            if torch.cuda.is_available():
+                # Returns bytes, convert to GB
+                return torch.cuda.get_device_properties(0).total_memory / (1024**3)
+            return 0
+        except:
+            return 0
+
+    def get_best_version(self, category, vram):
+        """
+        Generic data-driven VRAM selection.
+        Iterates all versions in the category, checks 'min_vram' from JSON.
+        Returns the version with the highest min_vram that fits within the user's VRAM.
+        """
+        category_data = self.bundles_data.get(category, {})
+        if not category_data:
+            return None
+            
+        compatible_versions = []
+        for version, data in category_data.items():
+            # Support both old list format (backward compatibility) and new dict format
+            if isinstance(data, list):
+                # Old format: assume 0 VRAM req or specific hardcoded handling if needed.
+                # For now, treat as extremely low req (0 GB).
+                min_req = 0 
+            else:
+                min_req = data.get("min_vram", 0)
+            
+            if vram >= min_req:
+                compatible_versions.append((version, min_req))
+        
+        if not compatible_versions:
+            # Fallback: if nothing fits (unlikely if we have low-end options), 
+            # return the one with the lowest requirement.
+            all_versions = []
+            for version, data in category_data.items():
+                 req = 0 if isinstance(data, list) else data.get("min_vram", 0)
+                 all_versions.append((version, req))
+            if all_versions:
+                # Sort by req ascending, return first
+                all_versions.sort(key=lambda x: x[1])
+                return all_versions[0][0]
+            return None
+
+        # Sort by min_vram descending (Greedy approach: use max available resources)
+        # If multiple have same min_vram, secondary sort by name (optional)
+        compatible_versions.sort(key=lambda x: x[1], reverse=True)
+        return compatible_versions[0][0]
+
+    def download_bundle(self, bundle_category, bundle_version, hf_token=""):
+        import requests
+        import subprocess
+        import shutil
+        import json # Ensure json is imported if not at top
+        from tqdm import tqdm
+
+        # Reload data
+        json_path = os.path.join(os.path.dirname(__file__), "umeairt_bundles.json")
+        bundles_data = {}
+        # Update self.bundles_data locally for this run as well to ensure freshness
+        if os.path.exists(json_path):
+             with open(json_path, 'r', encoding='utf-8') as f:
+                 bundles_data = json.load(f)
+                 self.bundles_data = bundles_data
+
+        # --- Base URL ---
+        BASE_URL = "https://huggingface.co/UmeAiRT/ComfyUI-Auto_installer/resolve/main/models"
+        
+        # --- Resolve Paths ---
+        try:
+            path_checkpoints = folder_paths.get_folder_paths("checkpoints")[0]
+            path_clip = folder_paths.get_folder_paths("clip")[0]
+            path_vae = folder_paths.get_folder_paths("vae")[0]
+            path_upscale = folder_paths.get_folder_paths("upscale_models")[0]
+            
+            if "controlnet" in folder_paths.folder_names_and_paths:
+                path_controlnet = folder_paths.get_folder_paths("controlnet")[0]
+            else:
+                 path_controlnet = os.path.join(path_checkpoints, "../controlnet")
+            
+            # Custom subfolders
+            # Use parent of checkpoints to get to "models" root
+            models_dir = os.path.dirname(path_checkpoints)
+            path_flux_diff = os.path.join(models_dir, "diffusion_models", "FLUX")
+            path_zimg_diff = os.path.join(models_dir, "diffusion_models", "Z-IMG")
+            path_zimg_unet = os.path.join(models_dir, "unet", "Z-IMG")
+            
+            # Additional Paths for Expanded Bundles
+            path_flux_unet = os.path.join(models_dir, "unet", "FLUX")
+            path_pulid = os.path.join(models_dir, "pulid")
+            path_style = os.path.join(models_dir, "style_models")
+            path_lora_flux = os.path.join(models_dir, "loras", "FLUX")
+            path_xlabs = os.path.join(models_dir, "xlabs", "controlnets")
+
+            # Path Mapping for JSON
+            path_map = {
+                "flux_diff": path_flux_diff,
+                "flux_unet": path_flux_unet,
+                "clip": path_clip,
+                "vae": path_vae,
+                "zimg_diff": path_zimg_diff,
+                "zimg_unet": path_zimg_unet,
+                "upscale": path_upscale,
+                "controlnet": path_controlnet,
+                "xlabs": path_xlabs,
+                "pulid": path_pulid,
+                "style": path_style,
+                "lora_flux": path_lora_flux
+            }
+            
+            
+        except Exception as e:
+            return (f"Error resolving paths: {e}",)
+
+
+
+        # --- Execution Logic ---
+        category_data = bundles_data.get(bundle_category, {})
+        
+        # Handle Auto
+        final_version = bundle_version
+        if bundle_version == "Auto":
+            vram = self.get_vram_gb()
+            # print(f"UmeAiRT: Detected {vram:.2f} GB VRAM. Selecting best version...")
+            log_node(f"Detected {vram:.2f} GB VRAM. Selecting best version...", color="CYAN")
+            best = self.get_best_version(bundle_category, vram)
+
+            if best and best in category_data:
+                final_version = best
+                # print(f"UmeAiRT: Auto-selected '{final_version}' for '{bundle_category}'")
+                log_node(f"Auto-selected '{final_version}' for '{bundle_category}'", color="GREEN")
+
+            else:
+                return (f"Auto-detection failed or not supported for {bundle_category}",)
+
+
+
+        version_data = category_data.get(final_version)
+        
+        if not version_data:
+             if bundle_category in bundles_data:
+                 return (f"Version '{final_version}' not found in '{bundle_category}'",)
+             return ("Select a valid bundle to download.",)
+
+
+
+        # Handle new object structure vs old list structure
+        if isinstance(version_data, list):
+            target_list = version_data
+        else:
+            target_list = version_data.get("files", [])
+
+        if not target_list:
+            return (f"No files defined for {bundle_category} - {final_version}",)
+
+
+        # Initialize Log Buffer
+        log_buffer = []
+        def log(msg):
+            # print(msg)
+            # Simple heuristic for color
+            color = None
+            if "Success" in msg: color = "GREEN"
+            elif "Failed" in msg or "Error" in msg: color = "RED"
+            elif "Downloading" in msg: color = "CYAN"
+            
+            log_node(msg, color=color)
+            log_buffer.append(msg)
+
+
+
+        log(f"UmeAiRT Downloader: Processing {bundle_category} - {final_version}")
+
+        download_count = 0
+        skip_count = 0
+        
+        headers = {}
+        if hf_token: headers["Authorization"] = f"Bearer {hf_token}"
+        
+        # Detect Aria2 (Always try)
+        aria2_path = None
+        
+        # 1. Custom Path (Windows) - Common in UmeAiRT env
+        local_app_data = os.environ.get("LOCALAPPDATA", "")
+        if local_app_data:
+            potential_path = os.path.join(local_app_data, "aria2", "aria2c.exe")
+            if os.path.exists(potential_path):
+                aria2_path = potential_path
+        
+        # 2. System Path
+        if not aria2_path:
+            aria2_path = shutil.which("aria2c")
+
+        if aria2_path:
+            # print(f"UmeAiRT: Aria2 detected at {aria2_path}")
+            log_node(f"Aria2 detected at {aria2_path}", color="GREEN")
+        else:
+             # print("UmeAiRT: Aria2 not found. Falling back to requests.")
+             log_node("Aria2 not found. Falling back to requests.", color="RED")
+
+
+        # print(f"UmeAiRT Downloader: Processing {bundle_category} - {final_version}")
+        log_node(f"Downloader Processing: {bundle_category} - {final_version}", color="CYAN")
+
+
+        for item in target_list:
+            # Parse JSON Item
+            url_suffix = item.get("url")
+            path_type = item.get("path_type")
+            fname = item.get("filename")
+            
+            if not url_suffix or not path_type or not fname:
+                log(f"Invalid config for {fname}")
+                continue
+
+            target_dir = path_map.get(path_type)
+            if not target_dir:
+                 log(f"Unknown path type: {path_type}")
+                 continue
+
+            if not os.path.exists(target_dir):
+                try: os.makedirs(target_dir, exist_ok=True)
+                except OSError as e:
+                     log(f"Mkdir Fail: {e}")
+                     continue
+
+            full_path = os.path.join(target_dir, fname)
+            
+            # Check if file exists, but also check for typical aria2 incomplete file
+            if os.path.exists(full_path):
+                if os.path.exists(full_path + ".aria2"):
+                    log(f"Resuming incomplete download (aria2): {fname}")
+                else:
+                    log(f"Skipping (Exists): {fname}")
+                    skip_count += 1
+                    continue
+            
+            # Download
+            if url_suffix.startswith("http"):
+                full_url = url_suffix
+            else:
+                full_url = BASE_URL + url_suffix
+                
+            log(f"Downloading: {fname} ...")
+            
+            success = False
+            
+            # --- Try Aria2 ---
+            if aria2_path:
+                try:
+                    # -x 16 -s 16 -k 1M -d "dir" -o "filename"
+                    # --allow-overwrite=true if needed, but we check existence before
+                    cmd = [
+                        aria2_path,
+                        "-c",
+                        "-x", "16", "-s", "16", "-k", "1M",
+                        "--console-log-level=error",
+                        "--summary-interval=0",
+                        "-d", target_dir,
+                        "-o", fname,
+                        full_url
+                    ]
+                    # Add auth token if present (syntax: --header="Authorization: Bearer ...")
+                    if hf_token:
+                         cmd.append(f"--header=Authorization: Bearer {hf_token}")
+                    
+                    subprocess.run(cmd, check=True)
+                    log(f"  [Aria2] Success: {fname}")
+                    success = True
+                except subprocess.CalledProcessError as e:
+                    log(f"  [Aria2] Failed: {e}. Trying request fallback...")
+                except Exception as e:
+                    log(f"  [Aria2] Error: {e}. Trying request fallback...")
+
+            # --- Fallback to Requests ---
+            if not success:
+                try:
+                    with requests.get(full_url, stream=True, headers=headers) as r:
+                        r.raise_for_status()
+                        total_size = int(r.headers.get('content-length', 0))
+                        with open(full_path, 'wb') as f, tqdm(
+                            desc=fname,
+                            total=total_size,
+                            unit='iB',
+                            unit_scale=True,
+                            unit_divisor=1024,
+                        ) as bar:
+                            for chunk in r.iter_content(chunk_size=8192):
+                                size = f.write(chunk)
+                                bar.update(size)
+                    success = True
+                    log(f"  [Requests] Success: {fname}")
+                except Exception as e:
+                    log(f"  [Requests] Failed: {e}")
+                    if os.path.exists(full_path): os.remove(full_path)
+            
+            if success:
+                download_count += 1
+            else:
+                log(f"FATAL: Could not download {fname}")
+
+        summary = f"Done. Downloaded: {download_count}, Skipped: {skip_count}, Total Checked: {len(target_list)}"
+        log(summary)
+        
+        full_log = "\n".join(log_buffer)
+        return (full_log,)
+
+
+
+class UmeAiRT_Log_Viewer:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "log_text": ("STRING", {"forceInput": True}),
+            }
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("log_output",)
+    FUNCTION = "show_log"
+    CATEGORY = "UmeAiRT/Tools"
+    OUTPUT_NODE = True
+
+    def show_log(self, log_text):
+        return {"ui": {"text": [log_text]}, "result": (log_text,)}
+
 
 class UmeAiRT_BlockImageProcess:
     """
@@ -3421,6 +3824,85 @@ class UmeAiRT_Unpack_SettingsBundle:
             settings_bundle.get("cfg", 8.0), # guidance alias
         )
 
+
+class UmeAiRT_Faces_Unpack_Node:
+    """
+    Unpacks FACES_DATA bundle? Or just pass through?
+    Wait, assuming Input is UME_FACES?
+    If not defined elsewhere, assuming generic structure.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "faces_bundle": ("UME_FACES",),
+            }
+        }
+
+    RETURN_TYPES = ("UME_FACES",)
+    RETURN_NAMES = ("faces_passthrough",)
+    FUNCTION = "unpack"
+    CATEGORY = "UmeAiRT/Unpack"
+
+    def unpack(self, faces_bundle):
+        return (faces_bundle,)
+
+class UmeAiRT_Tags_Unpack_Node:
+    """
+    Unpacks UME_TAGS bundle?
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "tags_bundle": ("UME_TAGS",),
+            }
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("tags_string",)
+    FUNCTION = "unpack"
+    CATEGORY = "UmeAiRT/Unpack"
+
+    def unpack(self, tags_bundle):
+        # Assuming tags_bundle is either dict or list or string
+        # Default behavior: stringify
+        return (str(tags_bundle),)
+
+class UmeAiRT_Pipe_Unpack_Node:
+    """
+    Unpacks UME_PIPE bundle (Model, Clip, Vae, Positive, Negative, Latent, etc.)
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "pipe_bundle": ("UME_PIPE",),
+            }
+        }
+    
+    RETURN_TYPES = ("MODEL", "CLIP", "VAE", "STRING", "STRING")
+    RETURN_NAMES = ("model", "clip", "vae", "positive", "negative")
+    FUNCTION = "unpack"
+    CATEGORY = "UmeAiRT/Unpack"
+
+    def unpack(self, pipe_bundle):
+         if not isinstance(pipe_bundle, dict):
+             # Try fallback tuple if from ImpactPack
+             if isinstance(pipe_bundle, (list, tuple)) and len(pipe_bundle) >= 5:
+                  return (pipe_bundle[0], pipe_bundle[1], pipe_bundle[2], pipe_bundle[3], pipe_bundle[4])
+             raise ValueError("UmeAiRT Unpack: Input is not a valid UME_PIPE bundle.")
+         
+         return (
+             pipe_bundle.get("model"),
+             pipe_bundle.get("clip"),
+             pipe_bundle.get("vae"),
+             # Extract strings from conditioning? Or raw text?
+             # Standard Basic Pipe usually carries raw text in custom implementations
+             pipe_bundle.get("positive_text", ""),
+             pipe_bundle.get("negative_text", "")
+         )
+
 class UmeAiRT_Unpack_PromptsBundle:
     """
     Unpacks UME_PROMPTS bundle into Positive and Negative strings.
@@ -3446,3 +3928,120 @@ class UmeAiRT_Unpack_PromptsBundle:
             prompts_bundle.get("positive", ""),
             prompts_bundle.get("negative", "")
         )
+
+class UmeAiRT_Seed_Node:
+    """
+    Standard Seed Node with UI control.
+    Sets the Wireless SEED value.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            }
+        }
+
+    RETURN_TYPES = ("INT",)
+    RETURN_NAMES = ("seed",)
+    FUNCTION = "set_seed"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
+    OUTPUT_NODE = True
+
+    def set_seed(self, seed):
+        UME_SHARED_STATE[KEY_SEED] = seed
+        return (seed,)
+
+class UmeAiRT_CR_Seed_Node:
+    """
+    Alternative Seed Node (ComfyRoll style or similar).
+    Also sets the Wireless SEED value.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            }
+        }
+
+    RETURN_TYPES = ("INT",)
+    RETURN_NAMES = ("seed",)
+    FUNCTION = "set_seed"
+    CATEGORY = "UmeAiRT/Wireless/Variables"
+    OUTPUT_NODE = True
+
+    def set_seed(self, seed):
+        UME_SHARED_STATE[KEY_SEED] = seed
+        return (seed,)
+
+# Mapping
+NODE_CLASS_MAPPINGS = {
+    "UmeAiRT_Guidance_Input": UmeAiRT_Guidance_Input,
+    "UmeAiRT_Guidance_Output": UmeAiRT_Guidance_Output,
+    "UmeAiRT_ImageSize_Input": UmeAiRT_ImageSize_Input,
+    "UmeAiRT_ImageSize_Output": UmeAiRT_ImageSize_Output,
+    "UmeAiRT_FPS_Input": UmeAiRT_FPS_Input,
+    "UmeAiRT_FPS_Output": UmeAiRT_FPS_Output,
+    "UmeAiRT_Steps_Input": UmeAiRT_Steps_Input,
+    "UmeAiRT_Steps_Output": UmeAiRT_Steps_Output,
+    "UmeAiRT_Seed_Input": UmeAiRT_Seed_Input,
+    "UmeAiRT_Seed_Output": UmeAiRT_Seed_Output,
+    "UmeAiRT_Denoise_Input": UmeAiRT_Denoise_Input,
+    "UmeAiRT_Denoise_Output": UmeAiRT_Denoise_Output,
+    "UmeAiRT_Sampler_Input": UmeAiRT_Sampler_Input,
+    "UmeAiRT_Sampler_Output": UmeAiRT_Sampler_Output,
+    "UmeAiRT_Scheduler_Input": UmeAiRT_Scheduler_Input,
+    "UmeAiRT_Scheduler_Output": UmeAiRT_Scheduler_Output,
+    "UmeAiRT_Seed_Node": UmeAiRT_Seed_Node,
+    "UmeAiRT_CR_Seed_Node": UmeAiRT_CR_Seed_Node,
+    "UmeAiRT_WirelessKSampler": UmeAiRT_WirelessKSampler,
+    "UmeAiRT_WirelessUltimateUpscale": UmeAiRT_WirelessUltimateUpscale,
+    "UmeAiRT_WirelessUltimateUpscale_Advanced": UmeAiRT_WirelessUltimateUpscale_Advanced,
+    "UmeAiRT_Unified_ControlNet": UmeAiRT_ControlNetImageProcess,
+    "UmeAiRT_Wireless_Image_Loader": UmeAiRT_WirelessImageLoader,
+    "UmeAiRT_BlockImageProcess": UmeAiRT_BlockImageProcess,
+    "UmeAiRT_BlockSampler": UmeAiRT_BlockSampler,
+    "UmeAiRT_Faces_Unpack_Node": UmeAiRT_Faces_Unpack_Node,
+    "UmeAiRT_Tags_Unpack_Node": UmeAiRT_Tags_Unpack_Node,
+    "UmeAiRT_Pipe_Unpack_Node": UmeAiRT_Pipe_Unpack_Node,
+    "UmeAiRT_Unpack_SettingsBundle": UmeAiRT_Unpack_SettingsBundle,
+    "UmeAiRT_Unpack_PromptsBundle": UmeAiRT_Unpack_PromptsBundle, 
+    "UmeAiRT_Bundle_Downloader": UmeAiRT_Bundle_Downloader,
+    "UmeAiRT_Log_Viewer": UmeAiRT_Log_Viewer
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "UmeAiRT_Guidance_Input": "UmeAiRT Guide In",
+    "UmeAiRT_Guidance_Output": "UmeAiRT Guide Out",
+    "UmeAiRT_ImageSize_Input": "UmeAiRT Size In",
+    "UmeAiRT_ImageSize_Output": "UmeAiRT Size Out",
+    "UmeAiRT_FPS_Input": "UmeAiRT FPS In",
+    "UmeAiRT_FPS_Output": "UmeAiRT FPS Out",
+    "UmeAiRT_Steps_Input": "UmeAiRT Step In",
+    "UmeAiRT_Steps_Output": "UmeAiRT Step Out",
+    "UmeAiRT_Seed_Input": "UmeAiRT Seed In",
+    "UmeAiRT_Seed_Output": "UmeAiRT Seed Out",
+    "UmeAiRT_Denoise_Input": "UmeAiRT Denoise In",
+    "UmeAiRT_Denoise_Output": "UmeAiRT Denoise Out",
+    "UmeAiRT_Sampler_Input": "UmeAiRT Sampler In",
+    "UmeAiRT_Sampler_Output": "UmeAiRT Sampler Out",
+    "UmeAiRT_Scheduler_Input": "UmeAiRT Scheduler In",
+    "UmeAiRT_Scheduler_Output": "UmeAiRT Scheduler Out",
+    "UmeAiRT_Seed_Node": "🌱 UmeAiRT Seed Node",
+    "UmeAiRT_CR_Seed_Node": "🌱 UmeAiRT CR Seed Node",
+    "UmeAiRT_WirelessKSampler": "📡 UmeAiRT Wireless KSampler",
+    "UmeAiRT_WirelessUltimateUpscale": "📡 UmeAiRT Wireless Ultimate Upscale",
+    "UmeAiRT_WirelessUltimateUpscale_Advanced": "📡 UmeAiRT Wireless Ultimate Upscale (Adv)",
+    "UmeAiRT_Unified_ControlNet": "🕹️ UmeAiRT Unified ControlNet",
+    "UmeAiRT_Wireless_Image_Loader": "📡 UmeAiRT Wireless Image Loader",
+    "UmeAiRT_BlockImageProcess": "🧱 UmeAiRT Block Image Process",
+    "UmeAiRT_BlockSampler": "🧱 UmeAiRT Block Sampler",
+    "UmeAiRT_Faces_Unpack_Node": "📦 UmeAiRT Faces Unpack",
+    "UmeAiRT_Tags_Unpack_Node": "📦 UmeAiRT Tags Unpack",
+    "UmeAiRT_Pipe_Unpack_Node": "📦 UmeAiRT Pipe Unpack",
+    "UmeAiRT_Unpack_SettingsBundle": "📦 UmeAiRT Settings Unpack",
+    "UmeAiRT_Unpack_PromptsBundle": "📦 UmeAiRT Prompts Unpack",
+    "UmeAiRT_Bundle_Downloader": "⬇️ UmeAiRT Bundle Downloader",
+    "UmeAiRT_Log_Viewer": "📜 UmeAiRT Log Viewer"
+}

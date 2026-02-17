@@ -48,7 +48,11 @@ from .nodes import (
     UmeAiRT_LoraBlock_1, UmeAiRT_LoraBlock_3, UmeAiRT_LoraBlock_5, UmeAiRT_LoraBlock_10,
     UmeAiRT_BlockUltimateSDUpscale, UmeAiRT_BlockFaceDetailer, UmeAiRT_BlockImageLoader, UmeAiRT_BlockImageLoader_Advanced, UmeAiRT_BlockImageProcess,
     UmeAiRT_Unpack_ImageBundle, UmeAiRT_Unpack_FilesBundle, UmeAiRT_Unpack_SettingsBundle, UmeAiRT_Unpack_PromptsBundle,
-    UmeAiRT_ControlNetImageApply_Simple, UmeAiRT_ControlNetImageApply_Advanced, UmeAiRT_ControlNetImageProcess
+    UmeAiRT_ControlNetImageApply_Simple, UmeAiRT_ControlNetImageApply_Advanced, UmeAiRT_ControlNetImageProcess,
+    
+    # Tools
+    UmeAiRT_Bundle_Downloader,
+    UmeAiRT_Log_Viewer,
 )
 
 # Register internal 'bbox' folder for standalone usage
@@ -141,6 +145,10 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_ControlNetImageApply_Simple": UmeAiRT_ControlNetImageApply_Simple,
     "UmeAiRT_ControlNetImageApply_Advanced": UmeAiRT_ControlNetImageApply_Advanced,
     "UmeAiRT_ControlNetImageProcess": UmeAiRT_ControlNetImageProcess,
+    
+    # Tools
+    "UmeAiRT_Bundle_Downloader": UmeAiRT_Bundle_Downloader,
+    "UmeAiRT_Log_Viewer": UmeAiRT_Log_Viewer,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -211,8 +219,28 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_ControlNetImageApply_Simple": "ControlNet Apply (Simple)",
     "UmeAiRT_ControlNetImageApply_Advanced": "ControlNet Apply (Advanced)",
     "UmeAiRT_ControlNetImageProcess": "ControlNet Process (Unified)",
+    
+    # Tools
+    "UmeAiRT_Bundle_Downloader": "💾 Bundle Model Downloader",
+    "UmeAiRT_Log_Viewer": "📜 UmeAiRT Log Viewer",
 }
 
 WEB_DIRECTORY = "./web"
+
+# --- STARTUP LOGGING ---
+try:
+    import colorama
+    from colorama import Fore, Style
+    colorama.init(convert=True, autoreset=True)
+    CYAN = Fore.CYAN
+    GREEN = Fore.GREEN
+    RED = Fore.RED
+    RESET = Style.RESET_ALL
+except ImportError:
+    CYAN = GREEN = RED = RESET = ""
+
+print(f"[{CYAN}UmeAiRT-Toolkit{RESET}] 📂 Loading nodes...")
+print(f"[{CYAN}UmeAiRT-Toolkit{RESET}] 🧩 Loaded {len(NODE_CLASS_MAPPINGS)} nodes.")
+print(f"[{CYAN}UmeAiRT-Toolkit{RESET}]{GREEN} ✅ Initialization Complete.{RESET}")
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]

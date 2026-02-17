@@ -14,6 +14,13 @@ from .utils import sanitize_filename, get_sha256, full_checkpoint_path_for
 from .utils_civitai import get_civitai_sampler_name, get_civitai_metadata, MAX_HASH_LENGTH
 from .prompt_metadata_extractor import PromptMetadataExtractor
 
+try:
+    from ..logger import log_node
+except ImportError:
+    def log_node(msg, color=None, prefix="UmeAiRT"):
+        print(f"[UmeAiRT] {msg}")
+
+
 def parse_checkpoint_name(ckpt_name: str) -> str:
     return os.path.basename(ckpt_name)
 
@@ -50,12 +57,18 @@ def save_json(image_info: dict[str, Any] | None, filename: str) -> None:
     try:
         workflow = (image_info or {}).get('workflow')
         if workflow is None:
-            print('No image info found, skipping saving of JSON')
+            # print('No image info found, skipping saving of JSON')
+            log_node('ImageSaver No image info found, skipping JSON.', color="YELLOW")
         with open(f'{filename}.json', 'w') as workflow_file:
+
             json.dump(workflow, workflow_file)
-            print(f'Saved workflow to {filename}.json')
+            # print(f'Saved workflow to {filename}.json')
+            log_node(f'ImageSaver Saved workflow to {filename}.json', color="GREEN")
     except Exception as e:
-        print(f'Failed to save workflow as json due to: {e}, proceeding with the remainder of saving execution')
+
+        # print(f'Failed to save workflow as json due to: {e}, proceeding with the remainder of saving execution')
+        log_node(f'ImageSaver Failed to save JSON: {e}', color="RED")
+
 
 @dataclass
 class Metadata:
@@ -278,8 +291,10 @@ class ImageSaverLogic:
 
         if output_path.strip() != '':
             if not os.path.exists(output_path.strip()):
-                print(f'UmeAiRT-Image-Saver: Creating directory `{output_path.strip()}`')
+                # print(f'UmeAiRT-Image-Saver: Creating directory `{output_path.strip()}`')
+                log_node(f'ImageSaver Creating directory `{output_path.strip()}`', color="CYAN")
                 os.makedirs(output_path, exist_ok=True)
+
 
         result_paths: list[str] = list()
         num_images = len(images)

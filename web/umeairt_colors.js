@@ -177,6 +177,12 @@ const UME_NODE_COLORS = {
         bgcolor: "#4A290B"
     },
 
+    // Tools - Light Grey/Dark Text
+    "UmeAiRT_Bundle_Downloader": {
+        color: "#333333",
+        bgcolor: "#D5D8DC"
+    },
+
     // Label - Dark Gray (utility)
     "UmeAiRT_Label": {
         color: "#34495E",
