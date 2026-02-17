@@ -609,5 +609,34 @@
                 }
             ]
         }
+    },
+    "bbox": {
+        "face_yolov8n": {
+            "files": [
+                {
+                    "url": "https://huggingface.co/Bingsu/adetailer/resolve/main/face_yolov8n.pt",
+                    "path_type": "bbox",
+                    "filename": "face_yolov8n.pt"
+                }
+            ]
+        },
+        "hand_yolov8n": {
+            "files": [
+                {
+                    "url": "https://huggingface.co/Bingsu/adetailer/resolve/main/hand_yolov8n.pt",
+                    "path_type": "bbox",
+                    "filename": "hand_yolov8n.pt"
+                }
+            ]
+        },
+        "person_yolov8n-seg": {
+            "files": [
+                {
+                    "url": "https://huggingface.co/Bingsu/adetailer/resolve/main/person_yolov8n-seg.pt",
+                    "path_type": "bbox",
+                    "filename": "person_yolov8n-seg.pt"
+                }
+            ]
+        }
     }
 }

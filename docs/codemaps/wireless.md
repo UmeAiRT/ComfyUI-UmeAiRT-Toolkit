@@ -1,9 +1,19 @@
 # Wireless Architecture Map
 
-## Core Concept
+## Overview
 
 The "Wireless" system allows nodes to communicate without visible noodle links in the ComfyUI graph.
-It uses a Python dictionary `UME_SHARED_STATE` in `nodes.py` as a central blackboard.
+It uses a Python dictionary `UME_SHARED_STATE` (located in `modules/wireless.py`) as a central blackboard.
+
+## Modular Structure
+
+The codebase is now split into modules:
+
+- **`modules/wireless.py`**: Core wireless logic, Global State, and Wireless Nodes (KSampler, Upscalers).
+- **`modules/blocks.py`**: Atomic "Block" nodes for packing parameters (Settings, Prompts, Models).
+- **`modules/controlnet.py`**: ControlNet integration (Unified Loader, Process, Apply).
+- **`modules/tools.py`**: Utility nodes (Bundle Downloader, Log Viewer, Seed).
+- **`nodes.py`**: Entry point bridge importing all modules.
 
 ## Data Flow Diagram
 
@@ -27,7 +37,7 @@ graph TD
 
 ## Internal Keys Reference
 
-These keys are defined as constants in `nodes.py`.
+These keys are defined as constants in `modules/wireless.py`.
 
 | Key Constant | String Value | Purpose |
 |--------------|--------------|---------|
@@ -45,6 +55,7 @@ These keys are defined as constants in `nodes.py`.
 | `KEY_IMAGESIZE` | `"ume_internal_imagesize"` | Dict `{'width': int, 'height': int}` |
 | `KEY_SOURCE_IMAGE` | `"ume_internal_source_image"` | Loaded Input Image |
 | `KEY_SOURCE_MASK` | `"ume_internal_source_mask"` | Mask for Inpainting (or None) |
+| `KEY_CONTROLNETS` | `"ume_internal_controlnets"` | ControlNet Stack |
 
 ## Autonomous Logic
 

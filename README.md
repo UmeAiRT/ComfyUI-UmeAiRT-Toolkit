@@ -7,7 +7,7 @@ Stop fighting with "noodle soup"! The UmeAiRT Toolkit provides two workflow para
 - **Wireless Nodes**: Share global state for ultra-clean workflows
 - **Block Nodes**: Self-contained bundles that connect via typed sockets
 
-![Workflow Example](https://github.com/user-attachments/assets/placeholder.png)
+<!-- ![Workflow Example](https://github.com/user-attachments/assets/placeholder.png) -->
 
 ---
 
