@@ -650,6 +650,7 @@ class UmeAiRT_WirelessCheckpointLoader(comfy_nodes.CheckpointLoaderSimple):
         UME_SHARED_STATE[KEY_VAE] = out[2]
         UME_SHARED_STATE[KEY_MODEL_NAME] = ckpt_name
         UME_SHARED_STATE[KEY_LORAS] = []
+        log_node(f"Wireless Checkpoint Loaded: {ckpt_name}", color="GREEN")
         return out
 
 
@@ -747,10 +748,11 @@ class UmeAiRT_WirelessImageLoader(comfy_nodes.LoadImage):
             img = final_img
             mask = final_mask
             
-            print(f"UmeAiRT Wireless Image Loader: Resized to {target_w}x{target_h}")
+            # print(f"UmeAiRT Wireless Image Loader: Resized to {target_w}x{target_h}")
 
         # Set Wireless State
         UME_SHARED_STATE[KEY_SOURCE_IMAGE] = img
+        log_node(f"Wireless Image Loaded: {image} (Resize: {resize}, Mode: {'Inpaint' if mode else 'Img2Img'})", color="GREEN")
         
         # Apply Mode (Inpaint vs Img2Img)
         if mode:
@@ -913,7 +915,10 @@ class UmeAiRT_WirelessKSampler:
         denoise = float(UME_SHARED_STATE.get(KEY_DENOISE, 1.0))
         
         pos_text = str(UME_SHARED_STATE.get(KEY_POSITIVE, ""))
+        pos_text = str(UME_SHARED_STATE.get(KEY_POSITIVE, ""))
         neg_text = str(UME_SHARED_STATE.get(KEY_NEGATIVE, ""))
+
+        log_node(f"Starting Wireless Sampling: {steps} steps | CFG: {cfg} | Denoise: {denoise} | Sampler: {sampler_name}", color="MAGENTA")
 
         # 3. Handle Latent (Auto-Detect Txt2Img vs Img2Img)
         wireless_latent = UME_SHARED_STATE.get(KEY_LATENT)
@@ -926,7 +931,8 @@ class UmeAiRT_WirelessKSampler:
             source_mask = UME_SHARED_STATE.get(KEY_SOURCE_MASK)
 
             if source_image is not None:
-                print(f"UmeAiRT DEBUG: Wireless KSampler triggered Img2Img (Denoise {denoise}). Encoding Source Image.")
+                # print(f"UmeAiRT DEBUG: Wireless KSampler triggered Img2Img (Denoise {denoise}). Encoding Source Image.")
+                log_node(f"Wireless KSampler: Img2Img Triggered (Denoise {denoise:.2f}). Encoding Source Image...", color="YELLOW")
                 # VAE Encode Logic
                 # VAEEncode needs (pixels, vae) -> returns (latent,)
                 try:
@@ -936,18 +942,16 @@ class UmeAiRT_WirelessKSampler:
                     # LoadImage returns a mask of 0s for opaque images. 
                     # If we apply that as a noise_mask, KSampler changes nothing (keeps original).
                     if source_mask is not None:
-                         if torch.any(source_mask > 0):
-                             # Ensure mask is suitable for latent (set_mask typically handles resizing/batching in KSampler logic, 
-                             # but here we are in raw latent space. 
-                             # ComfyUI 'SetLatentNoiseMask' node logic: s["noise_mask"] = mask
-                             latent_image["noise_mask"] = source_mask
-                             print("UmeAiRT DEBUG: Wireless KSampler applying Inpainting Mask.")
-                         else:
-                             # Mask is all zeros (Opaque image default). Ignore it to allow full Img2Img.
-                             print("UmeAiRT DEBUG: Sample mask is all zeros (Opaque). Ignoring to allow Img2Img.")
+                        if torch.any(source_mask > 0):
+                            # ComfyUI 'SetLatentNoiseMask' node logic: s["noise_mask"] = mask
+                            latent_image["noise_mask"] = source_mask
+                            log_node("Wireless KSampler: Applying Inpainting Mask.", color="YELLOW")
+                        else:
+                            # Mask is all zeros (Opaque image default). Ignore it to allow full Img2Img.
+                            pass
 
                 except Exception as e:
-                     print(f"UmeAiRT Error: Failed to VAE Encode source image: {e}")
+                     log_node(f"Error: Failed to VAE Encode source image: {e}", color="RED")
                      # Fallback to Txt2Img if encode fails? better to raise error or fallback to empty.
                      pass
         
@@ -979,17 +983,18 @@ class UmeAiRT_WirelessKSampler:
 
         # 4.5 Apply ControlNets (Wireless Injection)
         if controlnets:
-            print(f"UmeAiRT Wireless KSampler: Applying {len(controlnets)} ControlNets...")
+            # print(f"UmeAiRT Wireless KSampler: Applying {len(controlnets)} ControlNets...")
+            log_node(f"Wireless KSampler: Applying {len(controlnets)} ControlNets...", color="MAGENTA")
             for cnet_def in controlnets:
                 c_name, c_image, c_str, c_start, c_end = cnet_def
                 if c_name != "None" and c_image is not None:
                     try:
-                         print(f"  - ControlNet: {c_name} | Str: {c_str}")
+                         # print(f"  - ControlNet: {c_name} | Str: {c_str}")
                          cnet_model = self.cnet_loader.load_controlnet(c_name)[0]
                          # ControlNetApplyAdvanced takes both pos and neg
                          positive, negative = self.cnet_apply.apply_controlnet(positive, negative, cnet_model, c_image, c_str, c_start, c_end)
                     except Exception as e:
-                        print(f"  - Failed to apply {c_name}: {e}")
+                        log_node(f"Failed to apply {c_name}: {e}", color="RED")
 
         # 5. Sample
         # We reuse the standard KSampler function
@@ -1320,7 +1325,7 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
 
     def upscale(self, image, enabled, model, upscale_by, clean_prompt=True):
         # print(f"DEBUG: UmeAiRT Wireless Upscale Simple - Enabled: {enabled}")
-        # log_node(f"DEBUG: Wireless Upscale Simple - Enabled: {enabled}", color="CYAN")
+        log_node(f"Wireless Upscale Simple - Enabled: {enabled}", color="CYAN")
 
         if not enabled:
             return (image,)
@@ -1341,7 +1346,7 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         # Clean Prompt Logic
         if clean_prompt:
             # print("UmeAiRT Upscale: Using Clean Prompt (Empty Positive) to prevent hallucinations.")
-            log_node("Upscale: Using Clean Prompt (Empty Positive) to prevent hallucinations.", color="CYAN")
+            log_node("Upscale: Using Clean Prompt (Empty Positive) to prevent hallucinations.", color="YELLOW")
 
             # Use empty positive prompt
             target_pos_text = ""
@@ -1506,6 +1511,8 @@ class UmeAiRT_WirelessFaceDetailer_Advanced(UmeAiRT_WirelessUltimateUpscale_Base
         
         segs = bbox_detector.detect(image, bbox_threshold, bbox_dilation, bbox_crop_factor, drop_size)
 
+        log_node(f"Face Detailer (Adv): Detected {len(segs)} faces/regions. Processing...", color="MAGENTA")
+
         # Run Detailer with Wireless Settings
         # Usage strategy: We prioritize wireless settings as requested by user.
         # NOTE: If wireless_denoise is 1.0 (default), it might be too high for detailing, but we respect the user's intent to use setters.
@@ -1601,6 +1608,8 @@ class UmeAiRT_WirelessFaceDetailer_Simple(UmeAiRT_WirelessUltimateUpscale_Base):
         # Detect
         # print(f"DEBUG: Running Simple Detector with {bbox_model_name}")
         segs = bbox_detector.detect(image, bbox_threshold, bbox_dilation, bbox_crop_factor, drop_size)
+        
+        log_node(f"Face Detailer (Simple): Detected {len(segs)} faces/regions. Processing...", color="MAGENTA")
 
         # Run Detailer
         result = fd_logic.do_detail(
@@ -1747,6 +1756,8 @@ class UmeAiRT_WirelessImageSaver(UmeAiRT_WirelessUltimateUpscale_Base):
             time_format=time_format, 
             metadata=metadata_obj
         )
+
+        log_node(f"Image Saver: Saved {len(result_paths)} images to {resolved_path}", color="GREEN")
 
         # 5. Format Output
         # subfolder = os.path.normpath(path) # Old logic used raw path
@@ -2031,6 +2042,7 @@ class UmeAiRT_FilesSettings_FLUX:
             "vae": vae,
             "model_name": unet_name
         }
+        log_node(f"Block Checkpoint (FLUX) Loaded: {unet_name}", color="GREEN")
         return (files,)
 
 
@@ -2227,7 +2239,7 @@ class UmeAiRT_ControlNetImageProcess:
         # TXT2IMG Logic
         if mode == "txt2img":
              # print("UmeAiRT Unified CNet: Txt2Img Mode (Forcing Denoise=1.0, Ignoring Mask).")
-             log_node("Unified CNet: Txt2Img Mode (Forcing Denoise=1.0, Ignoring Mask).", color="CYAN")
+             log_node("Unified CNet: Txt2Img Mode (Forcing Denoise=1.0, Ignoring Mask).", color="YELLOW")
              denoise = 1.0
 
              mask = None 
@@ -2404,8 +2416,9 @@ class UmeAiRT_WirelessImageProcess:
         # But if image is provided, maybe we use it for size?
         # User request: "forcer le denoise a 1 et ignore les option de mask"
         
+        
         if mode == "txt2img":
-             print("UmeAiRT Wireless Process: Txt2Img Mode (Forcing Denoise=1.0, Ignoring Mask).")
+             log_node("Wireless Process: Txt2Img Mode (Forcing Denoise=1.0, Ignoring Mask).", color="YELLOW")
              # Force Denoise
              UME_SHARED_STATE[KEY_DENOISE] = 1.0
              # Hide Mask
@@ -2541,7 +2554,8 @@ class UmeAiRT_WirelessImageProcess:
         state_mask = final_mask
         if mode == "img2img":
             state_mask = None # Hide mask from state
-            print("UmeAiRT Wireless Process: Img2Img Mode (State Mask Hidden).")
+            log_node("Wireless Process: Img2Img Mode (State Mask Hidden).", color="YELLOW")
+        
         
         # 6. Update State
         UME_SHARED_STATE[KEY_SOURCE_IMAGE] = final_image

@@ -10,17 +10,19 @@ try:
     colorama.init(convert=True, autoreset=True)
     CYAN = Fore.CYAN
     GREEN = Fore.GREEN
-    RED = Fore.RED
+    RED = Fore.LIGHTRED_EX
+    MAGENTA = Fore.LIGHTMAGENTA_EX
+    YELLOW = Fore.LIGHTYELLOW_EX
     RESET = Style.RESET_ALL
 except ImportError:
-    CYAN = GREEN = RED = RESET = ""
+    CYAN = GREEN = RED = MAGENTA = YELLOW = RESET = ""
 
-def log_node(msg, color=None, prefix="UmeAiRT"):
+def log_node(msg, color=None, prefix="UmeAiRT-Toolkit"):
     """Standardized logger for UmeAiRT nodes."""
     c = ""
     if color == "GREEN": c = GREEN
-    elif color == "CYAN": c = CYAN
+    elif color == "CYAN": c = MAGENTA # User requested change from Cyan to avoid matching prefix
     elif color == "RED": c = RED
-    elif color == "YELLOW": c = Fore.YELLOW if 'colorama' in globals() else ""
+    elif color == "YELLOW": c = YELLOW
     
     print(f"[{CYAN}{prefix}{RESET}] {c}{msg}{RESET}")
