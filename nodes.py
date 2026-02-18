@@ -29,6 +29,7 @@ from server import PromptServer
 # --- UmeAiRT Logger ---
 try:
     from .logger import log_node, CYAN, GREEN, RED, RESET
+    from .optimization_utils import SamplerContext
 except ImportError:
     # Fallback if relative import fails (e.g. running script directly)
     # But usually unnecessary in ComfyUI context
@@ -997,8 +998,9 @@ class UmeAiRT_WirelessKSampler:
                         log_node(f"Failed to apply {c_name}: {e}", color="RED")
 
         # 5. Sample
-        # We reuse the standard KSampler function
-        return comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise)
+        # We reuse the standard KSampler function with our Optimization Wrapper
+        with SamplerContext():
+            return comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise)
 
 
 class UmeAiRT_WirelessInpaintComposite:
@@ -1331,7 +1333,7 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
             return (image,)
 
         # Hardcoded recommended denoise for simple mode
-        denoise = 0.35
+        denoise = 0.20
 
         # Load Upscale Model Internally
         try:
@@ -1370,17 +1372,18 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         # Force uniform tiles to prevent artifacts
         force_uniform = True
 
-        return usdu_node.upscale(
-            image=image, model=model, positive=positive, negative=negative, vae=vae,
-            upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
-            sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
-            upscale_model=upscale_model, mode_type=mode_type,
-            tile_width=t_w, tile_height=t_h, mask_blur=mask_blur, tile_padding=tile_padding,
-            seam_fix_mode=seam_fix_mode, seam_fix_denoise=seam_fix_denoise,
-            seam_fix_mask_blur=8, seam_fix_width=64, seam_fix_padding=16,
-            force_uniform_tiles=force_uniform, tiled_decode=False,
-            suppress_preview=True,
-        )
+        with SamplerContext():
+            return usdu_node.upscale(
+                image=image, model=model, positive=positive, negative=negative, vae=vae,
+                upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
+                sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
+                upscale_model=upscale_model, mode_type=mode_type,
+                tile_width=t_w, tile_height=t_h, mask_blur=mask_blur, tile_padding=tile_padding,
+                seam_fix_mode=seam_fix_mode, seam_fix_denoise=seam_fix_denoise,
+                seam_fix_mask_blur=8, seam_fix_width=64, seam_fix_padding=16,
+                force_uniform_tiles=force_uniform, tiled_decode=False,
+                suppress_preview=True,
+            )
 
 
 class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_Base):
@@ -1445,17 +1448,18 @@ class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_B
         steps = math.ceil(gen_steps / 4)
         cfg = 1.0 # Force 1.0
 
-        return usdu_node.upscale(
-            image=image, model=model, positive=positive, negative=negative, vae=vae,
-            upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
-            sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
-            upscale_model=upscale_model, mode_type=mode_type,
-            tile_width=tile_width, tile_height=tile_height, mask_blur=mask_blur, tile_padding=tile_padding,
-            seam_fix_mode=seam_fix_mode, seam_fix_denoise=seam_fix_denoise,
-            seam_fix_mask_blur=seam_fix_mask_blur, seam_fix_width=seam_fix_width, seam_fix_padding=seam_fix_padding,
-            force_uniform_tiles=force_uniform_tiles, tiled_decode=tiled_decode,
-            suppress_preview=True,
-        )
+        with SamplerContext():
+            return usdu_node.upscale(
+                image=image, model=model, positive=positive, negative=negative, vae=vae,
+                upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
+                sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
+                upscale_model=upscale_model, mode_type=mode_type,
+                tile_width=tile_width, tile_height=tile_height, mask_blur=mask_blur, tile_padding=tile_padding,
+                seam_fix_mode=seam_fix_mode, seam_fix_denoise=seam_fix_denoise,
+                seam_fix_mask_blur=seam_fix_mask_blur, seam_fix_width=seam_fix_width, seam_fix_padding=seam_fix_padding,
+                force_uniform_tiles=force_uniform_tiles, tiled_decode=tiled_decode,
+                suppress_preview=True,
+            )
 
 
 class UmeAiRT_WirelessFaceDetailer_Advanced(UmeAiRT_WirelessUltimateUpscale_Base):
@@ -1517,14 +1521,15 @@ class UmeAiRT_WirelessFaceDetailer_Advanced(UmeAiRT_WirelessUltimateUpscale_Base
         # Usage strategy: We prioritize wireless settings as requested by user.
         # NOTE: If wireless_denoise is 1.0 (default), it might be too high for detailing, but we respect the user's intent to use setters.
         
-        result = fd_logic.do_detail(
-            image=image, segs=segs, model=model, clip=clip, vae=vae,
-            guide_size=guide_size, guide_size_for_bbox=guide_size_for, max_size=max_size,
-            seed=wireless_seed, steps=wireless_steps, cfg=wireless_cfg, sampler_name=wireless_sampler, scheduler=wireless_scheduler,
-            positive=positive, negative=negative, denoise=denoise,
-            feather=feather, noise_mask=noise_mask, force_inpaint=force_inpaint,
-            drop_size=drop_size
-        )
+        with SamplerContext():
+            result = fd_logic.do_detail(
+                image=image, segs=segs, model=model, clip=clip, vae=vae,
+                guide_size=guide_size, guide_size_for_bbox=guide_size_for, max_size=max_size,
+                seed=wireless_seed, steps=wireless_steps, cfg=wireless_cfg, sampler_name=wireless_sampler, scheduler=wireless_scheduler,
+                positive=positive, negative=negative, denoise=denoise,
+                feather=feather, noise_mask=noise_mask, force_inpaint=force_inpaint,
+                drop_size=drop_size
+            )
         
         return result
 
@@ -1612,14 +1617,15 @@ class UmeAiRT_WirelessFaceDetailer_Simple(UmeAiRT_WirelessUltimateUpscale_Base):
         log_node(f"Face Detailer (Simple): Detected {len(segs)} faces/regions. Processing...", color="MAGENTA")
 
         # Run Detailer
-        result = fd_logic.do_detail(
-            image=image, segs=segs, model=sd_model, clip=clip, vae=vae,
-            guide_size=guide_size, guide_size_for_bbox=guide_size_for_bbox, max_size=max_size,
-            seed=wireless_seed, steps=wireless_steps, cfg=wireless_cfg, sampler_name=wireless_sampler, scheduler=wireless_scheduler,
-            positive=positive, negative=negative, denoise=denoise,
-            feather=feather, noise_mask=noise_mask, force_inpaint=force_inpaint,
-            drop_size=drop_size
-        )
+        with SamplerContext():
+            result = fd_logic.do_detail(
+                image=image, segs=segs, model=sd_model, clip=clip, vae=vae,
+                guide_size=guide_size, guide_size_for_bbox=guide_size_for_bbox, max_size=max_size,
+                seed=wireless_seed, steps=wireless_steps, cfg=wireless_cfg, sampler_name=wireless_sampler, scheduler=wireless_scheduler,
+                positive=positive, negative=negative, denoise=denoise,
+                feather=feather, noise_mask=noise_mask, force_inpaint=force_inpaint,
+                drop_size=drop_size
+            )
         
         return result
 
@@ -3419,7 +3425,10 @@ class UmeAiRT_BlockSampler:
         print(f"  Negative: {neg_text}")
         print(f"{'='*60}\n")
         
-        result_latent = comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise)[0]
+        print(f"{'='*60}\n")
+        
+        with SamplerContext():
+            result_latent = comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise)[0]
 
         # 7. Decode
         generated_image = comfy_nodes.VAEDecode().decode(vae, result_latent)[0]
@@ -3605,17 +3614,18 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         steps = max(5, steps // 4)  # 1/4 of normal steps
         mask_blur = 16
 
-        return usdu_node.upscale(
-            image=image, model=sd_model, positive=positive, negative=negative, vae=vae,
-            upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
-            sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
-            upscale_model=upscale_model, mode_type=mode_type,
-            tile_width=tile_width, tile_height=tile_height, mask_blur=mask_blur, tile_padding=tile_padding,
-            seam_fix_mode="None", seam_fix_denoise=1.0,
-            seam_fix_mask_blur=8, seam_fix_width=64, seam_fix_padding=16,
-            force_uniform_tiles=True, tiled_decode=False,
-            suppress_preview=True,
-        )
+        with SamplerContext():
+            return usdu_node.upscale(
+                image=image, model=sd_model, positive=positive, negative=negative, vae=vae,
+                upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
+                sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
+                upscale_model=upscale_model, mode_type=mode_type,
+                tile_width=tile_width, tile_height=tile_height, mask_blur=mask_blur, tile_padding=tile_padding,
+                seam_fix_mode="None", seam_fix_denoise=1.0,
+                seam_fix_mask_blur=8, seam_fix_width=64, seam_fix_padding=16,
+                force_uniform_tiles=True, tiled_decode=False,
+                suppress_preview=True,
+            )
 
 
 class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
@@ -3733,14 +3743,15 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
 
         segs = bbox_detector.detect(image, bbox_threshold, bbox_dilation, bbox_crop_factor, drop_size)
 
-        result = fd_logic.do_detail(
-            image=image, segs=segs, model=sd_model, clip=clip, vae=vae,
-            guide_size=guide_size, guide_size_for_bbox=guide_size_for_bbox, max_size=max_size,
-            seed=seed, steps=steps, cfg=cfg, sampler_name=sampler_name, scheduler=scheduler,
-            positive=positive, negative=negative, denoise=denoise,
-            feather=feather, noise_mask=noise_mask, force_inpaint=force_inpaint,
-            drop_size=drop_size
-        )
+        with SamplerContext():
+            result = fd_logic.do_detail(
+                image=image, segs=segs, model=sd_model, clip=clip, vae=vae,
+                guide_size=guide_size, guide_size_for_bbox=guide_size_for_bbox, max_size=max_size,
+                seed=seed, steps=steps, cfg=cfg, sampler_name=sampler_name, scheduler=scheduler,
+                positive=positive, negative=negative, denoise=denoise,
+                feather=feather, noise_mask=noise_mask, force_inpaint=force_inpaint,
+                drop_size=drop_size
+            )
 
         return result
 

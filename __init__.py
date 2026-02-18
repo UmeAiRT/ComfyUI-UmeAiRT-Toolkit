@@ -54,6 +54,7 @@ from .nodes import (
     UmeAiRT_Bundle_Downloader,
     UmeAiRT_Log_Viewer,
 )
+from .optimization_utils import check_optimizations
 
 # Register internal 'bbox' folder for standalone usage
 try:
@@ -241,6 +242,7 @@ except ImportError:
 
 print(f"[{CYAN}UmeAiRT-Toolkit{RESET}] 📂 Loading nodes...")
 print(f"[{CYAN}UmeAiRT-Toolkit{RESET}] 🧩 Loaded {len(NODE_CLASS_MAPPINGS)} nodes.")
+check_optimizations()
 print(f"[{CYAN}UmeAiRT-Toolkit{RESET}]{GREEN} ✅ Initialization Complete.{RESET}")
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]
