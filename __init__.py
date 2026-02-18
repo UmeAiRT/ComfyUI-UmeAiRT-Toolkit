@@ -45,11 +45,12 @@ from .nodes import (
     UmeAiRT_BboxDetectorLoader, UmeAiRT_WirelessImageSaver, UmeAiRT_WirelessCheckpointLoader,
     UmeAiRT_WirelessImageLoader, UmeAiRT_SourceImage_Output, UmeAiRT_WirelessInpaintComposite,
     UmeAiRT_Label, UmeAiRT_WirelessImageProcess,
-    UmeAiRT_GenerationSettings, UmeAiRT_FilesSettings_Checkpoint, UmeAiRT_FilesSettings_Checkpoint_Advanced, UmeAiRT_FilesSettings_FLUX, UmeAiRT_BlockSampler, UmeAiRT_PromptBlock,
+    UmeAiRT_GenerationSettings, UmeAiRT_FilesSettings_Checkpoint, UmeAiRT_FilesSettings_Checkpoint_Advanced, UmeAiRT_FilesSettings_FLUX, UmeAiRT_FilesSettings_Fragmented, UmeAiRT_FilesSettings_ZIMG, UmeAiRT_BlockSampler, UmeAiRT_PromptBlock,
     UmeAiRT_LoraBlock_1, UmeAiRT_LoraBlock_3, UmeAiRT_LoraBlock_5, UmeAiRT_LoraBlock_10,
     UmeAiRT_BlockUltimateSDUpscale, UmeAiRT_BlockFaceDetailer, UmeAiRT_BlockImageLoader, UmeAiRT_BlockImageLoader_Advanced, UmeAiRT_BlockImageProcess,
     UmeAiRT_Unpack_ImageBundle, UmeAiRT_Unpack_FilesBundle, UmeAiRT_Unpack_SettingsBundle, UmeAiRT_Unpack_PromptsBundle,
     UmeAiRT_ControlNetImageApply_Simple, UmeAiRT_ControlNetImageApply_Advanced, UmeAiRT_ControlNetImageProcess,
+    UmeAiRT_Detailer_Daemon_Simple, UmeAiRT_Detailer_Daemon_Advanced,
     
     # Tools
     UmeAiRT_Bundle_Downloader,
@@ -126,6 +127,9 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_FilesSettings_Checkpoint": UmeAiRT_FilesSettings_Checkpoint,
     "UmeAiRT_FilesSettings_Checkpoint_Advanced": UmeAiRT_FilesSettings_Checkpoint_Advanced,
     "UmeAiRT_FilesSettings_FLUX": UmeAiRT_FilesSettings_FLUX,
+    "UmeAiRT_FilesSettings_FLUX": UmeAiRT_FilesSettings_FLUX,
+    "UmeAiRT_FilesSettings_Fragmented": UmeAiRT_FilesSettings_Fragmented,
+    "UmeAiRT_FilesSettings_ZIMG": UmeAiRT_FilesSettings_ZIMG,
     "UmeAiRT_LoraBlock_1": UmeAiRT_LoraBlock_1,
     "UmeAiRT_LoraBlock_3": UmeAiRT_LoraBlock_3,
     "UmeAiRT_LoraBlock_5": UmeAiRT_LoraBlock_5,
@@ -137,6 +141,10 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_BlockImageLoader": UmeAiRT_BlockImageLoader,
     "UmeAiRT_BlockImageLoader_Advanced": UmeAiRT_BlockImageLoader_Advanced,
     "UmeAiRT_BlockImageProcess": UmeAiRT_BlockImageProcess,
+
+    # Post Processing
+    "UmeAiRT_Detailer_Daemon_Simple": UmeAiRT_Detailer_Daemon_Simple,
+    "UmeAiRT_Detailer_Daemon_Advanced": UmeAiRT_Detailer_Daemon_Advanced,
 
     # Unpack Nodes
     "UmeAiRT_Unpack_ImageBundle": UmeAiRT_Unpack_ImageBundle,
@@ -206,6 +214,9 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_FilesSettings_Checkpoint": "Model Loader (Block)",
     "UmeAiRT_FilesSettings_Checkpoint_Advanced": "Model Loader - Advanced (Block)",
     "UmeAiRT_FilesSettings_FLUX": "Model Loader - FLUX (Block)",
+    "UmeAiRT_FilesSettings_FLUX": "Model Loader - FLUX (Block)",
+    "UmeAiRT_FilesSettings_Fragmented": "Model Loader (Fragmented)",
+    "UmeAiRT_FilesSettings_ZIMG": "Model Loader (Z-IMG)",
     "UmeAiRT_PromptBlock": "Prompts (Block)",
     "UmeAiRT_LoraBlock_1": "LoRA 1x (Block)",
     "UmeAiRT_LoraBlock_3": "LoRA 3x (Block)",
@@ -217,6 +228,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_BlockImageLoader": "Image Loader (Block)",
     "UmeAiRT_BlockImageLoader_Advanced": "Image Loader - Advanced (Block)",
     "UmeAiRT_BlockImageProcess": "Image Process (Block)",
+    "UmeAiRT_Detailer_Daemon_Simple": "Detailer Daemon (Simple)",
+    "UmeAiRT_Detailer_Daemon_Advanced": "Detailer Daemon (Advanced)",
     "UmeAiRT_Unpack_ImageBundle": "Unpack Image Bundle",
     "UmeAiRT_Unpack_FilesBundle": "Unpack Models Bundle",
     "UmeAiRT_Unpack_SettingsBundle": "Unpack Settings Bundle",

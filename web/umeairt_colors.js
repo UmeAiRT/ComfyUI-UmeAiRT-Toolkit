@@ -24,6 +24,14 @@ const UME_NODE_COLORS = {
         color: "#154360",
         bgcolor: "#0A2130"
     },
+    "UmeAiRT_FilesSettings_Fragmented": {
+        color: "#154360",
+        bgcolor: "#0A2130"
+    },
+    "UmeAiRT_FilesSettings_ZIMG": {
+        color: "#154360",
+        bgcolor: "#0A2130"
+    },
 
     // Prompt Block - Green
     "UmeAiRT_PromptBlock": {
@@ -91,6 +99,15 @@ const UME_NODE_COLORS = {
         bgcolor: "#123851"
     },
 
+    // Detailer Daemon - Pale Blue (Same as SeedVR2)
+    "UmeAiRT_Detailer_Daemon_Simple": {
+        color: "#2471A3",
+        bgcolor: "#123851"
+    },
+    "UmeAiRT_Detailer_Daemon_Advanced": {
+        color: "#2471A3",
+        bgcolor: "#123851"
+    },
     // Wireless FaceDetailer - Pale Blue
     "UmeAiRT_WirelessFaceDetailer_Simple": {
         color: "#2471A3",

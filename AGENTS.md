@@ -88,3 +88,12 @@ Nodes are color-coded by category in `web/umeairt_colors.js`:
 | Create standard ComfyUI nodes | Create "Wireless" nodes that interact with `UME_SHARED_STATE` |
 | Hardcode internal keys | Use the defined constants in `nodes.py` (e.g., `KEY_LATENT`) |
 | Forget `__init__.py` | Double-check registration after creating a new node class |
+
+## 🚨 Mandatory Verification Checklist
+
+**Before marking any task as complete, you MUST verify:**
+
+1. [ ] **`__init__.py` Updated**: Did you add the new node class to `NODE_CLASS_MAPPINGS` and `NODE_DISPLAY_NAME_MAPPINGS` in `__init__.py`?
+2. [ ] **Web Directory**: If the node has frontend code, is it in `web/` and registered?
+3. [ ] **Syntax Check**: Did you do a final syntax check on the files you edited (especially big lists like mappings)?
+4. [ ] **User Notification**: Did you tell the user *exactly* where to find the new node (Category/Name)?

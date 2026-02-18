@@ -6,9 +6,18 @@ import os
 import contextlib
 from .logger import log_node, GREEN, RED, YELLOW, RESET, CYAN, MAGENTA
 
+# Global Cache
+_LIB_CACHE = {}
+
 def check_library(name):
-    """Check if a library is installed."""
-    return importlib.util.find_spec(name) is not None
+    """Check if a library is installed (cached)."""
+    if name in _LIB_CACHE:
+        return _LIB_CACHE[name]
+    
+    spec = importlib.util.find_spec(name)
+    found = spec is not None
+    _LIB_CACHE[name] = found
+    return found
 
 def get_cuda_memory():
     """Get CUDA memory usage."""
@@ -57,55 +66,28 @@ def SamplerContext():
     Context manager to apply optimizations (SageAttention, etc.) specifically during sampling.
     Restores original state afterwards to avoid side effects.
     """
-    # Check what's available
-    sage_spec = importlib.util.find_spec("sageattention")
-    
     # Track what we activated for logging
     active_optimizations = []
     
     # 1. SageAttention
-    if sage_spec:
+    if check_library("sageattention"):
         try:
+            # We assume if it's installed, it might be patching things or available for use
+            # Just importing it to ensure it's loaded if needed
             import sageattention
-            # SageAttention usually patches torch.nn.functional.scaled_dot_product_attention
-            # We should probably let it do its thing, but we might want to ensure we can revert it?
-            # SageAttention source shows it replaces the function on import or via 'use_sageattention()'?
-            # Let's assume there's a use_sageattention() or similar if it follows standard patterns, 
-            # otherwise just importing might be enough if it patches on import (which is aggressive).
-            # Looking at SeedVR2 compatibility.py, it seems to just import sageattn_varlen.
-            # If the user has it installed, we'll assume they want it used.
-            # But wait, we want to scope it.
-            
-            # If we manipulate global torch functions, we need to save/restore.
-            # However, sophisticated attention libs often provide context managers.
-            # If not, we have to rely on their global patch.
-            
-            # For now, let's log that we are *attempting* to use it if standard comfy behavior allows.
-            # Actually, without deep hacking, we can't easily force KSampler to use it unless we replace the attention mechanism.
-            # ComfyUI's model loading usually sets up the attention mechanism (comfy.ldm.modules.attention).
-            # If SageAttention patches standard torch SDPA, then it works automatically if Comfy uses SDPA.
-            
-            # SeedVR2 logic seems to imply it offers these as available options.
-            # Let's log it.
             active_optimizations.append(f"{GREEN}SageAttention{RESET}")
         except Exception as e:
             log_node(f"Failed to init SageAttention: {e}", color="RED")
 
     # 2. Triton (Implicitly used by torch.compile or some attention backends)
-    if importlib.util.find_spec("triton"):
+    if check_library("triton"):
          active_optimizations.append(f"{GREEN}Triton{RESET}")
 
     # Log specific Optimization usage for this run
     if active_optimizations:
         log_node(f"⚡ Optimisation Active: {' | '.join(active_optimizations)}", color="GREEN")
-    else:
-        # Standard
-        # log_node(f"⚡ Optimisation: Standard (No extra accelerators found)")
-        pass
-
+    
     try:
         yield
     finally:
-        # Cleanup if we did any patching (Placeholder for now as direct patching is risky without knowing exact lib behavior)
-        # If we implement explicit patching later, restore here.
         pass

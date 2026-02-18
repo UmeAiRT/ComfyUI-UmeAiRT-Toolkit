@@ -50,8 +50,9 @@ Each node family has its own color for instant visual recognition:
 | **Loaders** | `Wireless Checkpoint Loader` | Load Model/CLIP/VAE wirelessly |
 | **Loaders** | `Wireless Image Loader` | Load source image for Img2Img |
 | **Samplers** | `Wireless KSampler` | Auto-detect Txt2Img/Img2Img mode |
-| **Post-Process** | `Wireless Ultimate Upscale` | USDU with wireless inputs |
-| **Post-Process** | `Wireless FaceDetailer` | Face enhancement with wireless inputs |
+| **Post-Processing** | `Wireless Ultimate Upscale` | USDU with wireless inputs |
+| **Post-Processing** | `Wireless FaceDetailer` | Face enhancement with wireless inputs |
+| **Post-Processing** | `Detailer Daemon` | Autonomous 2-Pass Refiner (Simple/Adv) |
 | **Output** | `Wireless Image Saver` | Auto-path and metadata saving |
 
 ### Block Nodes
@@ -65,8 +66,8 @@ Each node family has its own color for instant visual recognition:
 | **LoRA** | `LoRA 1x/3x/5x/10x` | Stackable LoRA loaders |
 | **Images** | `Image Loader (Block)` | Load image with mode selection |
 | **Samplers** | `Block Sampler` | Full sampler with bundle inputs |
-| **Post-Process** | `Block Ultimate Upscale` | USDU with bundle inputs |
-| **Post-Process** | `Block FaceDetailer` | Face enhancement with bundle inputs |
+| **Post-Processing** | `Block Ultimate Upscale` | USDU with bundle inputs |
+| **Post-Processing** | `Block FaceDetailer` | Face enhancement with bundle inputs |
 
 ### Utilities
 
@@ -75,6 +76,7 @@ Each node family has its own color for instant visual recognition:
 | `Label` | Aesthetic sticky notes for documentation |
 | `Debug` | Inspect current global wireless state |
 | `Bbox Detector Loader` | Load face detection models |
+| `Detailer Daemon` | Standalone Detail Daemon logic |
 
 ---
 

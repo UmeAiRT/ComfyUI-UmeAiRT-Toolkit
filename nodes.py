@@ -58,6 +58,7 @@ KEY_CLIP = "ume_internal_clip"
 KEY_LATENT = "ume_internal_latent"
 KEY_MODEL_NAME = "ume_internal_model_name"
 KEY_LORAS = "ume_internal_loras"
+KEY_IMAGE = "ume_internal_image"
 KEY_SOURCE_IMAGE = "ume_internal_source_image"
 KEY_SOURCE_MASK = "ume_internal_source_mask"
 KEY_CONTROLNETS = "ume_internal_controlnets"
@@ -1020,7 +1021,7 @@ class UmeAiRT_WirelessInpaintComposite:
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("image",)
     FUNCTION = "composite"
-    CATEGORY = "UmeAiRT/Wireless/Post-Process"
+    CATEGORY = "UmeAiRT/Wireless/Post-Processing"
 
     def composite(self, image):
         # 1. Fetch Wireless Inputs
@@ -1313,7 +1314,7 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         return {
             "required": {
                 "image": ("IMAGE",),
-                "enabled": ("BOOLEAN", {"default": True}),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
                 "model": (folder_paths.get_filename_list("upscale_models"),),
                 "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider"}),
                 "clean_prompt": ("BOOLEAN", {"default": True, "label_on": "Reduces Hallucinations", "label_off": "Use Global Prompt"}),
@@ -1323,7 +1324,7 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("image",)
     FUNCTION = "upscale"
-    CATEGORY = "UmeAiRT/Wireless/Post-Process"
+    CATEGORY = "UmeAiRT/Wireless/Post-Processing"
 
     def upscale(self, image, enabled, model, upscale_by, clean_prompt=True):
         # print(f"DEBUG: UmeAiRT Wireless Upscale Simple - Enabled: {enabled}")
@@ -1420,7 +1421,7 @@ class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_B
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("image",)
     FUNCTION = "upscale_advanced"
-    CATEGORY = "UmeAiRT/Wireless/Post-Process"
+    CATEGORY = "UmeAiRT/Wireless/Post-Processing"
 
     def upscale_advanced(self, image, enabled, model, upscale_by, denoise, clean_prompt, 
                          mode_type, tile_width, tile_height, mask_blur, tile_padding,
@@ -1472,6 +1473,33 @@ class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_B
 # Minimum free VRAM (in bytes) required before we start the SeedVR2 upscale.
 # 6 GB leaves room for the DiT + VAE + tile buffers on consumer GPUs.
 SEEDVR2_VRAM_REQUIRED = 6 * 1024 * 1024 * 1024  # 6 GB
+
+# Minimum free VRAM for safe VAE Decoding (prevent swap)
+DECODE_VRAM_REQUIRED = 1.5 * 1024 * 1024 * 1024 # 1.5 GB
+
+def _ensure_vram_for_decode():
+    """Ensure sufficient VRAM for VAE Decode."""
+    import gc
+    import comfy.model_management as mm
+
+    device = mm.get_torch_device()
+    free_before = mm.get_free_memory(device)
+    
+    # If we have enough, do NOTHING (fast path)
+    if free_before >= DECODE_VRAM_REQUIRED:
+        log_node(f"VRAM Safe for Decode ({free_before / (1024**3):.2f} GB available) — skipping cleanup", color="GREEN")
+        return
+
+    # Only clean if tight
+    log_node(f"Low VRAM ({free_before / (1024**3):.2f} GB) for Decode — clearing cache...", color="YELLOW")
+    mm.soft_empty_cache()
+    
+    # Check again
+    if mm.get_free_memory(device) < DECODE_VRAM_REQUIRED:
+         # Force unload if still not enough
+         mm.free_memory(DECODE_VRAM_REQUIRED, device)
+         gc.collect()
+         log_node("Models unloaded to free VRAM for Decode.", color="YELLOW")
 
 def _ensure_vram_for_seedvr2():
     """Check available VRAM and unload cached models if necessary."""
@@ -1541,7 +1569,7 @@ class UmeAiRT_WirelessSeedVR2Upscale:
         return {
             "required": {
                 "image": ("IMAGE",),
-                "enabled": ("BOOLEAN", {"default": True, "label_on": "Enabled", "label_off": "Disabled"}),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
                 "model": (dit_models, {
                     "default": default_dit,
                     "tooltip": "DiT model for SeedVR2 upscaling. Models auto-download on first use.",
@@ -1556,7 +1584,7 @@ class UmeAiRT_WirelessSeedVR2Upscale:
 
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "upscale"
-    CATEGORY = "UmeAiRT/Wireless/Post-Process"
+    CATEGORY = "UmeAiRT/Wireless/Post-Processing"
 
     @staticmethod
     def _build_configs(model_name: str):
@@ -1656,7 +1684,7 @@ class UmeAiRT_WirelessSeedVR2Upscale_Advanced:
         return {
             "required": {
                 "image": ("IMAGE",),
-                "enabled": ("BOOLEAN", {"default": True, "label_on": "Enabled", "label_off": "Disabled"}),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
                 "dit": ("SEEDVR2_DIT", {
                     "tooltip": "DiT model configuration from 'SeedVR2 (Down)Load DiT Model' node."
                 }),
@@ -1707,7 +1735,7 @@ class UmeAiRT_WirelessSeedVR2Upscale_Advanced:
 
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "upscale"
-    CATEGORY = "UmeAiRT/Wireless/Post-Process"
+    CATEGORY = "UmeAiRT/Wireless/Post-Processing"
 
     def upscale(self, image, enabled, dit, vae, new_resolution,
                 tile_width, tile_height, mask_blur, tile_padding,
@@ -1774,7 +1802,7 @@ class UmeAiRT_WirelessFaceDetailer_Advanced(UmeAiRT_WirelessUltimateUpscale_Base
             "required": {
                 "image": ("IMAGE",),
                 "bbox_detector": ("BBOX_DETECTOR",),
-                "enabled": ("BOOLEAN", {"default": True}),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
                 "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": 4096, "step": 8}),
                 "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region"}),
                 "max_size": ("FLOAT", {"default": 1024, "min": 64, "max": 4096, "step": 8}),
@@ -1871,7 +1899,7 @@ class UmeAiRT_WirelessFaceDetailer_Simple(UmeAiRT_WirelessUltimateUpscale_Base):
         return {
             "required": {
                 "image": ("IMAGE",),
-                "enabled": ("BOOLEAN", {"default": True}),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
                 "model": (folder_paths.get_filename_list("bbox"),),
                 "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01, "display": "slider"}),
             }
@@ -1880,7 +1908,7 @@ class UmeAiRT_WirelessFaceDetailer_Simple(UmeAiRT_WirelessUltimateUpscale_Base):
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("image",)
     FUNCTION = "face_detail_simple"
-    CATEGORY = "UmeAiRT/Wireless/Post-Process"
+    CATEGORY = "UmeAiRT/Wireless/Post-Processing"
 
     def face_detail_simple(self, image, enabled, model, denoise):
         
@@ -2097,6 +2125,7 @@ class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_B
         return {
             "required": {
                 "image": ("IMAGE",),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
                 "upscale_model": ("UPSCALE_MODEL",),
                 "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider"}),
                 "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
@@ -2114,11 +2143,14 @@ class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_B
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("image",)
     FUNCTION = "upscale"
-    CATEGORY = "UmeAiRT/Wireless/Post-Process"
+    CATEGORY = "UmeAiRT/Wireless/Post-Processing"
 
-    def upscale(self, image, upscale_model, upscale_by, steps, cfg, denoise, mode_type, mask_blur, tile_padding, seam_fix_mode, seam_fix_denoise):
+    def upscale(self, image, enabled, upscale_model, upscale_by, steps, cfg, denoise, mode_type, mask_blur, tile_padding, seam_fix_mode, seam_fix_denoise):
+        if not enabled:
+            return (image,)
+            
         usdu_node = self.get_usdu_node()
-        model, vae, clip, pos_text, neg_text, seed, _, sampler_name, scheduler, t_w, t_h = self.fetch_wireless_common()
+        model, vae, clip, pos_text, neg_text, seed, _, sampler_name, scheduler, t_w, t_h, wireless_cfg, wireless_denoise = self.fetch_wireless_common()
         positive, negative = self.encode_prompts(clip, pos_text, neg_text)
 
         return usdu_node.upscale(
@@ -2354,6 +2386,235 @@ class UmeAiRT_FilesSettings_FLUX:
             "model_name": unet_name
         }
         log_node(f"Block Checkpoint (FLUX) Loaded: {unet_name}", color="GREEN")
+        return (files,)
+
+
+class UmeAiRT_FilesSettings_Fragmented:
+    """
+    Fragmented Model Loader (Z-IMG style).
+    Loads Model, CLIP, and VAE from separate files/folders.
+    Model list combines 'checkpoints', 'diffusion_models', and 'unet'.
+    CLIP list combines 'clip' and 'text_encoders' folders.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        # 1. Get Models (Checkpoints + Diffusion Models + UNET)
+        ckpts = folder_paths.get_filename_list("checkpoints")
+        diff_models = folder_paths.get_filename_list("diffusion_models")
+        unets = folder_paths.get_filename_list("unet")
+        
+        # Combine and deduplicate
+        all_models = sorted(list(set(ckpts + diff_models + unets)))
+
+        # 2. Get CLIPs (Standard + Text Encoders)
+        clips = folder_paths.get_filename_list("clip")
+        try:
+            tes = folder_paths.get_filename_list("text_encoders")
+            if tes:
+                clips = sorted(list(set(clips + tes)))
+        except:
+            pass
+            
+        # 3. Get VAEs
+        vaes = folder_paths.get_filename_list("vae")
+        
+        return {
+            "required": {
+                "model_name": (all_models,),
+                "weight_dtype": (["default", "fp8_e4m3fn", "fp8_e4m3fn_fast", "fp8_e5m2"],),
+                "clip_name": (clips,),
+                "clip_type": (["stable_diffusion", "stable_cascade", "sd3", "stable_audio", "mochi", "ltxv", "pixart", "cosmos", "lumina2", "wan", "hidream", "chroma", "ace", "omnigen2", "qwen_image", "hunyuan_image", "flux2", "ovis"], ),
+                "vae_name": (vaes,),
+            },
+            "optional": {
+                "clip_skip": ("INT", {"default": -1, "min": -24, "max": -1, "step": 1}),
+                "device": (["default", "cpu"], {"advanced": True}),
+            }
+        }
+
+    RETURN_TYPES = ("UME_FILES",)
+    RETURN_NAMES = ("models",)
+    FUNCTION = "load_files"
+    CATEGORY = "UmeAiRT/Blocks/Models"
+
+    def load_files(self, model_name, clip_name, vae_name, weight_dtype="default", clip_type="stable_diffusion", clip_skip=-1, device="default"):
+        # 1. Load Model (Checkpoint/UNET)
+        # Determine path and type
+        ckpt_path = folder_paths.get_full_path("checkpoints", model_name)
+        diff_path = folder_paths.get_full_path("diffusion_models", model_name)
+        unet_path = folder_paths.get_full_path("unet", model_name)
+
+        model = None
+        
+        # Priority: Diffusion Models/UNET -> Checkpoints
+        if diff_path or unet_path:
+            # It's a Diffusion Model / UNET
+            final_path = diff_path if diff_path else unet_path
+            
+            # Use load_diffusion_model with dtype options
+            model_options = {}
+            if weight_dtype == "fp8_e4m3fn":
+                model_options["dtype"] = torch.float8_e4m3fn
+            elif weight_dtype == "fp8_e4m3fn_fast":
+                model_options["dtype"] = torch.float8_e4m3fn
+                model_options["fp8_optimizations"] = True
+            elif weight_dtype == "fp8_e5m2":
+                model_options["dtype"] = torch.float8_e5m2
+            
+            # Using comfy.sd.load_diffusion_model directly matches native UNETLoader
+            model = comfy.sd.load_diffusion_model(final_path, model_options=model_options)
+            log_node(f"Fragmented Model (UNET) Loaded: {model_name} [{weight_dtype}]", color="GREEN")
+
+        elif ckpt_path:
+            # It's a Checkpoint
+            out = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
+            model = out[0]
+            log_node(f"Fragmented Model (Checkpoint) Loaded: {model_name}", color="GREEN")
+        else:
+            raise ValueError(f"Fragmented Loader: Model '{model_name}' not found.")
+        
+        # 2. Load CLIP (Text Encoder)
+        clip_path = folder_paths.get_full_path("clip", clip_name)
+        if clip_path is None:
+            try:
+                clip_path = folder_paths.get_full_path("text_encoders", clip_name)
+            except:
+                pass
+        
+        if clip_path is None:
+            raise ValueError(f"Fragmented Loader: Could not find CLIP file '{clip_name}' in 'clip' or 'text_encoders' folders.")
+
+        # Prepare CLIP Type & Options
+        clip_type_enum = getattr(comfy.sd.CLIPType, clip_type.upper(), comfy.sd.CLIPType.STABLE_DIFFUSION)
+        clip_options = {}
+        if device == "cpu":
+            clip_options["load_device"] = clip_options["offload_device"] = torch.device("cpu")
+
+        # Load CLIP with type and options
+        clip = comfy.sd.load_clip(ckpt_paths=[clip_path], embedding_directory=folder_paths.get_folder_paths("embeddings"), clip_type=clip_type_enum, model_options=clip_options)
+
+        # 3. Load VAE
+        vae_path = folder_paths.get_full_path("vae", vae_name)
+        vae = comfy.sd.VAE(sd=comfy.utils.load_torch_file(vae_path))
+
+        # 4. CLIP Skip
+        if clip_skip != -1:
+             clip = clip.clone()
+             clip.clip_layer(clip_skip)
+
+        # 5. Update Global State
+        UME_SHARED_STATE[KEY_MODEL] = model
+        UME_SHARED_STATE[KEY_CLIP] = clip
+        UME_SHARED_STATE[KEY_VAE] = vae
+        UME_SHARED_STATE[KEY_MODEL_NAME] = model_name
+        UME_SHARED_STATE[KEY_LORAS] = []
+
+        # 6. Return Bundle
+        files = {
+            "model": model,
+            "clip": clip,
+            "vae": vae,
+            "model_name": model_name
+        }
+        return (files,)
+
+
+class UmeAiRT_FilesSettings_ZIMG:
+    """
+    Z-IMG Specialized Loader (Simplified).
+    - Only loads models from 'diffusion_models'.
+    - Auto-detects weight_dtype (e4m3fn/e5m2) from filename.
+    - Hardcoded CLIP Type: LUMINA2.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        # 1. Get Models (Diffusion Models ONLY)
+        diff_models = folder_paths.get_filename_list("diffusion_models")
+        
+        # 2. Get CLIPs (Standard + Text Encoders)
+        clips = folder_paths.get_filename_list("clip")
+        try:
+            tes = folder_paths.get_filename_list("text_encoders")
+            if tes:
+                clips = sorted(list(set(clips + tes)))
+        except:
+            pass
+            
+        # 3. Get VAEs
+        vaes = folder_paths.get_filename_list("vae")
+        
+        return {
+            "required": {
+                "model_name": (diff_models,),
+                "clip_name": (clips,),
+                "vae_name": (vaes,),
+            }
+        }
+
+    RETURN_TYPES = ("UME_FILES",)
+    RETURN_NAMES = ("models",)
+    FUNCTION = "load_files"
+    CATEGORY = "UmeAiRT/Blocks/Models"
+
+    def load_files(self, model_name, clip_name, vae_name):
+        # 1. Load Model (Z-IMG / Diffusion Model)
+        diff_path = folder_paths.get_full_path("diffusion_models", model_name)
+        if not diff_path:
+            raise ValueError(f"Z-IMG Loader: Model '{model_name}' not found in 'diffusion_models'.")
+
+        # Auto-Detect Weight DType
+        model_options = {}
+        detected_dtype = "default"
+        
+        if "e4m3fn" in model_name.lower():
+            model_options["dtype"] = torch.float8_e4m3fn
+            detected_dtype = "fp8_e4m3fn"
+        elif "e5m2" in model_name.lower():
+            model_options["dtype"] = torch.float8_e5m2
+            detected_dtype = "fp8_e5m2"
+        
+        # Load Model
+        model = comfy.sd.load_diffusion_model(diff_path, model_options=model_options)
+        log_node(f"Z-IMG Model Loaded: {model_name} [Auto-DType: {detected_dtype}]", color="CYAN")
+        
+        # 2. Load CLIP (Hardcoded to LUMINA2)
+        clip_path = folder_paths.get_full_path("clip", clip_name)
+        if clip_path is None:
+            try:
+                clip_path = folder_paths.get_full_path("text_encoders", clip_name)
+            except:
+                pass
+        
+        if clip_path is None:
+            raise ValueError(f"Z-IMG Loader: Could not find CLIP file '{clip_name}'.")
+
+        # Hardcoded LUMINA2 type
+        clip_type_enum = comfy.sd.CLIPType.LUMINA2
+        # Default device options
+        clip_options = {}
+
+        # Load CLIP
+        clip = comfy.sd.load_clip(ckpt_paths=[clip_path], embedding_directory=folder_paths.get_folder_paths("embeddings"), clip_type=clip_type_enum, model_options=clip_options)
+        log_node(f"Z-IMG CLIP Loaded: {clip_name} [Type: LUMINA2]", color="CYAN")
+
+        # 3. Load VAE
+        vae_path = folder_paths.get_full_path("vae", vae_name)
+        vae = comfy.sd.VAE(sd=comfy.utils.load_torch_file(vae_path))
+
+        # 4. Update Global State
+        UME_SHARED_STATE[KEY_MODEL] = model
+        UME_SHARED_STATE[KEY_CLIP] = clip
+        UME_SHARED_STATE[KEY_VAE] = vae
+        UME_SHARED_STATE[KEY_MODEL_NAME] = model_name
+        UME_SHARED_STATE[KEY_LORAS] = []
+
+        # 5. Return Bundle
+        files = {
+            "model": model,
+            "clip": clip,
+            "vae": vae,
+            "model_name": model_name
+        }
         return (files,)
 
 
@@ -3734,9 +3995,12 @@ class UmeAiRT_BlockSampler:
         
         with SamplerContext():
             result_latent = comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise)[0]
-
+        
         # 7. Decode
+        print("🎨 UmeAiRT Block Sampler: Decoding VAE...")
+        _ensure_vram_for_decode() # <--- Memory Safety Check
         generated_image = comfy_nodes.VAEDecode().decode(vae, result_latent)[0]
+        print("🎨 UmeAiRT Block Sampler: Decode Finished.")
 
         # 8. Auto-Composite for Inpaint
         # If we are in inpaint mode (mask present), we almost always want to composite the result
@@ -3834,7 +4098,7 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("image",)
     FUNCTION = "upscale"
-    CATEGORY = "UmeAiRT/Blocks/Post-Process"
+    CATEGORY = "UmeAiRT/Blocks/Post-Processing"
 
     def upscale(self, image, model, upscale_by, settings=None, models=None, loras=None, prompts=None, 
                 denoise=0.35, clean_prompt=True, mode_type="Linear", tile_padding=32):
@@ -3962,7 +4226,7 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("image",)
     FUNCTION = "face_detail"
-    CATEGORY = "UmeAiRT/Blocks/Post-Process"
+    CATEGORY = "UmeAiRT/Blocks/Post-Processing"
 
     def face_detail(self, image, model, denoise, settings=None, models=None, loras=None, prompts=None, guide_size=512, max_size=1024):
         # Note: 'model' here is the bbox detector filename, 'models' is the SD models bundle
@@ -4326,6 +4590,11 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_Seed_Node": UmeAiRT_Seed_Node,
     "UmeAiRT_CR_Seed_Node": UmeAiRT_CR_Seed_Node,
     "UmeAiRT_WirelessKSampler": UmeAiRT_WirelessKSampler,
+    "UmeAiRT_FilesSettings_Checkpoint": UmeAiRT_FilesSettings_Checkpoint,
+    "UmeAiRT_FilesSettings_Checkpoint_Advanced": UmeAiRT_FilesSettings_Checkpoint_Advanced,
+    "UmeAiRT_FilesSettings_FLUX": UmeAiRT_FilesSettings_FLUX,
+    "UmeAiRT_FilesSettings_Fragmented": UmeAiRT_FilesSettings_Fragmented,
+    "UmeAiRT_ModelLoader_Block": UmeAiRT_FilesSettings_Checkpoint,
     "UmeAiRT_WirelessUltimateUpscale": UmeAiRT_WirelessUltimateUpscale,
     "UmeAiRT_WirelessUltimateUpscale_Advanced": UmeAiRT_WirelessUltimateUpscale_Advanced,
     "UmeAiRT_Unified_ControlNet": UmeAiRT_ControlNetImageProcess,
@@ -4367,6 +4636,10 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_Wireless_Image_Loader": "📡 UmeAiRT Wireless Image Loader",
     "UmeAiRT_BlockImageProcess": "🧱 UmeAiRT Block Image Process",
     "UmeAiRT_BlockSampler": "🧱 UmeAiRT Block Sampler",
+    "UmeAiRT_FilesSettings_Checkpoint": "Model Loader (Block)",
+    "UmeAiRT_FilesSettings_Checkpoint_Advanced": "Model Loader (Advanced Block)",
+    "UmeAiRT_FilesSettings_FLUX": "Model Loader (FLUX Block)",
+    "UmeAiRT_FilesSettings_Fragmented": "Model Loader (Fragmented)",
     "UmeAiRT_Faces_Unpack_Node": "📦 UmeAiRT Faces Unpack",
     "UmeAiRT_Tags_Unpack_Node": "📦 UmeAiRT Tags Unpack",
     "UmeAiRT_Pipe_Unpack_Node": "📦 UmeAiRT Pipe Unpack",
@@ -4375,3 +4648,473 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_Bundle_Downloader": "⬇️ UmeAiRT Bundle Downloader",
     "UmeAiRT_Log_Viewer": "📜 UmeAiRT Log Viewer"
 }
+
+
+# ====================================================================================================
+# DETAIL DAEMON STANDALONE LOGIC
+# Based on concept from https://github.com/muerrilla/sd-webui-detail-daemon
+# ====================================================================================================
+
+def make_detail_daemon_schedule(
+    steps,
+    start,
+    end,
+    bias,
+    amount,
+    exponent,
+    start_offset,
+    end_offset,
+    fade,
+    smooth,
+):
+    start = min(start, end)
+    mid = start + bias * (end - start)
+    multipliers = np.zeros(steps)
+
+    start_idx, mid_idx, end_idx = [
+        int(round(x * (steps - 1))) for x in [start, mid, end]
+    ]
+
+    start_values = np.linspace(0, 1, mid_idx - start_idx + 1)
+    if smooth:
+        start_values = 0.5 * (1 - np.cos(start_values * np.pi))
+    start_values = start_values**exponent
+    if start_values.any():
+        start_values *= amount - start_offset
+        start_values += start_offset
+
+    end_values = np.linspace(1, 0, end_idx - mid_idx + 1)
+    if smooth:
+        end_values = 0.5 * (1 - np.cos(end_values * np.pi))
+    end_values = end_values**exponent
+    if end_values.any():
+        end_values *= amount - end_offset
+        end_values += end_offset
+
+    if mid_idx + 1 > start_idx:
+        multipliers[start_idx : mid_idx + 1] = start_values
+    
+    if end_idx + 1 > mid_idx:
+        multipliers[mid_idx : end_idx + 1] = end_values
+        
+    multipliers[:start_idx] = start_offset
+    multipliers[end_idx + 1 :] = end_offset
+    multipliers *= 1 - fade
+
+    return multipliers
+
+def get_dd_schedule(
+    sigma: float,
+    sigmas: torch.Tensor,
+    dd_schedule: torch.Tensor,
+) -> float:
+    sched_len = len(dd_schedule)
+    if (
+        sched_len < 2
+        or len(sigmas) < 2
+        or sigma <= 0
+        or not (sigmas[-1] <= sigma <= sigmas[0])
+    ):
+        return 0.0
+    # First, we find the index of the closest sigma in the list to what the model was
+    # called with.
+    deltas = (sigmas[:-1] - sigma).abs()
+    idx = int(deltas.argmin())
+    if (
+        (idx == 0 and sigma >= sigmas[0])
+        or (idx == sched_len - 1 and sigma <= sigmas[-2])
+        or deltas[idx] == 0
+    ):
+        # Either exact match or closest to head/tail of the DD schedule so we
+        # can't interpolate to another schedule item.
+        return dd_schedule[idx].item()
+    # If we're here, that means the sigma is in between two sigmas in the
+    # list.
+    idxlow, idxhigh = (idx, idx - 1) if sigma > sigmas[idx] else (idx + 1, idx)
+    # We find the low/high neighbor sigmas - our sigma is somewhere between them.
+    nlow, nhigh = sigmas[idxlow], sigmas[idxhigh]
+    if nhigh - nlow == 0:
+        # Shouldn't be possible, but just in case... Avoid divide by zero.
+        return dd_schedule[idxlow]
+    # Ratio of how close we are to the high neighbor.
+    ratio = ((sigma - nlow) / (nhigh - nlow)).clamp(0, 1)
+    # Mix the DD schedule high/low items according to the ratio.
+    return torch.lerp(dd_schedule[idxlow], dd_schedule[idxhigh], ratio).item()
+
+
+def detail_daemon_sampler(
+    model: object,
+    x: torch.Tensor,
+    sigmas: torch.Tensor,
+    *,
+    dds_wrapped_sampler: object,
+    dds_make_schedule: callable,
+    dds_cfg_scale_override: float,
+    **kwargs: dict,
+) -> torch.Tensor:
+    if dds_cfg_scale_override > 0:
+        cfg_scale = dds_cfg_scale_override
+    else:
+        maybe_cfg_scale = getattr(model.inner_model, "cfg", None)
+        cfg_scale = (
+            float(maybe_cfg_scale) if isinstance(maybe_cfg_scale, (int, float)) else 1.0
+        )
+    dd_schedule = torch.tensor(
+        dds_make_schedule(len(sigmas) - 1),
+        dtype=torch.float32,
+        device="cpu",
+    )
+    sigmas_cpu = sigmas.detach().clone().cpu()
+    sigma_max, sigma_min = float(sigmas_cpu[0]), float(sigmas_cpu[-1]) + 1e-05
+
+    def model_wrapper(x: torch.Tensor, sigma: torch.Tensor, **extra_args: dict):
+        sigma_float = float(sigma.max().detach().cpu())
+        if not (sigma_min <= sigma_float <= sigma_max):
+            return model(x, sigma, **extra_args)
+        dd_adjustment = get_dd_schedule(sigma_float, sigmas_cpu, dd_schedule) * 0.1
+        adjusted_sigma = sigma * max(1e-06, 1.0 - dd_adjustment * cfg_scale)
+        return model(x, adjusted_sigma, **extra_args)
+
+    for k in (
+        "inner_model",
+        "sigmas",
+    ):
+        if hasattr(model, k):
+            setattr(model_wrapper, k, getattr(model, k))
+            
+    return dds_wrapped_sampler.sampler_function(
+        model_wrapper,
+        x,
+        sigmas,
+        **kwargs,
+        **dds_wrapped_sampler.extra_options,
+    )
+
+# --- Detail Daemon Nodes (Wireless) ---
+
+class UmeAiRT_Detailer_Daemon_Simple:
+    """
+    Autonomous Post-Processing Node using Detail Daemon Sampler.
+    Simple Version: Exposes 'detail_amount' and 'denoise'.
+    Uses Wireless State for Model, VAE, Image.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
+                "detail_amount": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider"}),
+            },
+            "optional": {
+                "image": ("IMAGE",),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
+    FUNCTION = "process"
+    CATEGORY = "UmeAiRT/Wireless/Post-Processing"
+
+    def process(self, enabled, detail_amount, image=None):
+        # 1. Get Wireless Context
+        model = UME_SHARED_STATE.get(KEY_MODEL)
+        vae = UME_SHARED_STATE.get(KEY_VAE)
+        start_image = image if image is not None else UME_SHARED_STATE.get(KEY_IMAGE)
+        
+        # Passthrough check
+        if not enabled:
+            if start_image is None:
+                 log_node("Detail Daemon (Passthrough): No image available!", color="RED")
+                 return (torch.zeros((1, 512, 512, 3)),)
+            return (start_image,)
+
+        # Get Wireless Settings
+        steps = UME_SHARED_STATE.get(KEY_STEPS, 20)
+        cfg = UME_SHARED_STATE.get(KEY_CFG, 8.0)
+        sampler_name = UME_SHARED_STATE.get(KEY_SAMPLER, "euler")
+        scheduler = UME_SHARED_STATE.get(KEY_SCHEDULER, "normal")
+        seed = UME_SHARED_STATE.get(KEY_SEED, 0)
+        
+        # Hardcoded Simple Values
+        denoise = 0.5
+        refine_denoise = 0.05
+        refine_steps = max(1, int(steps * 0.25))
+
+        positive = UME_SHARED_STATE.get(KEY_POSITIVE)
+        negative = UME_SHARED_STATE.get(KEY_NEGATIVE)
+
+        if any(x is None for x in [model, vae, start_image, positive, negative]):
+            log_node("Missing Wireless Context for Detailer Daemon", color="RED")
+            return (torch.zeros((1, 512, 512, 3)),)
+
+        # 1b. Check Prompt Encoding (String -> Conditioning)
+        if isinstance(positive, str) or isinstance(negative, str):
+            clip = UME_SHARED_STATE.get(KEY_CLIP)
+            if not clip:
+                 log_node("Detail Daemon: Prompts are text but CLIP is missing!", color="RED")
+                 return (torch.zeros((1, 512, 512, 3)),)
+            
+            if isinstance(positive, str):
+                tokens = clip.tokenize(positive)
+                cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
+                positive = [[cond, {"pooled_output": pooled}]]
+                
+            if isinstance(negative, str):
+                tokens = clip.tokenize(negative)
+                cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
+                negative = [[cond, {"pooled_output": pooled}]]
+
+        # 2. VAE Encode (if needed)
+        # Note: UME_SHARED_STATE[KEY_IMAGE] is typically [B, H, W, C] tensor
+        pixels = start_image
+        t = vae.encode(pixels[:,:,:,:3])
+        latent_image = {"samples": t}
+
+        # 3. Create Wrapped Sampler
+        # Prepare Detail Daemon Schedule Function
+        def dds_make_schedule(num_steps):
+            return make_detail_daemon_schedule(
+                num_steps,
+                start=0.2, end=0.8, bias=0.5, amount=detail_amount, exponent=1.0,
+                start_offset=0.0, end_offset=0.0, fade=0.0, smooth=True
+            )
+        
+        # Create base sampler
+        base_sampler = comfy.samplers.KSampler(
+            model, steps=steps, device=model.load_device, sampler=sampler_name, scheduler=scheduler, denoise=1.0, model_options=model.model_options
+        )
+        
+        # We need to wrap it into an object that has 'sampler_function' and 'extra_options'
+        # The standard Comfy KSampler object has these.
+        
+        # But wait, common_ksampler expects a sampler_name string, not a sampler object implicitly.
+        # However, for custom sampling, we often need to construct the chain manually.
+        
+        # Let's use the core KSampler implementation directly but injected with our wrapper.
+        # The Detail Daemon executes `sampler.sampler_function(model_wrapper, ...)`.
+        # So we need to construct a "Dummy" sampler object that mimics Comfy's internal sampler interface just enough?
+        # dds_wrapped_sampler needs .sampler_function and .extra_options
+        
+        # Actually, let's look at how DetailDaemonSamplerNode.go does it.
+        # It takes `sampler` (SAMPLER input) and returns a new KSAMPLER object.
+        # In Comfy, SAMPLER input is an object with .sampler_function.
+        
+        # Because we are autonomous, we don't have a "SAMPLER" input provided by another node.
+        # We must create the base sampler object ourselves.
+        
+        # Create standard sampler
+        # We pass 'denoise' here so that 'steps' is interpreted as "number of steps to run".
+        # Comfy's KSampler automatically scales the schedule (total_steps = steps / denoise).
+        sampler_obj = comfy.samplers.KSampler(
+             model, steps=steps, device=model.load_device, sampler=sampler_name, scheduler=scheduler, denoise=denoise, model_options=model.model_options
+        )
+
+        
+        # Get the low-level base sampler object (e.g. Euler, DPM++ 2M, etc.)
+        base_low_level_sampler = comfy.samplers.sampler_object(sampler_name)
+
+        class DD_Sampler_Wrapper:
+            def __init__(self, base_sampler, make_sched, cfg_override):
+                self.base_sampler = base_sampler
+                self.make_sched = make_sched
+                self.cfg = cfg_override
+
+            def __call__(self, model, x, sigmas, *args, **kwargs):
+                return detail_daemon_sampler(
+                    model, x, sigmas,
+                    dds_wrapped_sampler=self.base_sampler,
+                    dds_make_schedule=self.make_sched,
+                    dds_cfg_scale_override=self.cfg,
+                    **kwargs
+                )
+        
+        # Create function wrapper
+        dd_wrapper_func = DD_Sampler_Wrapper(base_low_level_sampler, dds_make_schedule, cfg)
+        
+        # Create a proper KSAMPLER instance that works with sample_custom
+        wrapped_sampler = comfy.samplers.KSAMPLER(
+            dd_wrapper_func, 
+            extra_options=base_low_level_sampler.extra_options,
+            inpaint_options=base_low_level_sampler.inpaint_options
+        )
+        
+        # 4. Run Sampling
+        # We use common_ksampler logic but we need to bypass the standard sampler lookup.
+        # comfy.sample.sample_custom allows passing a custom sampler object.
+        
+        # Manual noise generation
+        generator = torch.manual_seed(seed)
+        noise = torch.randn(latent_image["samples"].size(), dtype=latent_image["samples"].dtype, layout=latent_image["samples"].layout, generator=generator, device="cpu")
+
+        # Prepare sigmas (Scheduler)
+        sigmas = sampler_obj.sigmas
+        
+        # Handle denoise (this is img2img)
+        # For img2img, we usually slice the sigmas based on denoise.
+        # Since we use sample_custom, we must manually handle denoise logic or let standard utils do it.
+        # But wait, standard KSampler handles denoise by calculating sigmas.
+        
+        # Re-calc sigmas for img2img
+        # Standard logic:
+        # total_steps = steps
+        # sigmas = calculate_sigmas(model, scheduler, steps)
+        # sigmas = sigmas[-(int(steps * denoise) + 1):]
+        
+        # Prepare sigmas (Scheduler)
+        # KSampler with denoise set already calculated the correct slice of sigmas for us.
+        sigmas = sampler_obj.sigmas
+        
+        # Wait, if we slice sigmas, Detail Daemon uses `len(sigmas)` to generate schedule.
+        # This means the detail curve applies to the *remaining* steps (the detailing phase). 
+        # This is correct for img2img.
+        
+        # Run Sample
+        samples = comfy.sample.sample_custom(
+            model, noise, cfg, wrapped_sampler, sigmas, positive, negative, latent_image["samples"], noise_mask=None, callback=None, disable_pbar=False, seed=seed
+        )
+        
+        # 4b. Refine Pass (Optional)
+        if refine_denoise > 0.0:
+            # Create Standard Sampler for Refine
+            refine_sampler_obj = comfy.samplers.KSampler(
+                 model, steps=refine_steps, device=model.load_device, sampler=sampler_name, scheduler=scheduler, denoise=refine_denoise, model_options=model.model_options
+            )
+            # Standard Clean Sampler (No Detail Daemon Wrapper)
+            refine_sampler_base = comfy.samplers.sampler_object(sampler_name)
+            
+            # Use sample_custom or standard? Standard sample() is easier but sample_custom is consistent
+            # We need to calculate sigmas for refine
+            refine_sigmas = refine_sampler_obj.sigmas
+            
+            # Noise for refine
+            refine_noise = torch.randn(samples.size(), dtype=samples.dtype, layout=samples.layout, generator=torch.manual_seed(seed+1), device="cpu")
+            
+            samples = comfy.sample.sample_custom(
+                 model, refine_noise, cfg, refine_sampler_base, refine_sigmas, positive, negative, samples, noise_mask=None, callback=None, disable_pbar=False, seed=seed+1
+            )
+        
+        # 5. Decode
+        decoded = vae.decode(samples)
+        
+        # Update Wireless Image
+        UME_SHARED_STATE[KEY_IMAGE] = decoded
+        # Update Wireless Image
+        UME_SHARED_STATE["image"] = decoded
+        log_node(f"Detail Daemon (Simple) Applied: Amt={detail_amount}, Denoise={denoise} -> Refine={refine_denoise}", color="BLUE")
+        
+        return (decoded,)
+
+class UmeAiRT_Detailer_Daemon_Advanced(UmeAiRT_Detailer_Daemon_Simple):
+    """
+    Advanced version with full Detail Daemon controls.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "detail_amount": ("FLOAT", {"default": 0.5, "min": -5.0, "max": 5.0, "step": 0.01}),
+                "start": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "end": ("FLOAT", {"default": 0.8, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "bias": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "exponent": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.05}),
+                "start_offset": ("FLOAT", {"default": 0.0, "min": -1.0, "max": 1.0, "step": 0.01}),
+                "end_offset": ("FLOAT", {"default": 0.0, "min": -1.0, "max": 1.0, "step": 0.01}),
+                "fade": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.05}),
+                "smooth": ("BOOLEAN", {"default": True}),
+                "smooth": ("BOOLEAN", {"default": True}),
+                "denoise": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "refine_denoise": ("FLOAT", {"default": 0.05, "min": 0.0, "max": 1.0, "step": 0.01}),
+            },
+            "optional": {
+                "image": ("IMAGE",),
+                "steps": ("INT", {"default": 20, "min": 1, "max": 200, "step": 1, "display": "number"}),
+                "refine_steps": ("INT", {"default": 2, "min": 1, "max": 50, "step": 1, "display": "number"}),
+                "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "step": 0.1, "display": "number"}),
+                "sampler_name": (comfy.samplers.KSampler.SAMPLERS, ),
+                "scheduler": (comfy.samplers.KSampler.SCHEDULERS, ),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
+    FUNCTION = "process_advanced"
+    CATEGORY = "UmeAiRT/Wireless/Post-Processing"
+
+    def process_advanced(self, detail_amount, start, end, bias, exponent, start_offset, end_offset, fade, smooth, denoise, refine_denoise, image=None, steps=20, refine_steps=2, cfg=8.0, sampler_name="euler", scheduler="normal", seed=0):
+        # 1. Get Wireless Context
+        model = UME_SHARED_STATE.get(KEY_MODEL)
+        vae = UME_SHARED_STATE.get(KEY_VAE)
+        start_image = image if image is not None else UME_SHARED_STATE.get(KEY_IMAGE)
+        positive = UME_SHARED_STATE.get(KEY_POSITIVE)
+        negative = UME_SHARED_STATE.get(KEY_NEGATIVE)
+
+        if any(x is None for x in [model, vae, start_image, positive, negative]):
+            log_node("Missing Wireless Context for Detailer Daemon", color="RED")
+            return (torch.zeros((1, 512, 512, 3)),)
+
+        # 2. VAE Encode
+        pixels = start_image
+        t = vae.encode(pixels[:,:,:,:3])
+        latent_image = {"samples": t}
+
+        # 3. Create Wrapped Sampler
+        def dds_make_schedule(num_steps):
+            return make_detail_daemon_schedule(
+                num_steps,
+                start=start, end=end, bias=bias, amount=detail_amount, exponent=exponent,
+                start_offset=start_offset, end_offset=end_offset, fade=fade, smooth=smooth
+            )
+        
+        
+        # Get the low-level base sampler object
+        base_low_level_sampler = comfy.samplers.sampler_object(sampler_name)
+
+        class DD_Sampler_Wrapper:
+            def __init__(self, base_sampler, make_sched, cfg_override):
+                self.base_sampler = base_sampler
+                self.make_sched = make_sched
+                self.cfg = cfg_override
+
+            def __call__(self, model, x, sigmas, *args, **kwargs):
+                return detail_daemon_sampler(
+                    model, x, sigmas,
+                    dds_wrapped_sampler=self.base_sampler,
+                    dds_make_schedule=self.make_sched,
+                    dds_cfg_scale_override=self.cfg,
+                    **kwargs
+                )
+        
+        # Create function wrapper
+        dd_wrapper_func = DD_Sampler_Wrapper(base_low_level_sampler, dds_make_schedule, cfg)
+        
+        # Create a proper KSAMPLER instance
+        wrapped_sampler = comfy.samplers.KSAMPLER(
+            dd_wrapper_func, 
+            extra_options=base_low_level_sampler.extra_options,
+            inpaint_options=base_low_level_sampler.inpaint_options
+        )
+        
+        # 4. Run Sampling
+        # Manual noise generation
+        generator = torch.manual_seed(seed)
+        noise = torch.randn(latent_image["samples"].size(), dtype=latent_image["samples"].dtype, layout=latent_image["samples"].layout, generator=generator, device="cpu")
+        
+        # Sigmas already sliced by KSampler constructor
+        sigmas = sampler_obj.sigmas
+        
+        samples = comfy.sample.sample_custom(
+            model, noise, cfg, wrapped_sampler, sigmas, positive, negative, latent_image, noise_mask=None, callback=None, disable_pbar=False, seed=seed
+        )
+        
+        # 5. Decode
+        decoded = vae.decode(samples)
+        
+        # Update Wireless Image
+        UME_SHARED_STATE["image"] = decoded
+        # Update Wireless Image
+        UME_SHARED_STATE["image"] = decoded
+        log_node(f"Detail Daemon (Advanced) Applied: Amt={detail_amount}, Denoise={denoise} -> Refine={refine_denoise}", color="BLUE")
+        
+        return (decoded,)
+
