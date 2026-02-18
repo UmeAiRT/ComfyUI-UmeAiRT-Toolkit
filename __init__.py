@@ -40,6 +40,7 @@ from .nodes import (
     UmeAiRT_MultiLoraLoader,
     UmeAiRT_WirelessUltimateUpscale,
     UmeAiRT_WirelessUltimateUpscale_Advanced,
+    UmeAiRT_WirelessSeedVR2Upscale, UmeAiRT_WirelessSeedVR2Upscale_Advanced,
     UmeAiRT_WirelessFaceDetailer_Advanced, UmeAiRT_WirelessFaceDetailer_Simple,
     UmeAiRT_BboxDetectorLoader, UmeAiRT_WirelessImageSaver, UmeAiRT_WirelessCheckpointLoader,
     UmeAiRT_WirelessImageLoader, UmeAiRT_SourceImage_Output, UmeAiRT_WirelessInpaintComposite,
@@ -54,6 +55,7 @@ from .nodes import (
     UmeAiRT_Bundle_Downloader,
     UmeAiRT_Log_Viewer,
 )
+from .optimization_utils import check_optimizations
 
 # Register internal 'bbox' folder for standalone usage
 try:
@@ -106,6 +108,8 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_MultiLoraLoader": UmeAiRT_MultiLoraLoader,
     "UmeAiRT_WirelessUltimateUpscale": UmeAiRT_WirelessUltimateUpscale,
     "UmeAiRT_WirelessUltimateUpscale_Advanced": UmeAiRT_WirelessUltimateUpscale_Advanced,
+    "UmeAiRT_WirelessSeedVR2Upscale": UmeAiRT_WirelessSeedVR2Upscale,
+    "UmeAiRT_WirelessSeedVR2Upscale_Advanced": UmeAiRT_WirelessSeedVR2Upscale_Advanced,
     "UmeAiRT_WirelessFaceDetailer_Advanced": UmeAiRT_WirelessFaceDetailer_Advanced,
     "UmeAiRT_WirelessFaceDetailer_Simple": UmeAiRT_WirelessFaceDetailer_Simple,
     "UmeAiRT_BboxDetectorLoader": UmeAiRT_BboxDetectorLoader,
@@ -186,6 +190,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_MultiLoraLoader": "Multi-LoRA Loader",
     "UmeAiRT_WirelessUltimateUpscale": "Wireless UltimateSDUpscale",
     "UmeAiRT_WirelessUltimateUpscale_Advanced": "Wireless UltimateSDUpscale (Advanced)",
+    "UmeAiRT_WirelessSeedVR2Upscale": "Wireless SeedVR2 Upscale",
+    "UmeAiRT_WirelessSeedVR2Upscale_Advanced": "Wireless SeedVR2 Upscale (Advanced)",
     "UmeAiRT_WirelessFaceDetailer_Advanced": "Wireless FaceDetailer (Advanced)",
     "UmeAiRT_WirelessFaceDetailer_Simple": "Wireless FaceDetailer",
     "UmeAiRT_BboxDetectorLoader": "BBOX Detector Loader",
@@ -241,6 +247,7 @@ except ImportError:
 
 print(f"[{CYAN}UmeAiRT-Toolkit{RESET}] 📂 Loading nodes...")
 print(f"[{CYAN}UmeAiRT-Toolkit{RESET}] 🧩 Loaded {len(NODE_CLASS_MAPPINGS)} nodes.")
+check_optimizations()
 print(f"[{CYAN}UmeAiRT-Toolkit{RESET}]{GREEN} ✅ Initialization Complete.{RESET}")
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]

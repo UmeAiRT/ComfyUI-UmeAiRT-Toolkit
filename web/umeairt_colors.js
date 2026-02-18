@@ -82,6 +82,14 @@ const UME_NODE_COLORS = {
         color: "#2471A3",
         bgcolor: "#123851"
     },
+    "UmeAiRT_WirelessSeedVR2Upscale": {
+        color: "#2471A3",
+        bgcolor: "#123851"
+    },
+    "UmeAiRT_WirelessSeedVR2Upscale_Advanced": {
+        color: "#2471A3",
+        bgcolor: "#123851"
+    },
 
     // Wireless FaceDetailer - Pale Blue
     "UmeAiRT_WirelessFaceDetailer_Simple": {

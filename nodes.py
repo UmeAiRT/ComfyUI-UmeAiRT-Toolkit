@@ -29,6 +29,7 @@ from server import PromptServer
 # --- UmeAiRT Logger ---
 try:
     from .logger import log_node, CYAN, GREEN, RED, RESET
+    from .optimization_utils import SamplerContext
 except ImportError:
     # Fallback if relative import fails (e.g. running script directly)
     # But usually unnecessary in ComfyUI context
@@ -997,8 +998,9 @@ class UmeAiRT_WirelessKSampler:
                         log_node(f"Failed to apply {c_name}: {e}", color="RED")
 
         # 5. Sample
-        # We reuse the standard KSampler function
-        return comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise)
+        # We reuse the standard KSampler function with our Optimization Wrapper
+        with SamplerContext():
+            return comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise)
 
 
 class UmeAiRT_WirelessInpaintComposite:
@@ -1331,7 +1333,7 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
             return (image,)
 
         # Hardcoded recommended denoise for simple mode
-        denoise = 0.35
+        denoise = 0.20
 
         # Load Upscale Model Internally
         try:
@@ -1370,17 +1372,18 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         # Force uniform tiles to prevent artifacts
         force_uniform = True
 
-        return usdu_node.upscale(
-            image=image, model=model, positive=positive, negative=negative, vae=vae,
-            upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
-            sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
-            upscale_model=upscale_model, mode_type=mode_type,
-            tile_width=t_w, tile_height=t_h, mask_blur=mask_blur, tile_padding=tile_padding,
-            seam_fix_mode=seam_fix_mode, seam_fix_denoise=seam_fix_denoise,
-            seam_fix_mask_blur=8, seam_fix_width=64, seam_fix_padding=16,
-            force_uniform_tiles=force_uniform, tiled_decode=False,
-            suppress_preview=True,
-        )
+        with SamplerContext():
+            return usdu_node.upscale(
+                image=image, model=model, positive=positive, negative=negative, vae=vae,
+                upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
+                sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
+                upscale_model=upscale_model, mode_type=mode_type,
+                tile_width=t_w, tile_height=t_h, mask_blur=mask_blur, tile_padding=tile_padding,
+                seam_fix_mode=seam_fix_mode, seam_fix_denoise=seam_fix_denoise,
+                seam_fix_mask_blur=8, seam_fix_width=64, seam_fix_padding=16,
+                force_uniform_tiles=force_uniform, tiled_decode=False,
+                suppress_preview=True,
+            )
 
 
 class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_Base):
@@ -1445,17 +1448,323 @@ class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_B
         steps = math.ceil(gen_steps / 4)
         cfg = 1.0 # Force 1.0
 
-        return usdu_node.upscale(
-            image=image, model=model, positive=positive, negative=negative, vae=vae,
-            upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
-            sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
-            upscale_model=upscale_model, mode_type=mode_type,
-            tile_width=tile_width, tile_height=tile_height, mask_blur=mask_blur, tile_padding=tile_padding,
-            seam_fix_mode=seam_fix_mode, seam_fix_denoise=seam_fix_denoise,
-            seam_fix_mask_blur=seam_fix_mask_blur, seam_fix_width=seam_fix_width, seam_fix_padding=seam_fix_padding,
-            force_uniform_tiles=force_uniform_tiles, tiled_decode=tiled_decode,
-            suppress_preview=True,
+        with SamplerContext():
+            return usdu_node.upscale(
+                image=image, model=model, positive=positive, negative=negative, vae=vae,
+                upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
+                sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
+                upscale_model=upscale_model, mode_type=mode_type,
+                tile_width=tile_width, tile_height=tile_height, mask_blur=mask_blur, tile_padding=tile_padding,
+                seam_fix_mode=seam_fix_mode, seam_fix_denoise=seam_fix_denoise,
+                seam_fix_mask_blur=seam_fix_mask_blur, seam_fix_width=seam_fix_width, seam_fix_padding=seam_fix_padding,
+                force_uniform_tiles=force_uniform_tiles, tiled_decode=tiled_decode,
+                suppress_preview=True,
+            )
+
+# ---------------------------------------------------------------------------
+#  VRAM Management for SeedVR2
+# ---------------------------------------------------------------------------
+# SeedVR2's DiT model requires significant VRAM. On consumer GPUs (8–12 GB),
+# the previous generation model (SD1.5/SDXL/FLUX) is typically still cached
+# in VRAM.  We proactively free that memory before SeedVR2 starts.
+# ---------------------------------------------------------------------------
+
+# Minimum free VRAM (in bytes) required before we start the SeedVR2 upscale.
+# 6 GB leaves room for the DiT + VAE + tile buffers on consumer GPUs.
+SEEDVR2_VRAM_REQUIRED = 6 * 1024 * 1024 * 1024  # 6 GB
+
+def _ensure_vram_for_seedvr2():
+    """Check available VRAM and unload cached models if necessary."""
+    import gc
+    import comfy.model_management as mm
+
+    device = mm.get_torch_device()
+    free_before = mm.get_free_memory(device)
+    free_gb = free_before / (1024 ** 3)
+
+    log_node(f"VRAM check: {free_gb:.2f} GB free, {SEEDVR2_VRAM_REQUIRED / (1024**3):.0f} GB required", color="CYAN")
+
+    if free_before >= SEEDVR2_VRAM_REQUIRED:
+        log_node("VRAM OK — skipping cleanup", color="GREEN")
+        return
+
+    log_node("Insufficient VRAM — unloading cached models...", color="YELLOW")
+
+    # 1) Ask ComfyUI to unload models until we have enough room
+    mm.free_memory(SEEDVR2_VRAM_REQUIRED, device)
+
+    # 2) Python garbage-collect any lingering references
+    gc.collect()
+
+    # 3) Flush the CUDA/MPS cache
+    mm.soft_empty_cache()
+
+    free_after = mm.get_free_memory(device)
+    freed_mb = (free_after - free_before) / (1024 ** 2)
+    log_node(f"VRAM cleanup done: freed {freed_mb:.0f} MB — now {free_after / (1024**3):.2f} GB free", color="GREEN")
+
+
+class UmeAiRT_WirelessSeedVR2Upscale:
+    """Wireless SeedVR2 Tiling Upscaler (Simple) — self-contained, uses wireless seed.
+
+    Embeds DiT model selection and VAE loading directly.
+    No external loader nodes required.
+    """
+
+    @classmethod
+    def INPUT_TYPES(s):
+        # Discover DiT models without importing heavy model classes (avoids flash_attn chain)
+        KNOWN_DIT_MODELS = [
+            "seedvr2_ema_3b-Q4_K_M.gguf",
+            "seedvr2_ema_3b-Q8_0.gguf",
+            "seedvr2_ema_3b_fp8_e4m3fn.safetensors",
+            "seedvr2_ema_3b_fp16.safetensors",
+            "seedvr2_ema_7b-Q4_K_M.gguf",
+            "seedvr2_ema_7b_fp8_e4m3fn_mixed_block35_fp16.safetensors",
+            "seedvr2_ema_7b_fp16.safetensors",
+            "seedvr2_ema_7b_sharp-Q4_K_M.gguf",
+            "seedvr2_ema_7b_sharp_fp8_e4m3fn_mixed_block35_fp16.safetensors",
+            "seedvr2_ema_7b_sharp_fp16.safetensors",
+        ]
+        default_dit = "seedvr2_ema_3b_fp8_e4m3fn.safetensors"
+
+        # Also scan disk for any extra models the user may have added
+        try:
+            from seedvr2_videoupscaler.src.utils.constants import get_all_model_files
+            on_disk = list(get_all_model_files().keys())
+            # Merge: known first, then any extra discovered on disk
+            extra = [f for f in on_disk if f not in KNOWN_DIT_MODELS and f != "ema_vae_fp16.safetensors"]
+            dit_models = KNOWN_DIT_MODELS + sorted(extra)
+        except Exception:
+            dit_models = KNOWN_DIT_MODELS
+
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Enabled", "label_off": "Disabled"}),
+                "model": (dit_models, {
+                    "default": default_dit,
+                    "tooltip": "DiT model for SeedVR2 upscaling. Models auto-download on first use.",
+                }),
+                "upscale_by": ("FLOAT", {
+                    "default": 2.0, "min": 1.0, "max": 8.0, "step": 0.1,
+                    "display": "slider",
+                    "tooltip": "Upscale ratio (1.0x to 8.0x). The node calculates the target resolution automatically."
+                }),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "upscale"
+    CATEGORY = "UmeAiRT/Wireless/Post-Process"
+
+    @staticmethod
+    def _build_configs(model_name: str):
+        """Build dit_config and vae_config dicts (same format as loader nodes)."""
+        import torch
+
+        device = "cuda:0" if torch.cuda.is_available() else "cpu"
+
+        dit_config = {
+            "model": model_name,
+            "device": device,
+            "offload_device": "cpu",
+            "cache_model": False,
+            "blocks_to_swap": 0,
+            "swap_io_components": False,
+            "attention_mode": "sdpa",
+            "torch_compile_args": None,
+            "node_id": None,
+        }
+
+        vae_config = {
+            "model": "ema_vae_fp16.safetensors",
+            "device": device,
+            "offload_device": "cpu",
+            "cache_model": False,
+            "encode_tiled": False,
+            "encode_tile_size": 1024,
+            "encode_tile_overlap": 128,
+            "decode_tiled": False,
+            "decode_tile_size": 1024,
+            "decode_tile_overlap": 128,
+            "tile_debug": "false",
+            "torch_compile_args": None,
+            "node_id": None,
+        }
+
+        return dit_config, vae_config
+
+    def upscale(self, image, enabled, model, upscale_by):
+        if not enabled:
+            return (image,)
+
+        from .seedvr2_core.image_utils import tensor_to_pil, pil_to_tensor
+        from .seedvr2_core.tiling import generate_tiles
+        from .seedvr2_core.stitching import process_and_stitch
+
+        # Wireless seed
+        seed = UME_SHARED_STATE.get(KEY_SEED, 100) % (2**32)  # NumPy max seed
+
+        # Build model configs internally
+        dit_config, vae_config = self._build_configs(model)
+
+        # Best-practice defaults
+        tile_width = 512
+        tile_height = 512
+        mask_blur = 0
+        tile_padding = 32
+        tile_upscale_resolution = 1024
+        tiling_strategy = "Chess"
+        anti_aliasing_strength = 0.0
+        blending_method = "auto"
+        color_correction = "lab"
+
+        log_node(f"Wireless SeedVR2 Upscale → model={model}, ratio=x{upscale_by}, seed={seed}", color="CYAN")
+        _ensure_vram_for_seedvr2()
+
+        pil_image = tensor_to_pil(image)
+        upscale_factor = upscale_by
+        output_width = int(pil_image.width * upscale_factor)
+        output_height = int(pil_image.height * upscale_factor)
+
+        main_tiles = generate_tiles(pil_image, tile_width, tile_height, tile_padding, tiling_strategy)
+
+        output_image = process_and_stitch(
+            tiles=main_tiles,
+            width=output_width, height=output_height,
+            dit_config=dit_config, vae_config=vae_config,
+            seed=seed,
+            tile_upscale_resolution=tile_upscale_resolution,
+            upscale_factor=upscale_factor,
+            mask_blur=mask_blur,
+            progress=None,
+            original_image=pil_image,
+            anti_aliasing_strength=anti_aliasing_strength,
+            blending_method=blending_method,
+            color_correction=color_correction,
         )
+
+        return (pil_to_tensor(output_image),)
+
+
+class UmeAiRT_WirelessSeedVR2Upscale_Advanced:
+    """Wireless SeedVR2 Tiling Upscaler (Advanced) — all params exposed, wireless seed."""
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Enabled", "label_off": "Disabled"}),
+                "dit": ("SEEDVR2_DIT", {
+                    "tooltip": "DiT model configuration from 'SeedVR2 (Down)Load DiT Model' node."
+                }),
+                "vae": ("SEEDVR2_VAE", {
+                    "tooltip": "VAE model configuration from 'SeedVR2 (Down)Load VAE Model' node."
+                }),
+                "new_resolution": ("INT", {
+                    "default": 1072, "min": 16, "max": 16384, "step": 16,
+                    "tooltip": "Target resolution for the longest side of output."
+                }),
+                "tile_width": ("INT", {
+                    "default": 512, "min": 64, "max": 8192, "step": 8,
+                    "tooltip": "Width of each tile in pixels."
+                }),
+                "tile_height": ("INT", {
+                    "default": 512, "min": 64, "max": 8192, "step": 8,
+                    "tooltip": "Height of each tile in pixels."
+                }),
+                "mask_blur": ("INT", {
+                    "default": 0, "min": 0, "max": 64, "step": 1,
+                    "tooltip": "Tile edge blending. 0=multi-band (best detail), 1-3=minimal blur, 4+=traditional blur."
+                }),
+                "tile_padding": ("INT", {
+                    "default": 32, "min": 0, "max": 8192, "step": 8,
+                    "tooltip": "Overlap between tiles. Higher values reduce seams. Recommended: 32-64."
+                }),
+                "tile_upscale_resolution": ("INT", {
+                    "default": 1024, "min": 64, "max": 8192, "step": 8,
+                    "tooltip": "Max resolution for individual tiles. Higher=better quality but more VRAM."
+                }),
+                "tiling_strategy": (["Chess", "Linear"], {
+                    "tooltip": "Chess=checkerboard pattern for better blending, Linear=row-by-row."
+                }),
+                "anti_aliasing_strength": ("FLOAT", {
+                    "default": 0.0, "min": 0.0, "max": 1.0, "step": 0.05,
+                    "tooltip": "Edge-aware smoothing. 0=disabled, 0.1-0.3=subtle."
+                }),
+                "blending_method": (["auto", "multiband", "bilateral", "content_aware", "linear", "simple"], {
+                    "default": "auto",
+                    "tooltip": "Blending algorithm for tile stitching."
+                }),
+                "color_correction": (["lab", "wavelet", "wavelet_adaptive", "hsv", "adain", "none"], {
+                    "default": "lab",
+                    "tooltip": "Color correction method for upscaled output."
+                }),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "upscale"
+    CATEGORY = "UmeAiRT/Wireless/Post-Process"
+
+    def upscale(self, image, enabled, dit, vae, new_resolution,
+                tile_width, tile_height, mask_blur, tile_padding,
+                tile_upscale_resolution, tiling_strategy,
+                anti_aliasing_strength, blending_method, color_correction):
+        if not enabled:
+            return (image,)
+
+        from .seedvr2_core.image_utils import tensor_to_pil, pil_to_tensor
+        from .seedvr2_core.tiling import generate_tiles
+        from .seedvr2_core.stitching import process_and_stitch
+        from .seedvr2_core.progress import Progress
+
+        # Wireless seed
+        seed = UME_SHARED_STATE.get(KEY_SEED, 100) % (2**32)  # NumPy max seed
+
+        log_node(
+            f"Wireless SeedVR2 Upscale (Advanced) → resolution={new_resolution}, "
+            f"tiles={tile_width}×{tile_height}, blend={blending_method}, seed={seed}",
+            color="CYAN",
+        )
+        _ensure_vram_for_seedvr2()
+
+        try:
+            progress = Progress(0)
+            progress.initialize_websocket_progress()
+
+            pil_image = tensor_to_pil(image)
+            upscale_factor = new_resolution / max(pil_image.width, pil_image.height)
+            output_width = int(pil_image.width * upscale_factor)
+            output_height = int(pil_image.height * upscale_factor)
+
+            main_tiles = generate_tiles(pil_image, tile_width, tile_height, tile_padding, tiling_strategy)
+            progress = Progress(len(main_tiles))
+
+            output_image = process_and_stitch(
+                tiles=main_tiles,
+                width=output_width, height=output_height,
+                dit_config=dit, vae_config=vae,
+                seed=seed,
+                tile_upscale_resolution=tile_upscale_resolution,
+                upscale_factor=upscale_factor,
+                mask_blur=mask_blur,
+                progress=progress,
+                original_image=pil_image,
+                anti_aliasing_strength=anti_aliasing_strength,
+                blending_method=blending_method,
+                color_correction=color_correction,
+            )
+
+            progress.finalize_websocket_progress()
+            return (pil_to_tensor(output_image),)
+
+        except Exception as e:
+            if 'progress' in locals():
+                progress.finalize_websocket_progress()
+            raise e
 
 
 class UmeAiRT_WirelessFaceDetailer_Advanced(UmeAiRT_WirelessUltimateUpscale_Base):
@@ -1517,14 +1826,15 @@ class UmeAiRT_WirelessFaceDetailer_Advanced(UmeAiRT_WirelessUltimateUpscale_Base
         # Usage strategy: We prioritize wireless settings as requested by user.
         # NOTE: If wireless_denoise is 1.0 (default), it might be too high for detailing, but we respect the user's intent to use setters.
         
-        result = fd_logic.do_detail(
-            image=image, segs=segs, model=model, clip=clip, vae=vae,
-            guide_size=guide_size, guide_size_for_bbox=guide_size_for, max_size=max_size,
-            seed=wireless_seed, steps=wireless_steps, cfg=wireless_cfg, sampler_name=wireless_sampler, scheduler=wireless_scheduler,
-            positive=positive, negative=negative, denoise=denoise,
-            feather=feather, noise_mask=noise_mask, force_inpaint=force_inpaint,
-            drop_size=drop_size
-        )
+        with SamplerContext():
+            result = fd_logic.do_detail(
+                image=image, segs=segs, model=model, clip=clip, vae=vae,
+                guide_size=guide_size, guide_size_for_bbox=guide_size_for, max_size=max_size,
+                seed=wireless_seed, steps=wireless_steps, cfg=wireless_cfg, sampler_name=wireless_sampler, scheduler=wireless_scheduler,
+                positive=positive, negative=negative, denoise=denoise,
+                feather=feather, noise_mask=noise_mask, force_inpaint=force_inpaint,
+                drop_size=drop_size
+            )
         
         return result
 
@@ -1612,14 +1922,15 @@ class UmeAiRT_WirelessFaceDetailer_Simple(UmeAiRT_WirelessUltimateUpscale_Base):
         log_node(f"Face Detailer (Simple): Detected {len(segs)} faces/regions. Processing...", color="MAGENTA")
 
         # Run Detailer
-        result = fd_logic.do_detail(
-            image=image, segs=segs, model=sd_model, clip=clip, vae=vae,
-            guide_size=guide_size, guide_size_for_bbox=guide_size_for_bbox, max_size=max_size,
-            seed=wireless_seed, steps=wireless_steps, cfg=wireless_cfg, sampler_name=wireless_sampler, scheduler=wireless_scheduler,
-            positive=positive, negative=negative, denoise=denoise,
-            feather=feather, noise_mask=noise_mask, force_inpaint=force_inpaint,
-            drop_size=drop_size
-        )
+        with SamplerContext():
+            result = fd_logic.do_detail(
+                image=image, segs=segs, model=sd_model, clip=clip, vae=vae,
+                guide_size=guide_size, guide_size_for_bbox=guide_size_for_bbox, max_size=max_size,
+                seed=wireless_seed, steps=wireless_steps, cfg=wireless_cfg, sampler_name=wireless_sampler, scheduler=wireless_scheduler,
+                positive=positive, negative=negative, denoise=denoise,
+                feather=feather, noise_mask=noise_mask, force_inpaint=force_inpaint,
+                drop_size=drop_size
+            )
         
         return result
 
@@ -3419,7 +3730,10 @@ class UmeAiRT_BlockSampler:
         print(f"  Negative: {neg_text}")
         print(f"{'='*60}\n")
         
-        result_latent = comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise)[0]
+        print(f"{'='*60}\n")
+        
+        with SamplerContext():
+            result_latent = comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise)[0]
 
         # 7. Decode
         generated_image = comfy_nodes.VAEDecode().decode(vae, result_latent)[0]
@@ -3605,17 +3919,18 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         steps = max(5, steps // 4)  # 1/4 of normal steps
         mask_blur = 16
 
-        return usdu_node.upscale(
-            image=image, model=sd_model, positive=positive, negative=negative, vae=vae,
-            upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
-            sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
-            upscale_model=upscale_model, mode_type=mode_type,
-            tile_width=tile_width, tile_height=tile_height, mask_blur=mask_blur, tile_padding=tile_padding,
-            seam_fix_mode="None", seam_fix_denoise=1.0,
-            seam_fix_mask_blur=8, seam_fix_width=64, seam_fix_padding=16,
-            force_uniform_tiles=True, tiled_decode=False,
-            suppress_preview=True,
-        )
+        with SamplerContext():
+            return usdu_node.upscale(
+                image=image, model=sd_model, positive=positive, negative=negative, vae=vae,
+                upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
+                sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
+                upscale_model=upscale_model, mode_type=mode_type,
+                tile_width=tile_width, tile_height=tile_height, mask_blur=mask_blur, tile_padding=tile_padding,
+                seam_fix_mode="None", seam_fix_denoise=1.0,
+                seam_fix_mask_blur=8, seam_fix_width=64, seam_fix_padding=16,
+                force_uniform_tiles=True, tiled_decode=False,
+                suppress_preview=True,
+            )
 
 
 class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
@@ -3733,14 +4048,15 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
 
         segs = bbox_detector.detect(image, bbox_threshold, bbox_dilation, bbox_crop_factor, drop_size)
 
-        result = fd_logic.do_detail(
-            image=image, segs=segs, model=sd_model, clip=clip, vae=vae,
-            guide_size=guide_size, guide_size_for_bbox=guide_size_for_bbox, max_size=max_size,
-            seed=seed, steps=steps, cfg=cfg, sampler_name=sampler_name, scheduler=scheduler,
-            positive=positive, negative=negative, denoise=denoise,
-            feather=feather, noise_mask=noise_mask, force_inpaint=force_inpaint,
-            drop_size=drop_size
-        )
+        with SamplerContext():
+            result = fd_logic.do_detail(
+                image=image, segs=segs, model=sd_model, clip=clip, vae=vae,
+                guide_size=guide_size, guide_size_for_bbox=guide_size_for_bbox, max_size=max_size,
+                seed=seed, steps=steps, cfg=cfg, sampler_name=sampler_name, scheduler=scheduler,
+                positive=positive, negative=negative, denoise=denoise,
+                feather=feather, noise_mask=noise_mask, force_inpaint=force_inpaint,
+                drop_size=drop_size
+            )
 
         return result
 
