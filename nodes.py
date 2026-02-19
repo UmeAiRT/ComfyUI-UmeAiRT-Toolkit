@@ -94,7 +94,10 @@ class UmeAiRT_Guidance_Input:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "guidance": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 30.0, "step": 0.1, "display": "slider"}),
+                "guidance": ("FLOAT", {
+                    "default": 8.0, "min": 0.0, "max": 30.0, "step": 0.1, "display": "slider",
+                    "tooltip": "CFG Scale (Guidance Scale). Higher values follow the prompt more strictly, lower values allow more creativity."
+                }),
             }
         }
 
@@ -135,8 +138,8 @@ class UmeAiRT_ImageSize_Input:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "width": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 8, "display": "slider"}),
-                "height": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 8, "display": "slider"}),
+                "width": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 8, "display": "slider", "tooltip": "Target width of the generated image."}),
+                "height": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 8, "display": "slider", "tooltip": "Target height of the generated image."}),
             }
         }
 
@@ -177,7 +180,10 @@ class UmeAiRT_FPS_Input:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "fps": ("INT", {"default": 24, "min": 1, "max": 120, "step": 1, "display": "slider"}),
+                "fps": ("INT", {
+                    "default": 24, "min": 1, "max": 120, "step": 1, "display": "slider",
+                    "tooltip": "Frames Per Second for video generation workflows."
+                }),
             }
         }
 
@@ -216,7 +222,10 @@ class UmeAiRT_Steps_Input:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "steps": ("INT", {"default": 20, "min": 1, "max": 200, "step": 1, "display": "slider"}),
+                "steps": ("INT", {
+                    "default": 20, "min": 1, "max": 200, "step": 1, "display": "slider",
+                    "tooltip": "Number of sampling steps. More steps usually mean higher quality but take longer."
+                }),
             }
         }
 
@@ -255,7 +264,10 @@ class UmeAiRT_Denoise_Input:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
+                "denoise": ("FLOAT", {
+                    "default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider",
+                    "tooltip": "Denoising strength. 1.0 = full new generation (txt2img), <1.0 = modify existing image (img2img)."
+                }),
             }
         }
 
@@ -294,7 +306,10 @@ class UmeAiRT_Seed_Input:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                "seed": ("INT", {
+                    "default": 0, "min": 0, "max": 0xffffffffffffffff,
+                    "tooltip": "Random seed for generation. Same seed + same settings = same image."
+                }),
             }
         }
 
@@ -333,7 +348,7 @@ class UmeAiRT_Scheduler_Input:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
+                "scheduler": (comfy.samplers.KSampler.SCHEDULERS, {"tooltip": "Scheduler algorithm (e.g. normal, karras, exponential)."}),
             }
         }
 
@@ -374,7 +389,7 @@ class UmeAiRT_Sampler_Input:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
+                "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Sampling algorithm (e.g. euler, dpmpp_2m)."}),
             }
         }
 
@@ -413,8 +428,8 @@ class UmeAiRT_SamplerScheduler_Input:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "sampler": (comfy.samplers.KSampler.SAMPLERS,),
-                "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
+                "sampler": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Sampling algorithm."}),
+                "scheduler": (comfy.samplers.KSampler.SCHEDULERS, {"tooltip": "Scheduler algorithm."}),
             }
         }
 
@@ -436,7 +451,7 @@ class UmeAiRT_Positive_Input:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "text": ("STRING", {"multiline": True, "dynamicPrompts": True}),
+                "text": ("STRING", {"multiline": True, "dynamicPrompts": True, "tooltip": "The positive prompt describing what you WANT to see in the image."}),
             }
         }
 
@@ -475,7 +490,7 @@ class UmeAiRT_Negative_Input:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "text": ("STRING", {"default": "text, watermark", "multiline": True, "dynamicPrompts": True}),
+                "text": ("STRING", {"default": "text, watermark", "multiline": True, "dynamicPrompts": True, "tooltip": "The negative prompt describing what you DO NOT WANT to see (e.g. bad quality, watermark)."}),
             }
         }
 
@@ -514,7 +529,7 @@ class UmeAiRT_Model_Input:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "model": ("MODEL",),
+                "model": ("MODEL", {"tooltip": "Input Model (UNET)."}),
             }
         }
 
@@ -552,7 +567,7 @@ class UmeAiRT_VAE_Input:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "vae": ("VAE",),
+                "vae": ("VAE", {"tooltip": "Input VAE."}),
             }
         }
 
@@ -590,7 +605,7 @@ class UmeAiRT_CLIP_Input:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "clip": ("CLIP",),
+                "clip": ("CLIP", {"tooltip": "Input CLIP."}),
             }
         }
 
@@ -635,7 +650,7 @@ class UmeAiRT_WirelessCheckpointLoader(comfy_nodes.CheckpointLoaderSimple):
     def INPUT_TYPES(s):
         return {
             "required": {
-                "ckpt_name": (folder_paths.get_filename_list("checkpoints"), ),
+                "ckpt_name": (folder_paths.get_filename_list("checkpoints"), {"tooltip": "Select a Stable Diffusion checkpoint to load globally."}),
             }
         }
     RETURN_TYPES = ("MODEL", "CLIP", "VAE")
@@ -666,9 +681,9 @@ class UmeAiRT_WirelessImageLoader(comfy_nodes.LoadImage):
         files.sort()
         return {
             "required": {
-                "image": (sorted(files), {"image_upload": True}),
-                "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF"}),
-                "mode": ("BOOLEAN", {"default": False, "label_on": "Inpaint", "label_off": "Img2Img"}),
+                "image": (sorted(files), {"image_upload": True, "tooltip": "Source image for Img2Img or Inpainting."}),
+                "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF", "tooltip": "Resize the image to match the global width/height set by Image Size Input."}),
+                "mode": ("BOOLEAN", {"default": False, "label_on": "Inpaint", "label_off": "Img2Img", "tooltip": "Inpaint mode uses the mask. Img2Img mode ignores the mask."}),
             }
         }
 
@@ -797,7 +812,7 @@ class UmeAiRT_Latent_Input:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "latent": ("LATENT",),
+                "latent": ("LATENT", {"tooltip": "Input Latent (Optional override)."}),
             }
         }
 
@@ -854,7 +869,7 @@ class UmeAiRT_WirelessKSampler:
                 # Auto-detects mode based on KEY_LATENT presence
             },
             "optional": {
-                "signal": ("*",), # Generic input for syncing
+                "signal": ("*", {"tooltip": "Optional input to enforce execution order."}), # Generic input for syncing
             }
         }
     
@@ -1196,23 +1211,23 @@ class UmeAiRT_MultiLoraLoader:
         lora_list = ["None"] + folder_paths.get_filename_list("loras")
         return {
             "required": {
-                "model": ("MODEL",),
-                "clip": ("CLIP",),
+                "model": ("MODEL", {"tooltip": "Input Model."}),
+                "clip": ("CLIP", {"tooltip": "Input CLIP."}),
                 
                 # SLOT 1
-                "lora_1": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF"}),
-                "lora_1_name": (lora_list,),
-                "lora_1_strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider"}),
+                "lora_1": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF", "tooltip": "Enable LoRA slot 1."}),
+                "lora_1_name": (lora_list, {"tooltip": "Select LoRA model."}),
+                "lora_1_strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider", "tooltip": "LoRA strength (1.0 = standard)."}),
                 
                 # SLOT 2
-                "lora_2": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF"}),
-                "lora_2_name": (lora_list,),
-                "lora_2_strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider"}),
+                "lora_2": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF", "tooltip": "Enable LoRA slot 2."}),
+                "lora_2_name": (lora_list, {"tooltip": "Select LoRA model."}),
+                "lora_2_strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider", "tooltip": "LoRA strength."}),
                 
                 # SLOT 3
-                "lora_3": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF"}),
-                "lora_3_name": (lora_list,),
-                "lora_3_strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider"}),
+                "lora_3": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF", "tooltip": "Enable LoRA slot 3."}),
+                "lora_3_name": (lora_list, {"tooltip": "Select LoRA model."}),
+                "lora_3_strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider", "tooltip": "LoRA strength."}),
             }
         }
 
@@ -1313,11 +1328,11 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image": ("IMAGE",),
-                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
-                "model": (folder_paths.get_filename_list("upscale_models"),),
-                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider"}),
-                "clean_prompt": ("BOOLEAN", {"default": True, "label_on": "Reduces Hallucinations", "label_off": "Use Global Prompt"}),
+                "image": ("IMAGE", {"tooltip": "Input Image to upscale."}),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough", "tooltip": "Enable or disable upscaling."}),
+                "model": (folder_paths.get_filename_list("upscale_models"), {"tooltip": "Select the Upscale Model (e.g. 4x-UltraSharp)."}),
+                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider", "tooltip": "Upscale factor (e.g. 2.0 = double size)."}),
+                "clean_prompt": ("BOOLEAN", {"default": True, "label_on": "Reduces Hallucinations", "label_off": "Use Global Prompt", "tooltip": "Removes positive prompt during upscale to prevent ghosts/hallucinations."}),
             }
         }
 
@@ -1392,29 +1407,29 @@ class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_B
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image": ("IMAGE",),
-                "enabled": ("BOOLEAN", {"default": True}),
-                "model": (folder_paths.get_filename_list("upscale_models"),),
-                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider"}),
+                "image": ("IMAGE", {"tooltip": "Input Image."}),
+                "enabled": ("BOOLEAN", {"default": True, "tooltip": "Enable/Disable."}),
+                "model": (folder_paths.get_filename_list("upscale_models"), {"tooltip": "Upscale Model."}),
+                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider", "tooltip": "Upscale factor."}),
                 
                 # Advanced Settings
-                "denoise": ("FLOAT", {"default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
-                "clean_prompt": ("BOOLEAN", {"default": True, "label_on": "Reduces Hallucinations", "label_off": "Use Global Prompt"}),
+                "denoise": ("FLOAT", {"default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "Denoising strength for the upscale pass. Lower = preserves structure, Higher = more creative/hallucinations."}),
+                "clean_prompt": ("BOOLEAN", {"default": True, "label_on": "Reduces Hallucinations", "label_off": "Use Global Prompt", "tooltip": "Clears prompt to avoid hallucinations."}),
                 
-                "mode_type": (["Linear", "Chess", "None"], {"default": "Linear"}),
-                "tile_width": ("INT", {"default": 512, "min": 64, "max": 4096, "step": 64}),
-                "tile_height": ("INT", {"default": 512, "min": 64, "max": 4096, "step": 64}),
-                "mask_blur": ("INT", {"default": 8, "min": 0, "max": 64, "step": 1}),
-                "tile_padding": ("INT", {"default": 32, "min": 0, "max": 256, "step": 8}),
+                "mode_type": (["Linear", "Chess", "None"], {"default": "Linear", "tooltip": "Tiling strategy using UltimateSDUpscale."}),
+                "tile_width": ("INT", {"default": 512, "min": 64, "max": 4096, "step": 64, "tooltip": "Processing tile width."}),
+                "tile_height": ("INT", {"default": 512, "min": 64, "max": 4096, "step": 64, "tooltip": "Processing tile height."}),
+                "mask_blur": ("INT", {"default": 8, "min": 0, "max": 64, "step": 1, "tooltip": "Blur radius for tile masks."}),
+                "tile_padding": ("INT", {"default": 32, "min": 0, "max": 256, "step": 8, "tooltip": "Padding between tiles."}),
                 
-                "seam_fix_mode": (["None", "Band Pass", "Half Tile", "Half Tile + Intersections"], {"default": "None"}),
-                "seam_fix_denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "seam_fix_width": ("INT", {"default": 64, "min": 0, "max": 256, "step": 8}),
-                "seam_fix_mask_blur": ("INT", {"default": 8, "min": 0, "max": 64, "step": 1}),
-                "seam_fix_padding": ("INT", {"default": 16, "min": 0, "max": 128, "step": 8}),
+                "seam_fix_mode": (["None", "Band Pass", "Half Tile", "Half Tile + Intersections"], {"default": "None", "tooltip": "Method to fix seams between tiles."}),
+                "seam_fix_denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Denoise strength for seam fixing."}),
+                "seam_fix_width": ("INT", {"default": 64, "min": 0, "max": 256, "step": 8, "tooltip": "Width of seam fix area."}),
+                "seam_fix_mask_blur": ("INT", {"default": 8, "min": 0, "max": 64, "step": 1, "tooltip": "Blur for seam fix mask."}),
+                "seam_fix_padding": ("INT", {"default": 16, "min": 0, "max": 128, "step": 8, "tooltip": "Padding for seam fix."}),
                 
-                "force_uniform_tiles": ("BOOLEAN", {"default": True}),
-                "tiled_decode": ("BOOLEAN", {"default": False}),
+                "force_uniform_tiles": ("BOOLEAN", {"default": True, "tooltip": "Forces all tiles to be the same size."}),
+                "tiled_decode": ("BOOLEAN", {"default": False, "tooltip": "Decode generated latent in tiles to save VRAM."}),
             }
         }
 
@@ -1802,20 +1817,20 @@ class UmeAiRT_WirelessFaceDetailer_Advanced(UmeAiRT_WirelessUltimateUpscale_Base
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image": ("IMAGE",),
-                "bbox_detector": ("BBOX_DETECTOR",),
-                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
-                "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": 4096, "step": 8}),
-                "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region"}),
-                "max_size": ("FLOAT", {"default": 1024, "min": 64, "max": 4096, "step": 8}),
-                "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01}),
-                "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1}),
-                "noise_mask": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled"}),
-                "force_inpaint": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled"}),
-                "bbox_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "bbox_dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1}),
-                "bbox_crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 10, "step": 0.1}),
-                "drop_size": ("INT", {"min": 1, "max": 4096, "step": 1, "default": 10}),
+                "image": ("IMAGE", {"tooltip": "Input Image."}),
+                "bbox_detector": ("BBOX_DETECTOR", {"tooltip": "Face detector model (e.g. bbox/face_yolov8n)."}),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough", "tooltip": "Enable/Disable face detailing."}),
+                "guide_size": ("FLOAT", {"default": 512, "min": 64, "max": 4096, "step": 8, "tooltip": "Resolution for the detailing pass. Higher = more detail but slower."}),
+                "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region", "tooltip": "Whether guide size applies to the face bbox or the whole crop region."}),
+                "max_size": ("FLOAT", {"default": 1024, "min": 64, "max": 4096, "step": 8, "tooltip": "Maximum size of the cropped area."}),
+                "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01, "tooltip": "Denoising strength for the face fix. Too high = completely new face."}),
+                "feather": ("INT", {"default": 5, "min": 0, "max": 100, "step": 1, "tooltip": "Blur edges of the pasted face to blend with original."}),
+                "noise_mask": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled", "tooltip": "Use noise mask (recommended)."}),
+                "force_inpaint": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled", "tooltip": "Force inpainting model behavior."}),
+                "bbox_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Confidence threshold for face detection."}),
+                "bbox_dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1, "tooltip": "Expand the detected face box by pixels."}),
+                "bbox_crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 10, "step": 0.1, "tooltip": "How much context around the face to include."}),
+                "drop_size": ("INT", {"min": 1, "max": 4096, "step": 1, "default": 10, "tooltip": "Ignore faces smaller than this size (pixels)."}),
             }
         }
 
@@ -1900,10 +1915,10 @@ class UmeAiRT_WirelessFaceDetailer_Simple(UmeAiRT_WirelessUltimateUpscale_Base):
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image": ("IMAGE",),
-                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
-                "model": (folder_paths.get_filename_list("bbox"),),
-                "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01, "display": "slider"}),
+                "image": ("IMAGE", {"tooltip": "Input Image."}),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough", "tooltip": "Enable/Disable."}),
+                "model": (folder_paths.get_filename_list("bbox"), {"tooltip": "Select face detector model."}),
+                "denoise": ("FLOAT", {"default": 0.5, "min": 0.0001, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "Denoising strength."}),
             }
         }
 
@@ -1978,8 +1993,8 @@ class UmeAiRT_WirelessImageSaver(UmeAiRT_WirelessUltimateUpscale_Base):
     def INPUT_TYPES(s):
         return {
             "required": {
-                "images": ("IMAGE",),
-                "filename": ("STRING", {"default": 'SDXL/%date/%time_%basemodelname_%seed', "multiline": False}),
+                "images": ("IMAGE", {"tooltip": "Images to save."}),
+                "filename": ("STRING", {"default": 'SDXL/%date/%time_%basemodelname_%seed', "multiline": False, "tooltip": "File naming pattern. variables: %date, %time, %seed, %basemodelname, %counter."}),
             },
             "hidden": {
                 "prompt": "PROMPT",
@@ -2126,19 +2141,19 @@ class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_B
         
         return {
             "required": {
-                "image": ("IMAGE",),
-                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
-                "upscale_model": ("UPSCALE_MODEL",),
-                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider"}),
-                "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                "cfg": ("FLOAT", {"default": 2.0, "min": 0.0, "max": 100.0, "step": 0.1}),
-                "denoise": ("FLOAT", {"default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "image": ("IMAGE", {"tooltip": "Input Image."}),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough", "tooltip": "Enable/Disable."}),
+                "upscale_model": ("UPSCALE_MODEL", {"tooltip": "Input Upscale Model (loaded separately)."}),
+                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider", "tooltip": "Upscale factor."}),
+                "steps": ("INT", {"default": 20, "min": 1, "max": 10000, "tooltip": "Sampling steps for the upscale (tiled) pass."}),
+                "cfg": ("FLOAT", {"default": 2.0, "min": 0.0, "max": 100.0, "step": 0.1, "tooltip": "CFG Scale for the upscale pass."}),
+                "denoise": ("FLOAT", {"default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Denoise strength."}),
                 
-                "mode_type": (usdu_modes, {"default": "Linear"}),
-                "mask_blur": ("INT", {"default": 16, "min": 0, "max": 64}),
-                "tile_padding": ("INT", {"default": 32, "min": 0, "max": 128}),
-                "seam_fix_mode": (usdu_seam, {"default": "None"}),
-                "seam_fix_denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "mode_type": (usdu_modes, {"default": "Linear", "tooltip": "Tiling strategy."}),
+                "mask_blur": ("INT", {"default": 16, "min": 0, "max": 64, "tooltip": "Mask blur."}),
+                "tile_padding": ("INT", {"default": 32, "min": 0, "max": 128, "tooltip": "Tile padding."}),
+                "seam_fix_mode": (usdu_seam, {"default": "None", "tooltip": "Seam fixing."}),
+                "seam_fix_denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Seam fixing denoise."}),
             }
         }
 
@@ -2180,13 +2195,13 @@ class UmeAiRT_GenerationSettings:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "width": ("INT", {"default": 1024, "min": 512, "max": 2048, "step": 64, "display": "slider"}),
-                "height": ("INT", {"default": 1024, "min": 512, "max": 2048, "step": 64, "display": "slider"}),
-                "sampler": (comfy.samplers.KSampler.SAMPLERS,),
-                "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
-                "steps": ("INT", {"default": 20, "min": 1, "max": 150, "step": 1, "display": "slider"}),
-                "guidance": ("FLOAT", {"default": 8.0, "min": 1.0, "max": 30.0, "step": 0.5, "display": "slider"}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                "width": ("INT", {"default": 1024, "min": 512, "max": 2048, "step": 64, "display": "slider", "tooltip": "Target width of the generated image."}),
+                "height": ("INT", {"default": 1024, "min": 512, "max": 2048, "step": 64, "display": "slider", "tooltip": "Target height of the generated image."}),
+                "sampler": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Sampling algorithm (e.g., euler, dpmpp_2m)."}),
+                "scheduler": (comfy.samplers.KSampler.SCHEDULERS, {"tooltip": "Noise scheduler (e.g., normal, karras, exponential)."}),
+                "steps": ("INT", {"default": 20, "min": 1, "max": 150, "step": 1, "display": "slider", "tooltip": "Total sampling steps. Higher values take longer but can add detail."}),
+                "guidance": ("FLOAT", {"default": 8.0, "min": 1.0, "max": 30.0, "step": 0.5, "display": "slider", "tooltip": "CFG Scale. Higher values follow the prompt more strictly."}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Seed for random number generation. Same seed + same settings = same image."}),
             }
         }
 
@@ -2223,9 +2238,9 @@ class UmeAiRT_FilesSettings:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "ckpt_name": (folder_paths.get_filename_list("checkpoints"), ),
-                "vae_name": (["Baked"] + folder_paths.get_filename_list("vae"),),
-                "clip_skip": ("INT", {"default": -1, "min": -24, "max": -1, "step": 1}),
+                "ckpt_name": (folder_paths.get_filename_list("checkpoints"), {"tooltip": "Select the Checkpoint model to load."}),
+                "vae_name": (["Baked"] + folder_paths.get_filename_list("vae"), {"tooltip": "Select VAE. 'Baked' uses the VAE built into the checkpoint."}),
+                "clip_skip": ("INT", {"default": -1, "min": -24, "max": -1, "step": 1, "tooltip": "CLIP Skip layer. -1 is standard for SD1.5/SDXL/FLUX. -2 is common for anime models."}),
             }
         }
     
@@ -2244,7 +2259,7 @@ class UmeAiRT_FilesSettings_Checkpoint:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "ckpt_name": (folder_paths.get_filename_list("checkpoints"),),
+                "ckpt_name": (folder_paths.get_filename_list("checkpoints"), {"tooltip": "Select the Checkpoint model to load (includes Model, CLIP, and VAE)."}),
             }
         }
 
@@ -2288,11 +2303,11 @@ class UmeAiRT_FilesSettings_Checkpoint_Advanced:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "ckpt_name": (folder_paths.get_filename_list("checkpoints"),),
+                "ckpt_name": (folder_paths.get_filename_list("checkpoints"), {"tooltip": "Select the Checkpoint model to load."}),
             },
             "optional": {
-                 "vae_name": (["Baked"] + folder_paths.get_filename_list("vae"),),
-                 "clip_skip": ("INT", {"default": -1, "min": -24, "max": -1, "step": 1}),
+                 "vae_name": (["Baked"] + folder_paths.get_filename_list("vae"), {"tooltip": "Optional: Override the VAE."}),
+                 "clip_skip": ("INT", {"default": -1, "min": -24, "max": -1, "step": 1, "tooltip": "Optional: Set CLIP Skip layer."}),
             }
         }
 
@@ -2346,11 +2361,11 @@ class UmeAiRT_FilesSettings_FLUX:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "unet_name": (folder_paths.get_filename_list("unet"),),
-                "weight_dtype": (["default", "fp8_e4m3fn", "fp8_e5m2"],),
-                "clip_name1": (folder_paths.get_filename_list("clip"),),
-                "clip_name2": (folder_paths.get_filename_list("clip"),),
-                "vae_name": (folder_paths.get_filename_list("vae"),),
+                "unet_name": (folder_paths.get_filename_list("unet"), {"tooltip": "Select the UNET model file."}),
+                "weight_dtype": (["default", "fp8_e4m3fn", "fp8_e5m2"], {"tooltip": "Weight data type for loading the UNET (affects VRAM usage)."}),
+                "clip_name1": (folder_paths.get_filename_list("clip"), {"tooltip": "Select the primary CLIP model (e.g., t5xxl)."}),
+                "clip_name2": (folder_paths.get_filename_list("clip"), {"tooltip": "Select the secondary CLIP model (e.g., clip_l)."}),
+                "vae_name": (folder_paths.get_filename_list("vae"), {"tooltip": "Select the VAE model file."}),
             }
         }
 
@@ -2422,15 +2437,15 @@ class UmeAiRT_FilesSettings_Fragmented:
         
         return {
             "required": {
-                "model_name": (all_models,),
-                "weight_dtype": (["default", "fp8_e4m3fn", "fp8_e4m3fn_fast", "fp8_e5m2"],),
-                "clip_name": (clips,),
-                "clip_type": (["stable_diffusion", "stable_cascade", "sd3", "stable_audio", "mochi", "ltxv", "pixart", "cosmos", "lumina2", "wan", "hidream", "chroma", "ace", "omnigen2", "qwen_image", "hunyuan_image", "flux2", "ovis"], ),
-                "vae_name": (vaes,),
+                "model_name": (all_models, {"tooltip": "Select Model (Checkpoint, Diffusion Model, or UNET)."}),
+                "weight_dtype": (["default", "fp8_e4m3fn", "fp8_e4m3fn_fast", "fp8_e5m2"], {"tooltip": "Weight data type for loading the model."}),
+                "clip_name": (clips, {"tooltip": "Select CLIP model (Text Encoder)."}),
+                "clip_type": (["stable_diffusion", "stable_cascade", "sd3", "stable_audio", "mochi", "ltxv", "pixart", "cosmos", "lumina2", "wan", "hidream", "chroma", "ace", "omnigen2", "qwen_image", "hunyuan_image", "flux2", "ovis"], {"tooltip": "Specify the CLIP model architecture."}),
+                "vae_name": (vaes, {"tooltip": "Select VAE model."}),
             },
             "optional": {
-                "clip_skip": ("INT", {"default": -1, "min": -24, "max": -1, "step": 1}),
-                "device": (["default", "cpu"], {"advanced": True}),
+                "clip_skip": ("INT", {"default": -1, "min": -24, "max": -1, "step": 1, "tooltip": "CLIP Skip layer."}),
+                "device": (["default", "cpu"], {"advanced": True, "tooltip": "Device to load the model on (default is GPU)."}),
             }
         }
 
@@ -2547,9 +2562,9 @@ class UmeAiRT_FilesSettings_ZIMG:
         
         return {
             "required": {
-                "model_name": (diff_models,),
-                "clip_name": (clips,),
-                "vae_name": (vaes,),
+                "model_name": (diff_models, {"tooltip": "Select Diffusion Model (Z-IMG format)."}),
+                "clip_name": (clips, {"tooltip": "Select CLIP model (Text Encoder)."}),
+                "vae_name": (vaes, {"tooltip": "Select VAE model."}),
             }
         }
 
@@ -2625,13 +2640,13 @@ def get_lora_inputs(count):
     inputs = {
         "required": {},
         "optional": {
-            "loras": ("UME_LORA_STACK",),
+            "loras": ("UME_LORA_STACK", {"tooltip": "Optional input to chain multiple LoRA stacks."}),
         }
     }
     lora_list = ["None"] + folder_paths.get_filename_list("loras")
     for i in range(1, count + 1):
-        inputs["optional"][f"lora_{i}_name"] = (lora_list,)
-        inputs["optional"][f"lora_{i}_strength"] = ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider"})
+        inputs["optional"][f"lora_{i}_name"] = (lora_list, {"tooltip": f"Select LoRA model {i}."})
+        inputs["optional"][f"lora_{i}_strength"] = ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider", "tooltip": f"Strength for LoRA {i}."})
     return inputs
 
 def process_lora_stack(loras, **kwargs):
@@ -2728,14 +2743,14 @@ class UmeAiRT_ControlNetImageApply_Advanced:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image_bundle": ("UME_IMAGE",),
-                "control_net_name": (folder_paths.get_filename_list("controlnet"),),
-                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.01}),
-                "start_percent": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001}),
-                "end_percent": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.001}),
+                "image_bundle": ("UME_IMAGE", {"tooltip": "Input Image Bundle."}),
+                "control_net_name": (folder_paths.get_filename_list("controlnet"), {"tooltip": "Select ControlNet model."}),
+                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.01, "tooltip": "ControlNet strength."}),
+                "start_percent": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001, "tooltip": "Start step percentage (0.0 = beginning)."}),
+                "end_percent": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.001, "tooltip": "End step percentage (1.0 = end)."}),
             },
             "optional": {
-                "optional_control_image": ("IMAGE",), 
+                "optional_control_image": ("IMAGE", {"tooltip": "Optional: Override control image (uses bundle image if not connected)."}), 
             }
         }
 
@@ -2778,10 +2793,10 @@ class UmeAiRT_ControlNetImageProcess:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image_bundle": ("UME_IMAGE",),
+                "image_bundle": ("UME_IMAGE", {"tooltip": "Input Image Bundle."}),
                 # Image Process Params
-                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
-                "mode": (["img2img", "txt2img"], {"default": "img2img"}),
+                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "Denoise strength for the sampler."}),
+                "mode": (["img2img", "txt2img"], {"default": "img2img", "tooltip": "Processing mode. Txt2Img ignores mask and forces denoise to 1.0."}),
                 
                 # ControlNet Params
                 "control_net_name": (folder_paths.get_filename_list("controlnet"),),
@@ -3200,11 +3215,11 @@ class UmeAiRT_Bundle_Downloader:
 
         return {
             "required": {
-                "bundle_category": (categories,),
-                "bundle_version": (versions,),
+                "bundle_category": (categories, {"tooltip": "Select Bundle Category (e.g., FLUX, Upscale)."}),
+                "bundle_version": (versions, {"tooltip": "Select specific version or model. 'Auto' attempts to pick based on VRAM."}),
             },
             "optional": {
-                "hf_token": ("STRING", {"default": "", "multiline": False}),
+                "hf_token": ("STRING", {"default": "", "multiline": False, "tooltip": "Optional: HuggingFace Token for private repos or higher limits."}),
             }
         }
 
@@ -3553,19 +3568,19 @@ class UmeAiRT_BlockImageProcess:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image_bundle": ("UME_IMAGE",),
-                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
-                "mode": (["img2img", "inpaint", "outpaint", "txt2img"], {"default": "img2img"}),
+                "image_bundle": ("UME_IMAGE", {"tooltip": "Input Image Bundle."}),
+                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "Target denoise strength for the sampler."}),
+                "mode": (["img2img", "inpaint", "outpaint", "txt2img"], {"default": "img2img", "tooltip": "Processing mode."}),
             },
             "optional": {
-                "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF"}),
-                "mask_blur": ("INT", {"default": 10, "min": 0, "max": 200, "step": 1}),
+                "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF", "tooltip": "Resize to global resolution."}),
+                "mask_blur": ("INT", {"default": 10, "min": 0, "max": 200, "step": 1, "tooltip": "Blur mask edges."}),
                 # Outpaint Params
-                "padding_left": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
-                "padding_top": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
-                "padding_right": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
-                "padding_bottom": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
-                "feathering": ("INT", {"default": 40, "min": 0, "max": 200, "step": 1}),
+                "padding_left": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8, "tooltip": "Pixels to add to left."}),
+                "padding_top": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8, "tooltip": "Pixels to add to top."}),
+                "padding_right": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8, "tooltip": "Pixels to add to right."}),
+                "padding_bottom": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8, "tooltip": "Pixels to add to bottom."}),
+                "feathering": ("INT", {"default": 40, "min": 0, "max": 200, "step": 1, "tooltip": "Feathering distance for outpaint seams."}),
             }
         }
 
@@ -3721,7 +3736,7 @@ class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
         files.sort()
         return {
             "required": {
-                "image": (sorted(files), {"image_upload": True}),
+                "image": (sorted(files), {"image_upload": True, "tooltip": "Image to load."}),
             },
             "optional": {}
         }
@@ -3765,7 +3780,7 @@ class UmeAiRT_BlockImageLoader_Advanced(comfy_nodes.LoadImage):
         files.sort()
         return {
             "required": {
-                "image": (sorted(files), {"image_upload": True}),
+                "image": (sorted(files), {"image_upload": True, "tooltip": "Image to load."}),
             },
             "optional": {}
         }
@@ -3807,11 +3822,11 @@ class UmeAiRT_BlockSampler:
         return {
             "required": {},
             "optional": {
-                "models": ("UME_FILES",),
-                "prompts": ("UME_PROMPTS",),
-                "settings": ("UME_SETTINGS",),
-                "loras": ("UME_LORA_STACK",),
-                "image": ("UME_IMAGE",),  # Changed from IMAGE to UME_IMAGE bundle
+                "models": ("UME_FILES", {"tooltip": "Models Bundle (Model, Clip, VAE)."}),
+                "prompts": ("UME_PROMPTS", {"tooltip": "Prompts Bundle (Positive, Negative)."}),
+                "settings": ("UME_SETTINGS", {"tooltip": "Settings Bundle (Steps, CFG, etc)."}),
+                "loras": ("UME_LORA_STACK", {"tooltip": "LoRA Stack Bundle."}),
+                "image": ("UME_IMAGE", {"tooltip": "Image Bundle (Image, Mask, Mode, Denoise)."}),  # Changed from IMAGE to UME_IMAGE bundle
             }
         }
 
@@ -4081,19 +4096,19 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         usdu_modes = ["Linear", "Chess", "None"]
         return {
             "required": {
-                "image": ("IMAGE",),
-                "model": (folder_paths.get_filename_list("upscale_models"),),
-                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider"}),
+                "image": ("IMAGE", {"tooltip": "Input Image."}),
+                "model": (folder_paths.get_filename_list("upscale_models"), {"tooltip": "Upscale Model."}),
+                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider", "tooltip": "Upscale Factor."}),
             },
             "optional": {
-                "settings": ("UME_SETTINGS",),
-                "models": ("UME_FILES",),
-                "loras": ("UME_LORA_STACK",),
-                "prompts": ("UME_PROMPTS",),
-                "denoise": ("FLOAT", {"default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
-                "clean_prompt": ("BOOLEAN", {"default": True, "label_on": "Reduces Hallucinations", "label_off": "Use Global Prompt"}),
-                "mode_type": (usdu_modes, {"default": "Linear"}),
-                "tile_padding": ("INT", {"default": 32, "min": 0, "max": 128}),
+                "settings": ("UME_SETTINGS", {"tooltip": "Override Settings."}),
+                "models": ("UME_FILES", {"tooltip": "Override Models."}),
+                "loras": ("UME_LORA_STACK", {"tooltip": "Add LoRAs."}),
+                "prompts": ("UME_PROMPTS", {"tooltip": "Override Prompts."}),
+                "denoise": ("FLOAT", {"default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "Denoise Strength."}),
+                "clean_prompt": ("BOOLEAN", {"default": True, "label_on": "Reduces Hallucinations", "label_off": "Use Global Prompt", "tooltip": "Clean Prompt."}),
+                "mode_type": (usdu_modes, {"default": "Linear", "tooltip": "Tiling Strategy."}),
+                "tile_padding": ("INT", {"default": 32, "min": 0, "max": 128, "tooltip": "Tile Padding."}),
             }
         }
 
@@ -4211,17 +4226,17 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image": ("IMAGE",),
-                "model": (folder_paths.get_filename_list("bbox"),),
-                "denoise": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
+                "image": ("IMAGE", {"tooltip": "Input Image."}),
+                "model": (folder_paths.get_filename_list("bbox"), {"tooltip": "Face Detector."}),
+                "denoise": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "Denoise Strength."}),
             },
             "optional": {
-                "settings": ("UME_SETTINGS",),
-                "models": ("UME_FILES",),
-                "loras": ("UME_LORA_STACK",),
-                "prompts": ("UME_PROMPTS",),
-                "guide_size": ("INT", {"default": 512, "min": 64, "max": 4096, "step": 8}),
-                "max_size": ("INT", {"default": 1024, "min": 64, "max": 4096, "step": 8}),
+                "settings": ("UME_SETTINGS", {"tooltip": "Override Settings."}),
+                "models": ("UME_FILES", {"tooltip": "Override Models."}),
+                "loras": ("UME_LORA_STACK", {"tooltip": "Add LoRAs."}),
+                "prompts": ("UME_PROMPTS", {"tooltip": "Override Prompts."}),
+                "guide_size": ("INT", {"default": 512, "min": 64, "max": 4096, "step": 8, "tooltip": "Detailing Resolution."}),
+                "max_size": ("INT", {"default": 1024, "min": 64, "max": 4096, "step": 8, "tooltip": "Max Size."}),
             }
         }
 
@@ -4336,7 +4351,7 @@ class UmeAiRT_Unpack_ImageBundle:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image_bundle": ("UME_IMAGE",),
+                "image_bundle": ("UME_IMAGE", {"tooltip": "Input UME_IMAGE bundle to unpack."}),
             }
         }
 
@@ -4367,7 +4382,7 @@ class UmeAiRT_Unpack_FilesBundle:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "models_bundle": ("UME_FILES",),
+                "models_bundle": ("UME_FILES", {"tooltip": "Input UME_FILES bundle to unpack."}),
             }
         }
 
@@ -4395,7 +4410,7 @@ class UmeAiRT_Unpack_SettingsBundle:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "settings_bundle": ("UME_SETTINGS",),
+                "settings_bundle": ("UME_SETTINGS", {"tooltip": "Input UME_SETTINGS bundle to unpack."}),
             }
         }
 
@@ -4431,7 +4446,7 @@ class UmeAiRT_Faces_Unpack_Node:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "faces_bundle": ("UME_FACES",),
+                "faces_bundle": ("UME_FACES", {"tooltip": "Input UME_FACES bundle to unpack."}),
             }
         }
 
@@ -4451,7 +4466,7 @@ class UmeAiRT_Tags_Unpack_Node:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "tags_bundle": ("UME_TAGS",),
+                "tags_bundle": ("UME_TAGS", {"tooltip": "Input UME_TAGS bundle to unpack."}),
             }
         }
 
@@ -4473,7 +4488,7 @@ class UmeAiRT_Pipe_Unpack_Node:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "pipe_bundle": ("UME_PIPE",),
+                "pipe_bundle": ("UME_PIPE", {"tooltip": "Input UME_PIPE bundle to unpack."}),
             }
         }
     
@@ -4507,7 +4522,7 @@ class UmeAiRT_Unpack_PromptsBundle:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "prompts_bundle": ("UME_PROMPTS",),
+                "prompts_bundle": ("UME_PROMPTS", {"tooltip": "Input UME_PROMPTS bundle to unpack."}),
             }
         }
 
@@ -4534,7 +4549,7 @@ class UmeAiRT_Seed_Node:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Set the global Wireless Seed."}),
             }
         }
 
@@ -4557,7 +4572,7 @@ class UmeAiRT_CR_Seed_Node:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Set the global Wireless Seed."}),
             }
         }
 
