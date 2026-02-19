@@ -118,6 +118,24 @@ pip install -r ComfyUI-UmeAiRT-Toolkit/requirements.txt
 
 ---
 
+## 📜 Third-Party Code & Attribution
+
+This toolkit bundles or adapts code from the following open-source projects. We are grateful to their authors.
+
+| Component | Source | Author(s) | License |
+|:---|:---|:---|:---|
+| `seedvr2_core/vendor/` | [ComfyUI-SeedVR2_VideoUpscaler](https://github.com/numz/ComfyUI-SeedVR2_VideoUpscaler) | numz, adrientoupet | Apache-2.0 |
+| `seedvr2_core/` (tiling engine) | [comfyui-seedvr2-tilingupscaler](https://github.com/numz/comfyui-seedvr2-tilingupscaler) | numz | — |
+| `usdu_core/` | [ComfyUI_UltimateSDUpscale](https://github.com/ssitu/ComfyUI_UltimateSDUpscale) | ssitu | GPL-3.0 |
+| `usdu_core/repositories/` | [ultimate-upscale-for-automatic1111](https://github.com/Coyote-A/ultimate-upscale-for-automatic1111) | Coyote-A | GPL-3.0 |
+| `image_saver_core/` (metadata) | [sd_civitai_extension](https://github.com/civitai/sd_civitai_extension) | Civitai | — |
+| Detail Daemon logic | [sd-webui-detail-daemon](https://github.com/muerrilla/sd-webui-detail-daemon) | muerrilla | — |
+| `facedetailer_core/` | Inspired by [ComfyUI-Impact-Pack](https://github.com/ltdrdata/ComfyUI-Impact-Pack) | ltdrdata | GPL-3.0 |
+
+Original licenses are preserved in their respective directories where applicable.
+
+---
+
 ## ❤️ Credits
 
 Developed by **UmeAiRT Team**.  
