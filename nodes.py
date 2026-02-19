@@ -1558,6 +1558,8 @@ class UmeAiRT_WirelessSeedVR2Upscale:
 
         # Also scan disk for any extra models the user may have added
         try:
+            from .seedvr2_core.seedvr2_adapter import _ensure_seedvr2_path
+            _ensure_seedvr2_path()
             from seedvr2_videoupscaler.src.utils.constants import get_all_model_files
             on_disk = list(get_all_model_files().keys())
             # Merge: known first, then any extra discovered on disk

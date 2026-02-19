@@ -51,6 +51,7 @@ Each node family has its own color for instant visual recognition:
 | **Loaders** | `Wireless Image Loader` | Load source image for Img2Img |
 | **Samplers** | `Wireless KSampler` | Auto-detect Txt2Img/Img2Img mode |
 | **Post-Processing** | `Wireless Ultimate Upscale` | USDU with wireless inputs |
+| **Post-Processing** | `Wireless SeedVR2 Upscale` | SeedVR2 AI upscaler (bundled, no extra install) |
 | **Post-Processing** | `Wireless FaceDetailer` | Face enhancement with wireless inputs |
 | **Post-Processing** | `Detailer Daemon` | Autonomous 2-Pass Refiner (Simple/Adv) |
 | **Output** | `Wireless Image Saver` | Auto-path and metadata saving |
@@ -95,6 +96,8 @@ cd ComfyUI/custom_nodes
 git clone https://github.com/UmeAiRT/ComfyUI-UmeAiRT-Toolkit.git
 pip install -r ComfyUI-UmeAiRT-Toolkit/requirements.txt
 ```
+
+> **Note**: SeedVR2 upscaler is bundled with the toolkit — no extra custom node needed.
 
 ---
 
