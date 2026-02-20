@@ -636,17 +636,35 @@ class UmeAiRT_FilesSettings_ZIMG:
     """
     @classmethod
     def INPUT_TYPES(s):
-        # 1. Get Models (Diffusion Models ONLY)
+        try:
+            from ..vendor.comfyui_gguf import gguf_nodes
+        except Exception:
+            pass
+
+        # 1. Get Models (Diffusion Models ONLY natively, plus GGUF)
         diff_models = folder_paths.get_filename_list("diffusion_models")
+        if diff_models is None: diff_models = []
+        try:
+            unet_gguf = folder_paths.get_filename_list("unet_gguf")
+            if unet_gguf: diff_models = diff_models + unet_gguf
+        except Exception:
+            pass
+        diff_models = sorted(list(set(diff_models)))
         
-        # 2. Get CLIPs (Standard + Text Encoders)
+        # 2. Get CLIPs (Standard + Text Encoders + GGUF)
         clips = folder_paths.get_filename_list("clip")
+        if clips is None: clips = []
         try:
             tes = folder_paths.get_filename_list("text_encoders")
-            if tes:
-                clips = sorted(list(set(clips + tes)))
-        except:
+            if tes: clips = clips + tes
+        except Exception:
             pass
+        try:
+            gguf_clips = folder_paths.get_filename_list("clip_gguf")
+            if gguf_clips: clips = clips + gguf_clips
+        except Exception:
+            pass
+        clips = sorted(list(set(clips)))
             
         # 3. Get VAEs
         vaes = folder_paths.get_filename_list("vae")
@@ -666,44 +684,56 @@ class UmeAiRT_FilesSettings_ZIMG:
 
     def load_files(self, model_name, clip_name, vae_name):
         # 1. Load Model (Z-IMG / Diffusion Model)
-        diff_path = folder_paths.get_full_path("diffusion_models", model_name)
-        if not diff_path:
-            raise ValueError(f"Z-IMG Loader: Model '{model_name}' not found in 'diffusion_models'.")
+        if model_name.endswith(".gguf"):
+            from ..vendor.comfyui_gguf.gguf_nodes import UnetLoaderGGUF
+            model = UnetLoaderGGUF().load_unet(model_name)[0]
+            log_node(f"Z-IMG Model Loader: Loaded '{model_name}' [Type: GGUF]")
+        else:
+            diff_path = folder_paths.get_full_path("diffusion_models", model_name)
+            if not diff_path:
+                raise ValueError(f"Z-IMG Loader: Model '{model_name}' not found in 'diffusion_models'.")
 
-        # Auto-Detect Weight DType
-        model_options = {}
-        detected_dtype = "default"
+            # Auto-Detect Weight DType
+            model_options = {}
+            detected_dtype = "default"
+            
+            if "e4m3fn" in model_name.lower():
+                model_options["dtype"] = torch.float8_e4m3fn
+                detected_dtype = "fp8_e4m3fn"
+            elif "e5m2" in model_name.lower():
+                model_options["dtype"] = torch.float8_e5m2
+                detected_dtype = "fp8_e5m2"
+            
+            # Load Model
+            model = comfy.sd.load_diffusion_model(diff_path, model_options=model_options)
+            # Verify actual Dtype using Safetensors metadata natively if not Forced
+            detected_dtype = "Unquantized"
+            log_node(f"Z-IMG Model Loader: Loaded '{model_name}' [Auto-DType: {detected_dtype}]")
         
-        if "e4m3fn" in model_name.lower():
-            model_options["dtype"] = torch.float8_e4m3fn
-            detected_dtype = "fp8_e4m3fn"
-        elif "e5m2" in model_name.lower():
-            model_options["dtype"] = torch.float8_e5m2
-            detected_dtype = "fp8_e5m2"
-        
-        # Load Model
-        model = comfy.sd.load_diffusion_model(diff_path, model_options=model_options)
-        log_node(f"Z-IMG Model Loaded: {model_name} [Auto-DType: {detected_dtype}]", color="CYAN")
-        
-        # 2. Load CLIP (Hardcoded to LUMINA2)
-        clip_path = folder_paths.get_full_path("clip", clip_name)
-        if clip_path is None:
-            try:
-                clip_path = folder_paths.get_full_path("text_encoders", clip_name)
-            except:
-                pass
-        
-        if clip_path is None:
-            raise ValueError(f"Z-IMG Loader: Could not find CLIP file '{clip_name}'.")
+        # 2. Load CLIP (Hardcoded to LUMINA2 or loaded via GGUF)
+        if clip_name.endswith(".gguf"):
+            from ..vendor.comfyui_gguf.gguf_nodes import CLIPLoaderGGUF
+            clip = CLIPLoaderGGUF().load_clip(clip_name, type="lumina2")[0]
+            log_node(f"Z-IMG CLIP Loader: Loaded '{clip_name}' [Type: GGUF LUMINA2]")
+        else:
+            clip_path = folder_paths.get_full_path("clip", clip_name)
+            if clip_path is None:
+                try:
+                    clip_path = folder_paths.get_full_path("text_encoders", clip_name)
+                except:
+                     pass
+            
+            if clip_path is None:
+                raise ValueError(f"Z-IMG Loader: Could not find CLIP file '{clip_name}'.")
 
-        # Hardcoded LUMINA2 type
-        clip_type_enum = comfy.sd.CLIPType.LUMINA2
-        # Default device options
-        clip_options = {}
+            # Hardcoded LUMINA2 type
+            clip_type_enum = comfy.sd.CLIPType.LUMINA2
+            # Default device options
+            clip_options = {}
 
-        # Load CLIP
-        clip = comfy.sd.load_clip(ckpt_paths=[clip_path], embedding_directory=folder_paths.get_folder_paths("embeddings"), clip_type=clip_type_enum, model_options=clip_options)
-        log_node(f"Z-IMG CLIP Loaded: {clip_name} [Type: LUMINA2]", color="CYAN")
+            # Load CLIP
+            clip = comfy.sd.load_clip(ckpt_paths=[clip_path], embedding_directory=folder_paths.get_folder_paths("embeddings"), clip_type=clip_type_enum, model_options=clip_options)
+            log_node(f"Z-IMG CLIP Loader: Loaded '{clip_name}' [Type: LUMINA2]")
 
         # 3. Load VAE
         vae_path = folder_paths.get_full_path("vae", vae_name)
@@ -767,7 +797,7 @@ class UmeAiRT_BlockImageProcess:
         return {
             "required": {
                 "image_bundle": ("UME_IMAGE",),
-                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
                 "mode": (["img2img", "inpaint", "outpaint", "txt2img"], {"default": "img2img"}),
             },
             "optional": {
@@ -775,7 +805,6 @@ class UmeAiRT_BlockImageProcess:
                 "mask_blur": ("INT", {"default": 10}),
                 "padding_left": ("INT", {"default": 0}), "padding_top": ("INT", {"default": 0}),
                 "padding_right": ("INT", {"default": 0}), "padding_bottom": ("INT", {"default": 0}),
-                "feathering": ("INT", {"default": 40}),
             }
         }
     RETURN_TYPES = ("UME_IMAGE",)
@@ -784,7 +813,7 @@ class UmeAiRT_BlockImageProcess:
     CATEGORY = "UmeAiRT/Blocks/Images"
 
     def process_image(self, image_bundle, denoise=0.75, mode="img2img", resize=False, mask_blur=0, 
-                      padding_left=0, padding_top=0, padding_right=0, padding_bottom=0, feathering=40):
+                      padding_left=0, padding_top=0, padding_right=0, padding_bottom=0):
         
         image = image_bundle.get("image")
         mask = image_bundle.get("mask")
@@ -816,7 +845,8 @@ class UmeAiRT_BlockImageProcess:
              pad_l, pad_t, pad_r, pad_b = padding_left, padding_top, padding_right, padding_bottom
              if pad_l > 0 or pad_t > 0 or pad_r > 0 or pad_b > 0:
                  img_p = final_image.permute(0, 3, 1, 2)
-                 img_padded = torch.nn.functional.pad(img_p, (pad_l, pad_r, pad_t, pad_b), mode='constant', value=0)
+                 # Use 'replicate' to stretch edge pixels outward instead of 'constant' black bars
+                 img_padded = torch.nn.functional.pad(img_p, (pad_l, pad_r, pad_t, pad_b), mode='replicate')
                  final_image = img_padded.permute(0, 2, 3, 1)
                  
                  new_h = H + pad_t + pad_b
@@ -830,11 +860,15 @@ class UmeAiRT_BlockImageProcess:
                      if len(final_mask.shape) == 2: new_mask = m_padded.squeeze(0)
                      else: new_mask = m_padded
 
-                 if pad_t > 0: new_mask[:, :pad_t, :] = 1.0
-                 if pad_b > 0: new_mask[:, -pad_b:, :] = 1.0
-                 if pad_l > 0: new_mask[:, :, :pad_l] = 1.0
-                 if pad_r > 0: new_mask[:, :, -pad_r:] = 1.0
+                 # Set Padded Areas to 1.0 (Inpaint) - ComfyUI standard: 1.0 = generate, 0.0 = keep
+                 # We add a slight overlap (8 px) into the original image so the AI can blend the edge seamlessly
+                 overlap = 8
+                 if pad_t > 0: new_mask[:, :pad_t + overlap, :] = 1.0
+                 if pad_b > 0: new_mask[:, -(pad_b + overlap):, :] = 1.0
+                 if pad_l > 0: new_mask[:, :, :pad_l + overlap] = 1.0
+                 if pad_r > 0: new_mask[:, :, -(pad_r + overlap):] = 1.0
                  
+                 feathering = 40
                  if feathering > 0:
                       import torchvision.transforms.functional as TF
                       k = feathering
@@ -847,6 +881,11 @@ class UmeAiRT_BlockImageProcess:
                       else: new_mask = m_b.squeeze(1)
                  
                  final_mask = new_mask
+                 
+                 
+                 # The 'replicate' padding above provides the edge colors for the outpaint region.
+                 # The mask ensures those areas are re-generated. No need for VAEEncodeForInpaint here, 
+                 # as it destructively turns the padded areas into 50% grey!
 
         if (mode == "inpaint" or mode == "outpaint") and final_mask is not None and mask_blur > 0:
              import torchvision.transforms.functional as TF
@@ -876,12 +915,15 @@ class UmeAiRT_BlockSampler:
     @classmethod
     def INPUT_TYPES(s):
         return {
-            "required": {},
-            "optional": {
-                "models": ("UME_FILES",), "settings": ("UME_SETTINGS",),
+            "required": {
+                "models": ("UME_FILES",), 
+                "settings": ("UME_SETTINGS",),
                 "positive": ("POSITIVE", {"forceInput": True}),
+            },
+            "optional": {
                 "negative": ("NEGATIVE", {"forceInput": True}),
-                "loras": ("UME_LORA_STACK",), "image": ("UME_IMAGE",), 
+                "loras": ("UME_LORA_STACK",), 
+                "image": ("UME_IMAGE",), 
             }
         }
     RETURN_TYPES = ("IMAGE",)
@@ -950,17 +992,20 @@ class UmeAiRT_BlockSampler:
              source_mask = image.get("mask")
              mode_str = image.get("mode", "img2img")
              
-             if denoise < 1.0:
+             if mode_str in ["inpaint", "outpaint"] and source_mask is not None and torch.any(source_mask > 0):
+                 # For inpaint/outpaint, we MUST encode the image and apply the noise_mask
+                 # even if denoise is 1.0, otherwise the whole image gets regenerated.
                  latent_image = comfy_nodes.VAEEncode().encode(vae, raw_image)[0]
-                 if mode_str == "inpaint" and source_mask is not None and torch.any(source_mask > 0):
-                     latent_image["noise_mask"] = source_mask
+                 latent_image["noise_mask"] = source_mask
+             elif denoise < 1.0:
+                 latent_image = comfy_nodes.VAEEncode().encode(vae, raw_image)[0]
 
         if latent_image is None:
              wireless_latent = UME_SHARED_STATE.get(KEY_LATENT)
              if wireless_latent is not None: latent_image = wireless_latent
 
         if latent_image is None:
-             l = torch.zeros([1, 4, height // 8, width // 8])
+             l = torch.zeros([1, 4, height // 8, width // 8], device="cpu")
              latent_image = {"samples": l}
              denoise = 1.0
 
@@ -981,7 +1026,7 @@ class UmeAiRT_BlockSampler:
                         positive_cond, negative_cond = self.cnet_apply.apply_controlnet(positive_cond, negative_cond, c_model, c_image, c_str, c_start, c_end)
                     except Exception as e: log_node(f"Block Sampler ControlNet Error: {e}", color="RED")
 
-        log_node(f"Block Sample: {mode_str} | {width}x{height} | Steps:{steps}", color="CYAN")
+        log_node(f"Block Sampler: {mode_str} | {width}x{height} | Steps: {steps} | CFG: {cfg}")
         
         with SamplerContext():
              result_latent = comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive_cond, negative_cond, latent_image, denoise)[0]
@@ -1015,8 +1060,21 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
     def INPUT_TYPES(s):
         usdu_modes = ["Linear", "Chess", "None"]
         return {
-            "required": { "image": ("IMAGE",), "model": (folder_paths.get_filename_list("upscale_models"),), "upscale_by": ("FLOAT", {"default": 2.0}), },
-            "optional": { "settings": ("UME_SETTINGS",), "models": ("UME_FILES",), "loras": ("UME_LORA_STACK",), "prompts": ("UME_PROMPTS",), "denoise": ("FLOAT", {"default": 0.35}), "clean_prompt": ("BOOLEAN", {"default": True}), "mode_type": (usdu_modes, {"default": "Linear"}), "tile_padding": ("INT", {"default": 32}), }
+            "required": { 
+                "image": ("IMAGE",), 
+                "model": (folder_paths.get_filename_list("upscale_models"),), 
+                "upscale_by": ("FLOAT", {"default": 2.0}),
+                "settings": ("UME_SETTINGS",), 
+                "models": ("UME_FILES",), 
+            },
+            "optional": { 
+                "prompts": ("UME_PROMPTS",),
+                "loras": ("UME_LORA_STACK",), 
+                "denoise": ("FLOAT", {"default": 0.35}), 
+                "clean_prompt": ("BOOLEAN", {"default": True}), 
+                "mode_type": (usdu_modes, {"default": "Linear"}), 
+                "tile_padding": ("INT", {"default": 32}), 
+            }
         }
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("image",)
@@ -1082,8 +1140,19 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
     @classmethod
     def INPUT_TYPES(s):
         return {
-            "required": { "image": ("IMAGE",), "model": (folder_paths.get_filename_list("bbox"),), "denoise": ("FLOAT", {"default": 0.5}), },
-            "optional": { "settings": ("UME_SETTINGS",), "models": ("UME_FILES",), "loras": ("UME_LORA_STACK",), "prompts": ("UME_PROMPTS",), "guide_size": ("INT", {"default": 512}), "max_size": ("INT", {"default": 1024}), }
+            "required": { 
+                "image": ("IMAGE",), 
+                "model": (folder_paths.get_filename_list("bbox"),), 
+                "denoise": ("FLOAT", {"default": 0.5}),
+                "settings": ("UME_SETTINGS",), 
+                "models": ("UME_FILES",), 
+            },
+            "optional": { 
+                "prompts": ("UME_PROMPTS",),
+                "loras": ("UME_LORA_STACK",), 
+                "guide_size": ("INT", {"default": 512}), 
+                "max_size": ("INT", {"default": 1024}), 
+            }
         }
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("image",)

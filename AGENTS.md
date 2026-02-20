@@ -60,6 +60,7 @@ def get_val(self):
 - `__init__.py`: Registration and exposing nodes to ComfyUI.
 - `web/`: Javascript extensions (UI tweaks and Nodes 2.0 enforcements).
 - `*/core/`: Integrated libraries (e.g., `usdu_core`, `seedvr2_core`).
+- `vendor/comfyui_gguf/`: Vendored implementation of `ComfyUI-GGUF` for `.gguf` weight loading.
 
 ## UI & Styling (Node Colors)
 
