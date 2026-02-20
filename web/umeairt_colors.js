@@ -253,7 +253,87 @@ const UME_NODE_COLORS = {
 
     // Latent I/O - Gray (sampler family)
     "UmeAiRT_Latent_Input": { color: "#2C3E50", bgcolor: "#1A252F" },
-    "UmeAiRT_Latent_Output": { color: "#2C3E50", bgcolor: "#1A252F" }
+    "UmeAiRT_Latent_Output": { color: "#2C3E50", bgcolor: "#1A252F" },
+
+    // === RESTORED NODES ===
+
+    // Wireless Model Loader - Blue (Model Family)
+    "UmeAiRT_WirelessModelLoader": {
+        color: "#154360",
+        bgcolor: "#0A2130"
+    },
+
+    // Seed Nodes - Green (Prompt Family)
+    "UmeAiRT_Seed_Node": {
+        color: "#145A32",
+        bgcolor: "#0A2D19"
+    },
+    "UmeAiRT_CR_Seed_Node": {
+        color: "#145A32",
+        bgcolor: "#0A2D19"
+    },
+    "UmeAiRT_GlobalSeed": {
+        color: "#145A32",
+        bgcolor: "#0A2D19"
+    },
+
+    // Unpack Nodes - Amber (Settings/Utility Family)
+    "UmeAiRT_Faces_Unpack_Node": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    },
+    "UmeAiRT_Tags_Unpack_Node": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    },
+    "UmeAiRT_Pipe_Unpack_Node": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    },
+    "UmeAiRT_Unpack_SettingsBundle": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    },
+    "UmeAiRT_Unpack_PromptsBundle": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    },
+    "UmeAiRT_Unpack_Files": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    },
+    "UmeAiRT_Unpack_Settings": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    },
+    "UmeAiRT_Unpack_Prompt": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    },
+
+    // Log Viewer - Dark Grey (Utility)
+    "UmeAiRT_Log_Viewer": {
+        color: "#34495E",
+        bgcolor: "#1A252F"
+    },
+
+    // Wireless Inputs - Amber (Settings Family)
+    "UmeAiRT_Resolution": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    },
+    "UmeAiRT_Positive_Input": {
+        color: "#145A32", // Green for Positive
+        bgcolor: "#0A2D19"
+    },
+    "UmeAiRT_Negative_Input": {
+        color: "#641E16", // Deep Red for Negative
+        bgcolor: "#3B100C"
+    },
+    "UmeAiRT_SpeedMode": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    }
 };
 
 // Connection slot colors - Softer, harmonious palette
@@ -261,8 +341,17 @@ const UME_SLOT_COLORS = {
     "UME_FILES": "#5499C7",      // Soft Blue
     "UME_SETTINGS": "#CD8B62",   // Amber/Copper (matches node)
     "UME_PROMPTS": "#52BE80",    // Soft Green  
+    "POSITIVE": "#52BE80",       // Soft Green for Positive
+    "NEGATIVE": "#E74C3C",       // Vibrant Red for Negative
     "UME_LORA_STACK": "#9B59B6", // Purple
     "UME_IMAGE": "#DC7633"       // Orange/Brown
+};
+
+// Enforce minimum sizes for specific nodes (fixes Nodes 2.0 shrinking issues)
+const UME_NODE_SIZES = {
+    "UmeAiRT_Positive_Input": [600, 240],
+    "UmeAiRT_Negative_Input": [600, 160],
+    "UmeAiRT_Prompt": [600, 300]
 };
 
 app.registerExtension({
@@ -280,6 +369,60 @@ app.registerExtension({
                 }
                 this.color = colors.color;
                 this.bgcolor = colors.bgcolor;
+            };
+        }
+
+        // Apply custom minimum node sizes (Aggressive override for Nodes 2.0)
+        if (UME_NODE_SIZES[nodeData.name]) {
+            const minSize = UME_NODE_SIZES[nodeData.name];
+
+            // 1. Force size firmly on creation
+            const onNodeCreated_sizing = nodeType.prototype.onNodeCreated;
+            nodeType.prototype.onNodeCreated = function () {
+                if (onNodeCreated_sizing) {
+                    onNodeCreated_sizing.apply(this, arguments);
+                }
+                setTimeout(() => {
+                    this.size[0] = Math.max(this.size[0] || 0, minSize[0]);
+                    this.size[1] = Math.max(this.size[1] || 0, minSize[1]);
+                    this.setDirtyCanvas(true, true);
+                }, 100); // Give the DOM Vue engine a moment, then override
+            };
+
+            // 2. Override computeSize (LiteGraph standard)
+            const computeSize = nodeType.prototype.computeSize;
+            nodeType.prototype.computeSize = function (out) {
+                let size = [0, 0];
+                if (computeSize) {
+                    size = computeSize.apply(this, arguments);
+                }
+                size[0] = Math.max(size[0] || 0, minSize[0]);
+                size[1] = Math.max(size[1] || 0, minSize[1]);
+                return size;
+            };
+
+            // 3. Override onResize (LiteGraph standard)
+            const onResize = nodeType.prototype.onResize;
+            nodeType.prototype.onResize = function (size) {
+                if (onResize) {
+                    onResize.apply(this, arguments);
+                }
+                if (this.size[0] < minSize[0]) this.size[0] = minSize[0];
+                if (this.size[1] < minSize[1]) this.size[1] = minSize[1];
+            };
+
+            // 4. Ultimate Defense against Vue 2.0 background-tab crushing
+            // If the size is wrong when rendering, snap it back to reality!
+            const onDrawForeground = nodeType.prototype.onDrawForeground;
+            nodeType.prototype.onDrawForeground = function (ctx) {
+                if (onDrawForeground) {
+                    onDrawForeground.apply(this, arguments);
+                }
+                if (this.size[0] < minSize[0] || this.size[1] < minSize[1]) {
+                    this.size[0] = Math.max(this.size[0], minSize[0]);
+                    this.size[1] = Math.max(this.size[1], minSize[1]);
+                    this.setDirtyCanvas(true, true);
+                }
             };
         }
     },

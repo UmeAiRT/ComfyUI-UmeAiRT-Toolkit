@@ -97,6 +97,14 @@ class ImageSaverLogic:
     re_manual_hash_weights = re.compile(r'^\s*([^:]+?)(?:\s*:\s*([^\s:][^:]*?))?(?:\s*:\s*([-+]?(?:\d+(?:\.\d*)?|\.\d+)))?\s*$')
 
     @staticmethod
+    def tensor_to_pil(tensor):
+        if tensor.ndim == 4:
+            tensor = tensor[0]
+        i = 255. * tensor.cpu().numpy()
+        img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
+        return img
+
+    @staticmethod
     def replace_placeholders(text: str, width: int, height: int, seed: int, modelname: str, counter: int, time_format: str, sampler_name: str, steps: int, cfg: float, scheduler_name: str, denoise: float, clip_skip: int, custom: str) -> str:
         text = apply_custom_time_format(text)
         text = text.replace("%date", get_timestamp("%Y-%m-%d"))

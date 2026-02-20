@@ -16,7 +16,7 @@ Nodes act as "Setters" (Input) or "Getters" (Output/Processor), decoupling compl
 ### Wireless Architecture (Global State)
 
 **Never** pass latent/model/clip connections manually between Wireless nodes.
-Use the `UME_SHARED_STATE` dictionary in `nodes.py` to store and retrieve data.
+Use the `UME_SHARED_STATE` dictionary in `modules/common.py` to store and retrieve data.
 
 - **Input Nodes**: Write to `UME_SHARED_STATE`.
 - **Output/Process Nodes**: Read from `UME_SHARED_STATE`.
@@ -53,10 +53,13 @@ def get_val(self):
 
 ### File Structure
 
-- `nodes.py`: Core logic and node definitions.
+- `modules/common.py`: Shared constants, global state (`UME_SHARED_STATE`), and core utilities.
+- `modules/logger.py`: Standard logging utility.
+- `modules/optimization_utils.py`: Environment and optimization checks.
+- `modules/*.py`: Node definitions categorized logically (`settings_nodes`, `logic_nodes`, `image_nodes`, etc.).
 - `__init__.py`: Registration and exposing nodes to ComfyUI.
-- `web/`: Javascript extensions (UI tweaks).
-- `*/core/`: Sub-modules for complex logic (e.g., `usdu_core`).
+- `web/`: Javascript extensions (UI tweaks and Nodes 2.0 enforcements).
+- `*/core/`: Integrated libraries (e.g., `usdu_core`, `seedvr2_core`).
 
 ## UI & Styling (Node Colors)
 
@@ -66,10 +69,10 @@ Nodes are color-coded by category in `web/umeairt_colors.js`:
 |----------|--------------|-------------|----------|
 | **Settings / Controls**   | Amber / Bronze | `#4A290B` / `#935116` | Generation Settings, Image Process, ControlNet |
 | **Model / Files**         | Deep Blue      | `#0A2130` / `#154360` | Checkpoint Loader, VAE, CLIP |
-| **Prompts**               | Dark Green     | `#0A2D19` / `#145A32` | Prompt Block, Wireless Prompts |
-| **LoRA**                  | Violet         | `#25122D` / `#4A235A` | LoRA Stacks, Multi-LoRA |
+| **Prompts**               | Dark Green     | `#0A2D19` / `#145A32` | Wireless Prompts |
+| **LoRA**                  | Violet         | `#25122D` / `#4A235A` | LoRA Stacks |
 | **Samplers (Processors)** | Slate Gray     | `#1A252F` / `#2C3E50` | Wireless KSampler, Block Sampler |
-| **Upscale / Detailer**    | Pale Blue      | `#123851` / `#2471A3` | Ultimate Upscale, Face Detailer, Inpaint Composite |
+| **Post-Processing**       | Pale Blue / Teal | `#123851` / `#2471A3` | Ultimate Upscale, Face Detailer, Inpaint Composite |
 | **Utilities**             | Dark Gray      | `#1A252F` / `#34495E` | Debug, Label |
 | **Image Inputs**          | Rust Red       | `#35160D` / `#6B2D1A` | Image Loaders |
 
@@ -77,16 +80,16 @@ Nodes are color-coded by category in `web/umeairt_colors.js`:
 
 | File | Notes |
 |------|-------|
-| `nodes.py` | Contains `UME_SHARED_STATE` and most node logic. |
-| `__init__.py` | Entry point. **Must be updated** when adding nodes. |
-| `docs/codemaps/wireless.md` | Detailed list of available Wireless keys. |
+| `modules/common.py` | Contains `UME_SHARED_STATE` and shared configurations. |
+| `__init__.py` | Entry point. **Must be updated** when adding nodes via import from modules. |
+| `docs/codemaps/structure.md` | Overview of the modular organization. |
 
 ## Common Pitfalls
 
 | Don't | Do Instead |
 |-------|-----------|
 | Create standard ComfyUI nodes | Create "Wireless" nodes that interact with `UME_SHARED_STATE` |
-| Hardcode internal keys | Use the defined constants in `nodes.py` (e.g., `KEY_LATENT`) |
+| Hardcode internal keys | Use the defined constants in `modules/common.py` (e.g., `KEY_LATENT`) |
 | Forget `__init__.py` | Double-check registration after creating a new node class |
 
 ## 🚨 Mandatory Verification Checklist

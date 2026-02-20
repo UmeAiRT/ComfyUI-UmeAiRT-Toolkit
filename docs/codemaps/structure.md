@@ -4,37 +4,38 @@
 
 | Directory/File | Description |
 |----------------|-------------|
-| `nodes.py` | **CORE**. Contains `UME_SHARED_STATE`, constants, and all Node Classes. |
-| `__init__.py` | **ENTRY POINT**. Registers nodes with ComfyUI. Maps classes to names. |
-| `web/` | Javascript files for UI extensions (e.g., color pickers, listeners). |
-| `docs/` | Documentation (Architecture, Code Maps). |
-| `.cursorrules` | AI Agent instructions. |
+| `__init__.py` | **ENTRY POINT**. Registers nodes with ComfyUI and handles theme/settings injection. |
+| `modules/` | **CORE LOGIC**. Refactored modular node implementations. |
+| `web/` | Javascript files for UI extensions (styling and Nodes 2.0 enforcements). |
+| `docs/` | Internal architectural documentation and code maps. |
+| `.cursorrules` | AI Agent instructions and coding standards. |
 | `AGENTS.md` | Developer guide for AI Agents. |
 
-## Sub-Modules (Cores)
+## Sub-Modules (`modules/`)
 
-Complex logic is offloaded to specialized core folders to keep `nodes.py` clean.
+The toolkit is organized into functional modules to maintain scalability:
 
-- `usdu_core/`: Logic for **Ultimate SD Upscale** integration.
-- `facedetailer_core/`: Logic for **Face Detailer** integration.
-- `image_saver_core/`: Logic for saving images.
+- `common.py`: Global constants and the `UME_SHARED_STATE` dictionary.
+- `logger.py`: Standardized colorized logging utility.
+- `optimization_utils.py`: Environment checks (SageAttention, Triton, etc.).
+- `settings_nodes.py`: Wireless Variable Setters/Getters (Steps, CFG, Prompts).
+- `model_nodes.py`: Wireless and Block-based Model/LoRA loaders.
+- `logic_nodes.py`: The "Brains" - Wireless Samplers, Upscalers, and Detailers.
+- `block_nodes.py`: The Block-based equivalents of samplers and loaders.
+- `image_nodes.py`: Wireless image loading, processing, and saving.
+- `utils_nodes.py`: Labels, state debuggers, and bundle Unpack nodes.
 
-## File Map: `nodes.py`
+## Core Directories (Vendored/Integrated)
 
-| Section | Content |
-|---------|---------|
-| `imports` | Standard imports & ComfyUI internal imports (`folder_paths`, `samplers`). |
-| `Global Storage` | `UME_SHARED_STATE = {}` Definition. |
-| `Internal Keys` | Constants defining dictionary keys. |
-| `Variables Nodes` | Input/Output nodes for simple types (Float, Int, String). |
-| `Loaders` | `WirelessImageLoader` & `WirelessCheckpointLoader`. |
-| `Logic Nodes` | `WirelessKSampler`, `WirelessUltimateUpscale`, etc. |
+- `facedetailer_core/`: Logic for face detection and enhancement.
+- `seedvr2_core/`: Ported tiling upscaler for high-VRAM efficiency.
+- `usdu_core/`: Integrated Ultimate SD Upscale logic.
+- `image_saver_core/`: Robust image saving with metadata.
 
-## File Map: `__init__.py`
+## Registration Workflow
 
-| Section | Content |
-|---------|---------|
-| `Imports` | Imports all node classes from `nodes.py`. |
-| `NODE_CLASS_MAPPINGS` | Dictionary mapping `ClassName` -> `Class`. |
-| `NODE_DISPLAY_NAME_MAPPINGS` | Dictionary mapping `ClassName` -> `"Human Readable Name"`. |
-| `WEB_DIRECTORY` | Points ComfyUI to the `web/` folder. |
+1. Node classes are defined in `modules/`.
+2. `__init__.py` imports necessary classes.
+3. `NODE_CLASS_MAPPINGS` links ComfyUI internal keys to Python classes.
+4. `NODE_DISPLAY_NAME_MAPPINGS` provides user-friendly titles.
+5. `WEB_DIRECTORY` exposes the `web/` folder for frontend styling.
