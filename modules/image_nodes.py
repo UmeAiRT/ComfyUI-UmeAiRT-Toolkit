@@ -131,7 +131,6 @@ class UmeAiRT_WirelessImageProcess:
                 "padding_top": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
                 "padding_right": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
                 "padding_bottom": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
-                "feathering": ("INT", {"default": 40, "min": 0, "max": 200, "step": 1}),
             }
         }
 
@@ -141,7 +140,7 @@ class UmeAiRT_WirelessImageProcess:
     CATEGORY = "UmeAiRT/Wireless/Pre-Process"
 
     def process_image(self, denoise=1.0, mode="img2img", image=None, mask=None, resize=False, mask_blur=0, 
-                      padding_left=0, padding_top=0, padding_right=0, padding_bottom=0, feathering=40):
+                      padding_left=0, padding_top=0, padding_right=0, padding_bottom=0):
         
         if mode == "txt2img":
              log_node("Wireless Process: Txt2Img Mode (Forcing Denoise=1.0, Ignoring Mask).", color="YELLOW")
@@ -193,9 +192,9 @@ class UmeAiRT_WirelessImageProcess:
              pad_l, pad_t, pad_r, pad_b = padding_left, padding_top, padding_right, padding_bottom
              
              if pad_l > 0 or pad_t > 0 or pad_r > 0 or pad_b > 0:
-                 # Pad Image (Constant 0)
+                 # Pad Image (Replicate to stretch edges)
                  img_p = final_image.permute(0, 3, 1, 2)
-                 img_padded = torch.nn.functional.pad(img_p, (pad_l, pad_r, pad_t, pad_b), mode='constant', value=0)
+                 img_padded = torch.nn.functional.pad(img_p, (pad_l, pad_r, pad_t, pad_b), mode='replicate')
                  final_image = img_padded.permute(0, 2, 3, 1)
                  
                  new_h = H + pad_t + pad_b
@@ -219,12 +218,15 @@ class UmeAiRT_WirelessImageProcess:
                      else: new_mask = m_padded
 
                  # Set Padded Areas to 1.0 (Inpaint)
-                 if pad_t > 0: new_mask[:, :pad_t, :] = 1.0
-                 if pad_b > 0: new_mask[:, -pad_b:, :] = 1.0
-                 if pad_l > 0: new_mask[:, :, :pad_l] = 1.0
-                 if pad_r > 0: new_mask[:, :, -pad_r:] = 1.0
+                 # We add a slight overlap (8 px) into the original image so the AI can blend the edge seamlessly
+                 overlap = 8
+                 if pad_t > 0: new_mask[:, :pad_t + overlap, :] = 1.0
+                 if pad_b > 0: new_mask[:, -(pad_b + overlap):, :] = 1.0
+                 if pad_l > 0: new_mask[:, :, :pad_l + overlap] = 1.0
+                 if pad_r > 0: new_mask[:, :, -(pad_r + overlap):] = 1.0
                  
                  # Feathering logic
+                 feathering = 40
                  if feathering > 0:
                       import torchvision.transforms.functional as TF
                       k = feathering
@@ -472,9 +474,9 @@ class UmeAiRT_WirelessImageSaver:
             )
             
             if len(result_filenames) == 1:
-                log_node(f"Image Saver: Saved image to {resolved_path}/{result_filenames[0]}", color="GREEN")
+                log_node(f"Image Saver: Saved -> {resolved_path}/{result_filenames[0]}", color="GREEN")
             else:
-                log_node(f"Image Saver: Saved {len(result_filenames)} images to {resolved_path} (e.g. {result_filenames[0]})", color="GREEN")
+                log_node(f"Image Saver: Saved {len(result_filenames)} images -> {resolved_path} (e.g. {result_filenames[0]})", color="GREEN")
             
             # 5. Format Output UI
             ui_images = []

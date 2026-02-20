@@ -114,32 +114,34 @@ class UmeAiRT_WirelessKSampler:
         
         if latent_image is None:
             # Img2Img / Inpaint Check
-            if source_image is not None and denoise < 1.0:
-                 # Encode Source
+            mode_from_state = UME_SHARED_STATE.get(KEY_MODE, "img2img")  # Fallback logic
+
+            if source_image is not None and source_mask is not None and torch.any(source_mask > 0):
+                 # For inpaint/outpaint, ALWAYS encode and use the mask, even if denoise >= 1.0
                  t = vae.encode(source_image[:,:,:,:3]) # Drop alpha if 4 channels
+                 latent_image = {"samples": t, "noise_mask": source_mask}
+                 mode = "Inpaint/Outpaint"
+            elif source_image is not None and denoise < 1.0:
+                 # Standard Img2Img encoded only if denoise < 1.0
+                 t = vae.encode(source_image[:,:,:,:3])
                  latent_image = {"samples": t}
                  mode = "Img2Img"
-                 
-                 # Apply Mask if Inpaint
-                 if source_mask is not None:
-                     if torch.any(source_mask > 0):
-                         latent_image["noise_mask"] = source_mask
-                         mode = "Inpaint"
-
             else:
-                 # Boolean Txt2Img
-                 # Create Empty Latent
+                 # Pure Txt2Img
                  size = UME_SHARED_STATE.get(KEY_IMAGESIZE, {"width": 1024, "height": 1024})
                  w = int(size.get("width", 1024))
                  h = int(size.get("height", 1024))
                  batch_size = 1
                  
-                 # Empty Latent Logic (standard)
-                 l = torch.zeros([batch_size, 4, h // 8, w // 8])
+                 # Empty Latent Logic
+                 l = torch.zeros([batch_size, 4, h // 8, w // 8], device="cpu")
                  latent_image = {"samples": l}
                  mode = "Txt2Img"
-                 # Ensure denoise is 1.0 for new generation
                  denoise = 1.0
+        
+        # Just in case KEY_MODE wasn't exactly set
+        if mode != "Txt2Img":
+             pass
 
         # 4. Encoding Prompts
         tokens = clip.tokenize(pos_text)
@@ -167,7 +169,7 @@ class UmeAiRT_WirelessKSampler:
                         log_node(f"Wireless ControlNet Error ({c_name}): {e}", color="RED")
 
         # 6. Sample
-        log_node(f"Wireless Sampling: {mode} | Steps: {steps} | Denoise: {denoise}", color="CYAN")
+        log_node(f"Wireless Sampler: {mode} | Steps: {steps} | CFG: {cfg} | Denoise: {denoise}")
         
         # Sampler Context Wrapper
         try:
@@ -179,7 +181,7 @@ class UmeAiRT_WirelessKSampler:
              raise RuntimeError(f"Sampling Failed: {e}")
 
         # 7. Decode
-        log_node("Wireless Decoding...", color="CYAN")
+        log_node("Wireless Sampler: Decoding VAE...")
         _ensure_vram_for_decode()
         image = comfy_nodes.VAEDecode().decode(vae, result_latent)[0]
 
@@ -239,7 +241,7 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
     CATEGORY = "UmeAiRT/Wireless/Post-Processing"
 
     def upscale(self, image, enabled, model, upscale_by):
-        log_node(f"Wireless UltimateSDUpscale Simple - Enabled: {enabled}", color="CYAN")
+        log_node(f"UltimateSDUpscale (Simple): Processing | Ratio: x{upscale_by} | Model: {model} | Denoise: 0.35")
         if not enabled:
             return (image,)
 
@@ -334,6 +336,8 @@ class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_B
 
     def upscale(self, image, model, upscale_by, denoise, clean_prompt=True, mode_type="Linear", tile_width=512, tile_height=512, mask_blur=8, tile_padding=32, seam_fix_mode="None", seam_fix_denoise=1.0, seam_fix_width=64, seam_fix_mask_blur=8, seam_fix_padding=16, force_uniform_tiles=True, tiled_decode=False):
         
+        log_node(f"UltimateSDUpscale (Advanced): Processing | Ratio: x{upscale_by} | Model: {model} | Denoise: {denoise}")
+
         sd_model = UME_SHARED_STATE.get(KEY_MODEL)
         vae = UME_SHARED_STATE.get(KEY_VAE)
         clip = UME_SHARED_STATE.get(KEY_CLIP)
@@ -390,14 +394,14 @@ def _ensure_vram_for_decode():
     device = mm.get_torch_device()
     free_before = mm.get_free_memory(device)
     if free_before >= DECODE_VRAM_REQUIRED:
-        log_node(f"VRAM Safe for Decode ({free_before / (1024**3):.2f} GB available) — skipping cleanup", color="GREEN")
+        log_node(f"Decode VRAM Check: Safe ({free_before / (1024**3):.2f} GB available) -> skipping cleanup")
         return
-    log_node(f"Low VRAM ({free_before / (1024**3):.2f} GB) for Decode — clearing cache...", color="YELLOW")
+    log_node(f"Decode VRAM Check: WARNING | Low VRAM ({free_before / (1024**3):.2f} GB) -> clearing cache...", color="ORANGE")
     mm.soft_empty_cache()
     if mm.get_free_memory(device) < DECODE_VRAM_REQUIRED:
          mm.free_memory(DECODE_VRAM_REQUIRED, device)
          gc.collect()
-         log_node("Models unloaded to free VRAM for Decode.", color="YELLOW")
+         log_node("Decode VRAM Check: Models unloaded to free VRAM for Decode.")
 
 def _ensure_vram_for_seedvr2():
     """Check available VRAM and unload cached models if necessary."""
@@ -406,17 +410,17 @@ def _ensure_vram_for_seedvr2():
     device = mm.get_torch_device()
     free_before = mm.get_free_memory(device)
     free_gb = free_before / (1024 ** 3)
-    log_node(f"VRAM check: {free_gb:.2f} GB free, {SEEDVR2_VRAM_REQUIRED / (1024**3):.0f} GB required", color="CYAN")
+    log_node(f"SeedVR2 VRAM Check: {free_gb:.2f} GB free, {SEEDVR2_VRAM_REQUIRED / (1024**3):.0f} GB required")
     if free_before >= SEEDVR2_VRAM_REQUIRED:
-        log_node("VRAM OK — skipping cleanup", color="GREEN")
+        log_node("SeedVR2 VRAM Check: OK -> skipping cleanup")
         return
-    log_node("Insufficient VRAM — unloading cached models...", color="YELLOW")
+    log_node("SeedVR2 VRAM Check: WARNING | Insufficient VRAM -> unloading cached models...", color="ORANGE")
     mm.free_memory(SEEDVR2_VRAM_REQUIRED, device)
     gc.collect()
     mm.soft_empty_cache()
     free_after = mm.get_free_memory(device)
     freed_mb = (free_after - free_before) / (1024 ** 2)
-    log_node(f"VRAM cleanup done: freed {freed_mb:.0f} MB — now {free_after / (1024**3):.2f} GB free", color="GREEN")
+    log_node(f"SeedVR2 VRAM Check: Cleanup done -> freed {freed_mb:.0f} MB -> now {free_after / (1024**3):.2f} GB free")
 
 class UmeAiRT_WirelessSeedVR2Upscale:
     @classmethod
@@ -518,7 +522,7 @@ class UmeAiRT_WirelessSeedVR2Upscale:
         # Build model configs internally
         dit_config, vae_config = self._build_configs(model)
 
-        log_node(f"Wireless SeedVR2 Upscale -> model={model}, ratio=x{upscale_by}, seed={seed}", color="CYAN")
+        log_node(f"SeedVR2 Upscale: Processing | Ratio: x{upscale_by} | Model: {model} | Seed: {seed}")
         _ensure_vram_for_seedvr2()
 
         # VRAM Consultation & Warning System
@@ -543,23 +547,23 @@ class UmeAiRT_WirelessSeedVR2Upscale:
 
         if total_vram_gb < req_vram:
             if total_vram_gb < m_size_gb:
-                log_node(f"CRITICAL: Model '{model}' (~{m_size_gb:.1f}GB) is LARGER than your total VRAM ({total_vram_gb:.1f}GB)! Expect EXTREME OOM slowdown.", color="RED")
+                log_node(f"SeedVR2 Upscale: CRITICAL | Model '{model}' (~{m_size_gb:.1f}GB) is LARGER than your total VRAM ({total_vram_gb:.1f}GB)! Expect EXTREME OOM slowdown.", color="RED")
                 if total_vram_gb <= 8.5:
-                    log_node("ADVICE: For 8GB GPUs, please use 'seedvr2_ema_3b_fp8_e4m3fn.safetensors' (3.4GB) or ideally 'seedvr2_ema_3b-Q4_K_M.gguf' (2GB).", color="YELLOW")
+                    log_node("SeedVR2 Upscale: ADVICE | For 8GB GPUs, please use 'seedvr2_ema_3b_fp8_e4m3fn.safetensors' (3.4GB) or ideally 'seedvr2_ema_3b-Q4_K_M.gguf' (2GB).")
             else:
-                log_node(f"WARNING: VRAM is very tight. Model (~{m_size_gb:.1f}GB) + Process Overhead (~{overhead_gb}GB) > Total VRAM ({total_vram_gb:.1f}GB). This will cause slow Shared RAM swap.", color="YELLOW")
+                log_node(f"SeedVR2 Upscale: WARNING | VRAM is very tight. Model (~{m_size_gb:.1f}GB) + Process Overhead (~{overhead_gb}GB) > Total VRAM ({total_vram_gb:.1f}GB). This will cause slow Shared RAM swap.", color="ORANGE")
                 if total_vram_gb <= 8.5:
                     if "7b" in model_l:
-                        log_node("ADVICE: 7B models are too heavy for an 8GB GPU. Switch to 'seedvr2_ema_3b_fp8_e4m3fn.safetensors' or 'seedvr2_ema_3b-Q4_K_M.gguf'.", color="YELLOW")
+                        log_node("SeedVR2 Upscale: ADVICE | 7B models are too heavy for an 8GB GPU. Switch to 'seedvr2_ema_3b_fp8_e4m3fn.safetensors' or 'seedvr2_ema_3b-Q4_K_M.gguf'.")
                     elif m_size_gb > 3.0:
-                        log_node("ADVICE: To avoid the slow RAM swap on 8GB GPUs, drop down to 'seedvr2_ema_3b-Q4_K_M.gguf' (2GB).", color="CYAN")
+                        log_node("SeedVR2 Upscale: ADVICE | To avoid the slow RAM swap on 8GB GPUs, drop down to 'seedvr2_ema_3b-Q4_K_M.gguf' (2GB).")
                 elif total_vram_gb <= 12.5:
-                    log_node("ADVICE: For 12GB GPUs, 'seedvr2_ema_7b-Q4_K_M.gguf' (~4.8GB) is the sweet spot for 7B models.", color="CYAN")
+                    log_node("SeedVR2 Upscale: ADVICE | For 12GB GPUs, 'seedvr2_ema_7b-Q4_K_M.gguf' (~4.8GB) is the sweet spot for 7B models.")
             
             if total_vram_gb <= 8.5:
-                log_node("TIP: If SeedVR2 is still too slow due to VRAM limits, try using the 'Wireless UltimateSDUpscale' node instead. It is much lighter on memory!", color="MAGENTA")
+                log_node("SeedVR2 Upscale: TIP | If SeedVR2 is still too slow due to VRAM limits, try using the 'Wireless UltimateSDUpscale' node instead. It is much lighter on memory!")
         else:
-             log_node(f"VRAM Check OK: {total_vram_gb:.1f}GB total VRAM is plenty for model '{model}' (~{m_size_gb:.1f}GB).", color="GREEN")
+             log_node(f"SeedVR2 Upscale: VRAM Check OK | {total_vram_gb:.1f}GB total VRAM is plenty for model '{model}' (~{m_size_gb:.1f}GB).", color="GREEN")
 
         # Best-practice defaults restored for quality
         tile_width = 512
@@ -597,7 +601,7 @@ class UmeAiRT_WirelessSeedVR2Upscale:
         # Cleanup VRAM after massive DiT model use
         import gc
         import comfy.model_management as mm
-        log_node("SeedVR2 upscale finished. Clearing VRAM for next nodes...", color="GREEN")
+        log_node("SeedVR2 Upscale: Finished | VRAM cleared", color="GREEN")
         mm.soft_empty_cache()
         gc.collect()
 
@@ -666,7 +670,7 @@ class UmeAiRT_WirelessSeedVR2Upscale_Advanced:
         # Build model configs internally (Advanced node in refactor is also all-in-one)
         dit_config, vae_config = UmeAiRT_WirelessSeedVR2Upscale._build_configs(model)
 
-        log_node(f"Wireless SeedVR2 Upscale (Advanced) -> model={model}, ratio=x{upscale_by}, seed={seed}", color="CYAN")
+        log_node(f"SeedVR2 Upscale: Processing | Ratio: x{upscale_by} | Model: {model} | Seed: {seed}")
         _ensure_vram_for_seedvr2()
 
         # VRAM Consultation & Warning System
@@ -691,23 +695,23 @@ class UmeAiRT_WirelessSeedVR2Upscale_Advanced:
 
         if total_vram_gb < req_vram:
             if total_vram_gb < m_size_gb:
-                log_node(f"CRITICAL: Model '{model}' (~{m_size_gb:.1f}GB) is LARGER than your total VRAM ({total_vram_gb:.1f}GB)! Expect EXTREME OOM slowdown.", color="RED")
+                log_node(f"SeedVR2 Upscale: CRITICAL | Model '{model}' (~{m_size_gb:.1f}GB) is LARGER than your total VRAM ({total_vram_gb:.1f}GB)! Expect EXTREME OOM slowdown.", color="RED")
                 if total_vram_gb <= 8.5:
-                    log_node("ADVICE: For 8GB GPUs, please use 'seedvr2_ema_3b_fp8_e4m3fn.safetensors' (3.4GB) or ideally 'seedvr2_ema_3b-Q4_K_M.gguf' (2GB).", color="YELLOW")
+                    log_node("SeedVR2 Upscale: ADVICE | For 8GB GPUs, please use 'seedvr2_ema_3b_fp8_e4m3fn.safetensors' (3.4GB) or ideally 'seedvr2_ema_3b-Q4_K_M.gguf' (2GB).")
             else:
-                log_node(f"WARNING: VRAM is very tight. Model (~{m_size_gb:.1f}GB) + Process Overhead (~{overhead_gb}GB) > Total VRAM ({total_vram_gb:.1f}GB). This will cause slow Shared RAM swap.", color="YELLOW")
+                log_node(f"SeedVR2 Upscale: WARNING | VRAM is very tight. Model (~{m_size_gb:.1f}GB) + Process Overhead (~{overhead_gb}GB) > Total VRAM ({total_vram_gb:.1f}GB). This will cause slow Shared RAM swap.", color="ORANGE")
                 if total_vram_gb <= 8.5:
                     if "7b" in model_l:
-                        log_node("ADVICE: 7B models are too heavy for an 8GB GPU. Switch to 'seedvr2_ema_3b_fp8_e4m3fn.safetensors' or 'seedvr2_ema_3b-Q4_K_M.gguf'.", color="YELLOW")
+                        log_node("SeedVR2 Upscale: ADVICE | 7B models are too heavy for an 8GB GPU. Switch to 'seedvr2_ema_3b_fp8_e4m3fn.safetensors' or 'seedvr2_ema_3b-Q4_K_M.gguf'.")
                     elif m_size_gb > 3.0:
-                        log_node("ADVICE: To avoid the slow RAM swap on 8GB GPUs, drop down to 'seedvr2_ema_3b-Q4_K_M.gguf' (2GB).", color="CYAN")
+                        log_node("SeedVR2 Upscale: ADVICE | To avoid the slow RAM swap on 8GB GPUs, drop down to 'seedvr2_ema_3b-Q4_K_M.gguf' (2GB).")
                 elif total_vram_gb <= 12.5:
-                    log_node("ADVICE: For 12GB GPUs, 'seedvr2_ema_7b-Q4_K_M.gguf' (~4.8GB) is the sweet spot for 7B models.", color="CYAN")
+                    log_node("SeedVR2 Upscale: ADVICE | For 12GB GPUs, 'seedvr2_ema_7b-Q4_K_M.gguf' (~4.8GB) is the sweet spot for 7B models.")
             
             if total_vram_gb <= 8.5:
-                log_node("TIP: If SeedVR2 is still too slow due to VRAM limits, try using the 'Wireless UltimateSDUpscale' node instead. It is much lighter on memory!", color="MAGENTA")
+                log_node("SeedVR2 Upscale: TIP | If SeedVR2 is still too slow due to VRAM limits, try using the 'Wireless UltimateSDUpscale' node instead. It is much lighter on memory!")
         else:
-             log_node(f"VRAM Check OK: {total_vram_gb:.1f}GB total VRAM is plenty for model '{model}' (~{m_size_gb:.1f}GB).", color="GREEN")
+             log_node(f"SeedVR2 Upscale: VRAM Check OK | {total_vram_gb:.1f}GB total VRAM is plenty for model '{model}' (~{m_size_gb:.1f}GB).", color="GREEN")
 
         pil_image = tensor_to_pil(image)
         output_width = int(pil_image.width * upscale_by)
@@ -733,7 +737,7 @@ class UmeAiRT_WirelessSeedVR2Upscale_Advanced:
         # Cleanup VRAM after massive DiT model use
         import gc
         import comfy.model_management as mm
-        log_node("SeedVR2 upscale (advanced) finished. Clearing VRAM for next nodes...", color="GREEN")
+        log_node("SeedVR2 Upscale: Finished | VRAM cleared", color="GREEN")
         mm.soft_empty_cache()
         gc.collect()
 
@@ -1004,6 +1008,8 @@ class UmeAiRT_Detailer_Daemon_Simple:
             model, noise, cfg, wrapped_sampler, sigmas, positive, negative, latent_image["samples"], noise_mask=None, callback=None, disable_pbar=False, seed=seed
         )
 
+        log_node(f"Detail Daemon: Processing | Amount: {detail_amount} | Steps: {steps} | Denoise: {denoise}")
+
         if refine_denoise > 0.0:
             refine_steps = max(1, int(steps * 0.25))
             refine_sampler_obj = comfy.samplers.KSampler(model, steps=refine_steps, device=model.load_device, sampler=sampler_name, scheduler=scheduler, denoise=refine_denoise, model_options=model.model_options)
@@ -1015,7 +1021,7 @@ class UmeAiRT_Detailer_Daemon_Simple:
         
         decoded = vae.decode(samples)
         UME_SHARED_STATE[KEY_IMAGE] = decoded
-        log_node(f"Detail Daemon Applied (Amt={detail_amount})", color="BLUE")
+        log_node("Detail Daemon: Finished", color="GREEN")
         return (decoded,)
 
 class UmeAiRT_Detailer_Daemon_Advanced(UmeAiRT_Detailer_Daemon_Simple):
@@ -1107,6 +1113,8 @@ class UmeAiRT_Detailer_Daemon_Advanced(UmeAiRT_Detailer_Daemon_Simple):
             model, noise, cfg, wrapped_sampler, sigmas, positive, negative, latent_image["samples"], noise_mask=None, callback=None, disable_pbar=False, seed=seed
         )
 
+        log_node(f"Detail Daemon: Processing | Amount: {detail_amount} | Steps: {steps} | Denoise: {denoise}")
+
         if refine_denoise > 0.0:
             refine_sampler_obj = comfy.samplers.KSampler(model, steps=refine_steps, device=model.load_device, sampler=sampler_name, scheduler=scheduler, denoise=refine_denoise, model_options=model.model_options)
             refine_sigmas = refine_sampler_obj.sigmas
@@ -1117,6 +1125,6 @@ class UmeAiRT_Detailer_Daemon_Advanced(UmeAiRT_Detailer_Daemon_Simple):
         
         decoded = vae.decode(samples)
         UME_SHARED_STATE[KEY_IMAGE] = decoded
-        log_node(f"Detail Daemon Advanced (Amt={detail_amount})", color="BLUE")
+        log_node("Detail Daemon: Finished", color="GREEN")
         return (decoded,)
 

@@ -433,12 +433,7 @@ app.registerExtension({
             Object.assign(app.canvas.default_connection_color_byType, UME_SLOT_COLORS);
         }
 
-        // Also try LiteGraph if available
-        if (typeof LiteGraph !== "undefined" && LiteGraph.slot_types_default_out) {
-            Object.keys(UME_SLOT_COLORS).forEach(type => {
-                LiteGraph.slot_types_default_out[type] = UME_SLOT_COLORS[type];
-                LiteGraph.slot_types_default_in[type] = UME_SLOT_COLORS[type];
-            });
-        }
+        // Note: LiteGraph.slot_types_default_out/in are for suggesting node names, not colors.
+        // Colors are handled natively by app.canvas.default_connection_color_byType above.
     }
 });
