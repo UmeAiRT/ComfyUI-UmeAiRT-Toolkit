@@ -19,13 +19,6 @@ app.registerExtension({
                 // Allow resizing to set scale
                 this.resizable = true;
 
-                // Override default minimum sizes so the sticker can be very small
-                // And strictly return the CURRENT size so LiteGraph never auto-shrinks it 
-                // during graph reloads or tab switches.
-                this.computeSize = function () {
-                    return [this.size[0], this.size[1]];
-                };
-
                 // Keep track of the loaded image
                 this.signatureImage = new Image();
                 this.imageLoaded = false;

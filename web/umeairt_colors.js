@@ -351,7 +351,8 @@ const UME_SLOT_COLORS = {
 const UME_NODE_SIZES = {
     "UmeAiRT_Positive_Input": [600, 240],
     "UmeAiRT_Negative_Input": [600, 160],
-    "UmeAiRT_Prompt": [600, 300]
+    "UmeAiRT_Prompt": [600, 300],
+    "UmeAiRT_Signature": [250, 80]
 };
 
 app.registerExtension({
