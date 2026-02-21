@@ -20,20 +20,26 @@ app.registerExtension({
                 this.resizable = true;
 
                 // Override default minimum sizes so the sticker can be very small
+                // And strictly return the CURRENT size so LiteGraph never auto-shrinks it 
+                // during graph reloads or tab switches.
                 this.computeSize = function () {
-                    return [Math.max(50, this.size[0]), Math.max(20, this.size[1])];
+                    return [this.size[0], this.size[1]];
                 };
 
                 // Keep track of the loaded image
                 this.signatureImage = new Image();
                 this.imageLoaded = false;
 
+                // Track if we've initialized the size to prevent overriding custom sizing on reload
+                this.sizeInitialized = false;
+
                 this.signatureImage.onload = () => {
                     this.imageLoaded = true;
-                    // Auto-adjust node size to image aspect ratio natively on first load
-                    if (this.size[0] === LiteGraph.NODE_WIDTH && this.size[1] === 60) {
+                    // Auto-adjust node size to image aspect ratio natively FIRST time only
+                    if (!this.sizeInitialized && this.size[0] <= LiteGraph.NODE_WIDTH && this.size[1] <= 60) {
                         this.size[0] = Math.min(800, this.signatureImage.width);
                         this.size[1] = this.size[0] * (this.signatureImage.height / this.signatureImage.width);
+                        this.sizeInitialized = true;
                     }
                     app.graph.setDirtyCanvas(true);
                 };
