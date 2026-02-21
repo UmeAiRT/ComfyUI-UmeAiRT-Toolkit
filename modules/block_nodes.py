@@ -1054,7 +1054,7 @@ class UmeAiRT_BlockSampler:
         with SamplerContext():
              result_latent = comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive_cond, negative_cond, latent_image, denoise)[0]
 
-        log_node("Block Sampler: Decoding VAE (First run may pause for VRAM loading & compilation)...")
+        log_node("Block Sampler: Decoding VAE")
         image_out = comfy_nodes.VAEDecode().decode(vae, result_latent)[0]
 
         if mode_str == "inpaint" and raw_image is not None and source_mask is not None:
