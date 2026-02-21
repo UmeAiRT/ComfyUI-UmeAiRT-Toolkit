@@ -84,7 +84,7 @@ from .modules.utils_nodes import (
     UmeAiRT_Unpack_PromptsBundle,
     UmeAiRT_Unpack_ImageBundle,
     UmeAiRT_Unpack_FilesBundle,
-    UmeAiRT_ImageNote
+    UmeAiRT_Signature
 )
 
 NODE_CLASS_MAPPINGS = {
@@ -193,7 +193,7 @@ NODE_CLASS_MAPPINGS = {
 
     # Utils
     "UmeAiRT_Label": UmeAiRT_Label,
-    "UmeAiRT_ImageNote": UmeAiRT_ImageNote,
+    "UmeAiRT_Signature": UmeAiRT_Signature,
     "UmeAiRT_Wireless_Debug": UmeAiRT_Wireless_Debug,
     "UmeAiRT_Bundle_Downloader": UmeAiRT_Bundle_Downloader,
     "UmeAiRT_Log_Viewer": UmeAiRT_Log_Viewer,
@@ -253,7 +253,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_SourceImage_Output": "Wireless Source Image",
     "UmeAiRT_WirelessInpaintComposite": "Wireless Inpaint Composite",
     "UmeAiRT_Label": "Label",
-    "UmeAiRT_ImageNote": "Image Note (Signature)",
+    "UmeAiRT_Signature": "UmeAiRT Signature",
     "UmeAiRT_WirelessImageProcess": "Wireless Image Process",
     "UmeAiRT_GenerationSettings": "Generation Settings (Block)",
     "UmeAiRT_FilesSettings_Checkpoint": "Model Loader (Block)",
@@ -299,9 +299,19 @@ from .modules.optimization_utils import check_optimizations
 import colorama
 from colorama import Fore, Style
 import json
+import server
+from aiohttp import web
 
 # Initialize Colorama
 colorama.init(convert=True, autoreset=True)
+
+# Define API Route for Signature Image
+@server.PromptServer.instance.routes.get("/umeairt/signature")
+async def get_signature(request):
+    signature_path = os.path.join(os.path.dirname(__file__), "assets", "signature.png")
+    if os.path.exists(signature_path):
+        return web.FileResponse(signature_path)
+    return web.Response(status=404, text="Signature not found")
 
 # 1. Print Node List
 

@@ -1,6 +1,8 @@
 import { app } from "../../scripts/app.js";
+import { api } from "../../scripts/api.js";
 
-const SIGNATURE_URL = "/extensions/ComfyUI-UmeAiRT-Toolkit/assets/signature.png";
+// Fetch the image from our new backend Python route
+const SIGNATURE_URL = api.apiURL("/umeairt/signature");
 
 app.registerExtension({
     name: "UmeAiRT.Signature",
