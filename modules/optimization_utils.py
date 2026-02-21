@@ -115,8 +115,11 @@ def warmup_vae(vae):
         import comfy_extras.nodes_custom_sampler as comfy_nodes
         import nodes
         
-        # Dynamically determine the correct latent channels (SD1.5/SDXL = 4, FLUX = 16)
-        channels = getattr(vae, "latent_channels", 16)
+        # Dynamically determine the correct latent channels
+        # ComfyUI wraps the PyTorch model inside a VAE class. We need to reach the inner model.
+        channels = 4 # default SD1.5/SDXL
+        if hasattr(vae, "first_stage_model"):
+             channels = getattr(vae.first_stage_model, "latent_channels", channels)
         
         # Create a tiny 64x64 empty tensor
         empty_latent = torch.zeros([1, channels, 8, 8], device="cpu")
