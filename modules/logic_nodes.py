@@ -187,6 +187,9 @@ class UmeAiRT_WirelessKSampler:
         
         # Sampler Context Wrapper
         try:
+             from .optimization_utils import warmup_vae
+             warmup_vae(vae)
+             
              with SamplerContext():
                  result_latent = comfy_nodes.KSampler().sample(
                      model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise

@@ -1048,6 +1048,9 @@ class UmeAiRT_BlockSampler:
 
         log_node(f"Block Sampler: {mode_str} | {width}x{height} | Steps: {steps} | CFG: {cfg}")
         
+        from .optimization_utils import warmup_vae
+        warmup_vae(vae)
+        
         with SamplerContext():
              result_latent = comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive_cond, negative_cond, latent_image, denoise)[0]
 

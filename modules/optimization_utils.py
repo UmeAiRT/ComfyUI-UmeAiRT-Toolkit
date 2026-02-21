@@ -91,3 +91,37 @@ def SamplerContext():
         yield
     finally:
         pass
+
+# --- Pre-Compilation Warmup ---
+_VAE_WARMED_UP = False
+
+def warmup_vae(vae):
+    """
+    Forces Triton/SageAttention to compile VAE kernels before the heavy KSampler fills VRAM.
+    Creates a tiny 64x64 empty latent and decodes it.
+    Only runs once per ComfyUI session and only if Triton is installed.
+    """
+    global _VAE_WARMED_UP
+    if _VAE_WARMED_UP:
+        return
+    
+    if not check_library("triton"):
+        # No Triton means no massive JIT stall, skip warmup
+        _VAE_WARMED_UP = True
+        return
+        
+    log_node("⚡ Optimisation: Initiating VAE Pre-Compilation Warmup (Preventing VRAM spikes)...", color="CYAN")
+    try:
+        import comfy_extras.nodes_custom_sampler as comfy_nodes
+        import nodes
+        
+        # Create a tiny 64x64 empty tensor (1, 4, 8, 8 in latent space)
+        empty_latent = torch.zeros([1, 4, 8, 8], device="cpu")
+        latent_dict = {"samples": empty_latent}
+        
+        # Decode it silently
+        nodes.VAEDecode().decode(vae, latent_dict)
+    except Exception as e:
+        log_node(f"VAE Warmup failed (Safe to ignore): {e}", color="YELLOW")
+    finally:
+        _VAE_WARMED_UP = True
