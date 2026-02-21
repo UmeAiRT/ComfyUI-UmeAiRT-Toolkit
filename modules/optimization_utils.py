@@ -110,25 +110,32 @@ def warmup_vae(vae, latent_image):
     try:
         # Extract the exact shape (B, C, H, W) of the target image
         shape = tuple(latent_image["samples"].shape)
+        if len(shape) != 4: return
+        B, C, H, W = shape
         
         # If we already compiled this exact resolution this session, skip
-        if shape in _WARMED_UP_SHAPES:
+        if (H, W) in _WARMED_UP_SHAPES:
             return
             
-        log_node(f"⚡ Optimisation: VAE Target-Resolution Warmup {shape} (Preventing VRAM spikes)...", color="CYAN")
+        log_node(f"⚡ Optimisation: VAE Target-Resolution Warmup {H*8}x{W*8} (Preventing VRAM spikes)...", color="CYAN")
         
         import comfy_extras.nodes_custom_sampler as comfy_nodes
         import nodes
         
-        # Create an empty tensor of the EXACT same shape
-        empty_latent = torch.zeros(shape, device="cpu")
-        latent_dict = {"samples": empty_latent}
-        
-        # Decode it silently
-        nodes.VAEDecode().decode(vae, latent_dict)
+        try:
+            # Attempt 1: 16 Channels (FLUX)
+            empty_16 = torch.zeros([B, 16, H, W], device="cpu")
+            nodes.VAEDecode().decode(vae, {"samples": empty_16})
+        except Exception as e:
+            if "channels" in str(e).lower() or "size" in str(e).lower() or "dimension" in str(e).lower():
+                # Attempt 2: 4 Channels (SD1.5 / SDXL)
+                empty_4 = torch.zeros([B, 4, H, W], device="cpu")
+                nodes.VAEDecode().decode(vae, {"samples": empty_4})
+            else:
+                raise e
         
         # Remember this shape so we don't compile it again
-        _WARMED_UP_SHAPES.add(shape)
+        _WARMED_UP_SHAPES.add((H, W))
         
     except Exception as e:
         log_node(f"VAE Warmup failed (Safe to ignore): {e}", color="YELLOW")
