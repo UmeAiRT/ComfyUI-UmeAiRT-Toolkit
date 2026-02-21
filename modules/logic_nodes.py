@@ -31,12 +31,7 @@ except ImportError:
 
 # --- Helpers ---
 
-class SamplerContext:
-    def __enter__(self):
-        # Optimization context placeholders (Triton/SageAttention would go here)
-        pass
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+from .optimization_utils import SamplerContext
 
 def _ensure_vram_for_decode():
     if torch.cuda.is_available():
@@ -74,6 +69,13 @@ class UmeAiRT_WirelessKSampler:
     def __init__(self):
          self.cnet_loader = comfy_nodes.ControlNetLoader()
          self.cnet_apply = comfy_nodes.ControlNetApplyAdvanced()
+         
+         # Local Prompt Cache
+         self._last_pos_text = None
+         self._last_neg_text = None
+         self._last_clip = None
+         self._cached_positive = None
+         self._cached_negative = None
 
     def process(self, signal=None):
         # 1. Fetch State
@@ -116,7 +118,7 @@ class UmeAiRT_WirelessKSampler:
             # Img2Img / Inpaint Check
             mode_from_state = UME_SHARED_STATE.get(KEY_MODE, "img2img")  # Fallback logic
 
-            if source_image is not None and source_mask is not None and torch.any(source_mask > 0):
+            if source_image is not None and source_mask is not None:
                  # For inpaint/outpaint, ALWAYS encode and use the mask, even if denoise >= 1.0
                  t = vae.encode(source_image[:,:,:,:3]) # Drop alpha if 4 channels
                  latent_image = {"samples": t, "noise_mask": source_mask}
@@ -144,13 +146,25 @@ class UmeAiRT_WirelessKSampler:
              pass
 
         # 4. Encoding Prompts
-        tokens = clip.tokenize(pos_text)
-        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-        positive = [[cond, {"pooled_output": pooled}]]
+        if self._last_pos_text == pos_text and self._last_neg_text == neg_text and self._last_clip is clip:
+             positive = self._cached_positive
+             negative = self._cached_negative
+             log_node("Wireless Sampler: Using cached Prompts (Fast Start)", color="GREEN")
+        else:
+             log_node("Wireless Sampler: Encoding Prompts...")
+             tokens = clip.tokenize(pos_text)
+             cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
+             positive = [[cond, {"pooled_output": pooled}]]
 
-        tokens = clip.tokenize(neg_text)
-        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-        negative = [[cond, {"pooled_output": pooled}]]
+             tokens = clip.tokenize(neg_text)
+             cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
+             negative = [[cond, {"pooled_output": pooled}]]
+             
+             self._last_pos_text = pos_text
+             self._last_neg_text = neg_text
+             self._last_clip = clip
+             self._cached_positive = positive
+             self._cached_negative = negative
 
         # 5. Apply ControlNets (if in State)
         cnets = UME_SHARED_STATE.get(KEY_CONTROLNETS, [])

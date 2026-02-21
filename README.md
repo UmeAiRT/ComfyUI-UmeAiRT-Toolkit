@@ -17,6 +17,7 @@ Stop fighting with "noodle soup"! The UmeAiRT Toolkit provides two workflow para
 
 - **Global State**: Define inputs (Model, VAE, CLIP, Steps, CFG, etc.) once with "Setter" nodes
 - **Autonomous Processors**: KSampler, Upscaler, FaceDetailer automatically fetch from global state
+- **Smart Caching**: Internally caches CLIP encodings and bypasses synchronous CPU-GPU bottlenecks for instant re-generation
 - **Zero Wires**: No need to drag wires across your canvas (Uses `modules/common.py` state sharing)
 
 ### 🧱 Block Architecture

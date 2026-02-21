@@ -11,7 +11,8 @@ from .common import (
     KEY_IMAGESIZE, KEY_MODEL_NAME, resize_tensor, log_node
 )
 from .logger import logger
-from .logic_nodes import UmeAiRT_WirelessUltimateUpscale_Base, SamplerContext
+from .logic_nodes import UmeAiRT_WirelessUltimateUpscale_Base
+from .optimization_utils import SamplerContext
 
 try:
     from .facedetailer_core import detector, logic as fd_logic
@@ -935,6 +936,13 @@ class UmeAiRT_BlockSampler:
         self.lora_loader = comfy_nodes.LoraLoader()
         self.cnet_loader = comfy_nodes.ControlNetLoader()
         self.cnet_apply = comfy_nodes.ControlNetApplyAdvanced()
+        
+        # Local Prompt Cache
+        self._last_pos_text = None
+        self._last_neg_text = None
+        self._last_clip = None
+        self._cached_positive = None
+        self._cached_negative = None
 
     def process(self, settings=None, models=None, loras=None, positive=None, negative=None, image=None):
         controlnets = []
@@ -992,7 +1000,7 @@ class UmeAiRT_BlockSampler:
              source_mask = image.get("mask")
              mode_str = image.get("mode", "img2img")
              
-             if mode_str in ["inpaint", "outpaint"] and source_mask is not None and torch.any(source_mask > 0):
+             if mode_str in ["inpaint", "outpaint"] and source_mask is not None:
                  # For inpaint/outpaint, we MUST encode the image and apply the noise_mask
                  # even if denoise is 1.0, otherwise the whole image gets regenerated.
                  latent_image = comfy_nodes.VAEEncode().encode(vae, raw_image)[0]
@@ -1009,13 +1017,25 @@ class UmeAiRT_BlockSampler:
              latent_image = {"samples": l}
              denoise = 1.0
 
-        tokens = clip.tokenize(pos_text)
-        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-        positive_cond = [[cond, {"pooled_output": pooled}]]
+        if self._last_pos_text == pos_text and self._last_neg_text == neg_text and self._last_clip is clip:
+             positive_cond = self._cached_positive
+             negative_cond = self._cached_negative
+             log_node("Block Sampler: Using cached Prompts (Fast Start)", color="GREEN")
+        else:
+             log_node("Block Sampler: Encoding Prompts...")
+             tokens = clip.tokenize(pos_text)
+             cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
+             positive_cond = [[cond, {"pooled_output": pooled}]]
 
-        tokens = clip.tokenize(neg_text)
-        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-        negative_cond = [[cond, {"pooled_output": pooled}]]
+             tokens = clip.tokenize(neg_text)
+             cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
+             negative_cond = [[cond, {"pooled_output": pooled}]]
+             
+             self._last_pos_text = pos_text
+             self._last_neg_text = neg_text
+             self._last_clip = clip
+             self._cached_positive = positive_cond
+             self._cached_negative = negative_cond
 
         if controlnets:
             for cnet_def in controlnets:

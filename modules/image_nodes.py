@@ -446,16 +446,30 @@ class UmeAiRT_WirelessImageSaver:
         # 4. Save
         time_format = "%Y-%m-%d-%H%M%S"
         
+        import random
+        import string
+        
+        # Inject random cache buster into the base filename just before saving to ensure UI refresh.
+        # This mirrors ComfyUI's PreviewImage behavior, avoiding cache collisions permanently.
+        rand_suffix = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(5))
+        
+        # If the filename contains a dot (extension provided by user), we want to append before it. 
+        # But UmeAiRT usually expects extension separate. Let's append it to the filename prefix directly!
+        filename = f"{filename}_{rand_suffix}"
+        
         # Resolve Path Placeholders (for UI return Consistency)
         resolved_path = ImageSaverLogic.replace_placeholders(
             path, 
             metadata_obj.width, metadata_obj.height, metadata_obj.seed, metadata_obj.modelname, 
-            0, time_format, 
+            getattr(self, "counter", 0), time_format, 
             metadata_obj.sampler_name, metadata_obj.steps, metadata_obj.cfg, metadata_obj.scheduler_name, 
             metadata_obj.denoise, metadata_obj.clip_skip, metadata_obj.custom
         )
         
         try:
+            if not hasattr(self, "counter"):
+                self.counter = 0
+
             result_filenames = ImageSaverLogic.save_images(
                 images=images,
                 filename_pattern=filename,
@@ -468,10 +482,12 @@ class UmeAiRT_WirelessImageSaver:
                 extra_pnginfo=extra_pnginfo,
                 save_workflow_as_json=save_workflow_as_json,
                 embed_workflow=embed_workflow,
-                counter=0,
+                counter=self.counter,
                 time_format=time_format,
                 metadata=metadata_obj
             )
+            
+            self.counter += len(images)
             
             if len(result_filenames) == 1:
                 log_node(f"Image Saver: Saved -> {resolved_path}/{result_filenames[0]}", color="GREEN")
