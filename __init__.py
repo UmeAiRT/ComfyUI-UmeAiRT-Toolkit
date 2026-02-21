@@ -1,3 +1,11 @@
+# --- Dynamic Sampler Registration ---
+try:
+    from .modules.extra_samplers import register_extra_samplers
+    register_extra_samplers()
+except Exception as e:
+    print(f"[UmeAiRT-Toolkit] Failed to register extra samplers: {e}")
+# ------------------------------------
+
 from .modules.settings_nodes import (
     UmeAiRT_GlobalSeed,
     UmeAiRT_Resolution,
