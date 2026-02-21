@@ -284,46 +284,28 @@ class UmeAiRT_Pipe_Unpack_Node:
          )
 
 
-class UmeAiRT_ImageNote:
+class UmeAiRT_Signature:
     """
-    Displays an image on the workflow canvas as a sticky note or signature.
-    Does not hold any output sockets, rendering strictly for aesthetic purposes.
+    Displays a custom aesthetic signature directly on the canvas without any inputs.
+    Place your transparent PNG signature in `ComfyUI-UmeAiRT-Toolkit/assets/signature.png`.
     """
     @classmethod
     def INPUT_TYPES(s):
-        input_dir = folder_paths.get_input_directory()
-        files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
-        # Filter for common image extensions
-        files = [f for f in files if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp', '.gif'))]
         return {
-            "required": {
-                "image": (sorted(files), {"image_upload": True}),
-            },
+            "required": {}, # No inputs! Clean and simple.
         }
 
     RETURN_TYPES = ()
-    FUNCTION = "display_note"
+    FUNCTION = "display_signature"
     CATEGORY = "UmeAiRT/Utils"
     OUTPUT_NODE = True 
 
-    def display_note(self, image):
-        # We process the image essentially as a pass-through to the UI dict.
-        # This tells the ComfyUI frontend to render this image on the node itself.
-        image_path = folder_paths.get_annotated_filepath(image)
-        if not image_path:
-             return {"ui": {"images": []}}
-             
-        return {
-            "ui": {
-                "images": [
-                    {
-                        "filename": image,
-                        "subfolder": "",
-                        "type": "input"
-                    }
-                ]
-            }
-        }
+    def display_signature(self):
+        # The node execution does nothing except return the path relative to ComfyUI for preview.
+        # But this node is for frontend visual mostly!
+        # If the user somehow executes it, we just return empty.
+        # The real magic happens in umeairt_signature.js
+        return {"ui": {"images": []}}
 
 # Aliases for legacy compatibility
 UmeAiRT_Unpack_SettingsBundle = UmeAiRT_Unpack_Settings
