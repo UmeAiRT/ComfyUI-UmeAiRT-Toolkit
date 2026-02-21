@@ -83,7 +83,8 @@ from .modules.utils_nodes import (
     UmeAiRT_Unpack_SettingsBundle,
     UmeAiRT_Unpack_PromptsBundle,
     UmeAiRT_Unpack_ImageBundle,
-    UmeAiRT_Unpack_FilesBundle
+    UmeAiRT_Unpack_FilesBundle,
+    UmeAiRT_ImageNote
 )
 
 NODE_CLASS_MAPPINGS = {
@@ -192,6 +193,7 @@ NODE_CLASS_MAPPINGS = {
 
     # Utils
     "UmeAiRT_Label": UmeAiRT_Label,
+    "UmeAiRT_ImageNote": UmeAiRT_ImageNote,
     "UmeAiRT_Wireless_Debug": UmeAiRT_Wireless_Debug,
     "UmeAiRT_Bundle_Downloader": UmeAiRT_Bundle_Downloader,
     "UmeAiRT_Log_Viewer": UmeAiRT_Log_Viewer,
@@ -251,6 +253,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_SourceImage_Output": "Wireless Source Image",
     "UmeAiRT_WirelessInpaintComposite": "Wireless Inpaint Composite",
     "UmeAiRT_Label": "Label",
+    "UmeAiRT_ImageNote": "Image Note (Signature)",
     "UmeAiRT_WirelessImageProcess": "Wireless Image Process",
     "UmeAiRT_GenerationSettings": "Generation Settings (Block)",
     "UmeAiRT_FilesSettings_Checkpoint": "Model Loader (Block)",

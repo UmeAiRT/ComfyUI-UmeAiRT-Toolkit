@@ -283,6 +283,48 @@ class UmeAiRT_Pipe_Unpack_Node:
              pipe_bundle.get("negative_text", "")
          )
 
+
+class UmeAiRT_ImageNote:
+    """
+    Displays an image on the workflow canvas as a sticky note or signature.
+    Does not hold any output sockets, rendering strictly for aesthetic purposes.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        input_dir = folder_paths.get_input_directory()
+        files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
+        # Filter for common image extensions
+        files = [f for f in files if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp', '.gif'))]
+        return {
+            "required": {
+                "image": (sorted(files), {"image_upload": True}),
+            },
+        }
+
+    RETURN_TYPES = ()
+    FUNCTION = "display_note"
+    CATEGORY = "UmeAiRT/Utils"
+    OUTPUT_NODE = True 
+
+    def display_note(self, image):
+        # We process the image essentially as a pass-through to the UI dict.
+        # This tells the ComfyUI frontend to render this image on the node itself.
+        image_path = folder_paths.get_annotated_filepath(image)
+        if not image_path:
+             return {"ui": {"images": []}}
+             
+        return {
+            "ui": {
+                "images": [
+                    {
+                        "filename": image,
+                        "subfolder": "",
+                        "type": "input"
+                    }
+                ]
+            }
+        }
+
 # Aliases for legacy compatibility
 UmeAiRT_Unpack_SettingsBundle = UmeAiRT_Unpack_Settings
 UmeAiRT_Unpack_PromptsBundle = UmeAiRT_Unpack_Prompt
