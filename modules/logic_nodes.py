@@ -195,7 +195,7 @@ class UmeAiRT_WirelessKSampler:
              raise RuntimeError(f"Sampling Failed: {e}")
 
         # 7. Decode
-        log_node("Wireless Sampler: Decoding VAE...")
+        log_node("Wireless Sampler: Decoding VAE (First run may pause for VRAM loading & compilation)...")
         _ensure_vram_for_decode()
         image = comfy_nodes.VAEDecode().decode(vae, result_latent)[0]
 
