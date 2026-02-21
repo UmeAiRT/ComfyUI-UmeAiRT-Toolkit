@@ -19,6 +19,11 @@ app.registerExtension({
                 // Allow resizing to set scale
                 this.resizable = true;
 
+                // Override default minimum sizes so the sticker can be very small
+                this.computeSize = function () {
+                    return [Math.max(50, this.size[0]), Math.max(20, this.size[1])];
+                };
+
                 // Keep track of the loaded image
                 this.signatureImage = new Image();
                 this.imageLoaded = false;
