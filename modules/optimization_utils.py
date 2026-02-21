@@ -10,7 +10,14 @@ from .logger import log_node, GREEN, RED, YELLOW, RESET, CYAN, MAGENTA
 _LIB_CACHE = {}
 
 def check_library(name):
-    """Check if a library is installed (cached)."""
+    """Checks if a specific Python library module is installed and caches the result.
+
+    Args:
+        name (str): The module name to check (e.g., "sageattention", "triton").
+
+    Returns:
+        bool: True if the module is found in the current environment, False otherwise.
+    """
     if name in _LIB_CACHE:
         return _LIB_CACHE[name]
     
@@ -20,7 +27,12 @@ def check_library(name):
     return found
 
 def get_cuda_memory():
-    """Get CUDA memory usage."""
+    """Retrieves the current CUDA memory usage.
+
+    Returns:
+        str: A formatted string showing free and total VRAM in Gigabytes (e.g., '10.50GB free / 24.00GB total').
+             Returns "CUDA not available" if torch.cuda is not initialized, or "Unknown" upon failure.
+    """
     try:
         if torch.cuda.is_available():
             free, total = torch.cuda.mem_get_info()
@@ -32,13 +44,10 @@ def get_cuda_memory():
         return "Unknown"
 
 def check_optimizations():
-    """
-    Check for optimization libraries and system status.
-    Mimics the requested style:
-    ⚡ Optimisation check: SageAttention [?] | Flash Attention [?] | Triton [?]
-    💡 Optional: pip install flash-attn
-    🔧 Conv3d workaround active: PyTorch [ver], cuDNN [ver] (fixing VAE 3x memory bug)
-    📊 Initial CUDA memory: [free] / [total]
+    """Checks for optimization libraries and system status during startup.
+
+    Logs the presence of crucial performance libraries like SageAttention, Flash Attention, 
+    and Triton. It also prints out the initial CUDA memory state to inform the user.
     """
     
     # 1. Library Checks
@@ -62,9 +71,14 @@ def check_optimizations():
 
 @contextlib.contextmanager
 def SamplerContext():
-    """
-    Context manager to apply optimizations (SageAttention, etc.) specifically during sampling.
-    Restores original state afterwards to avoid side effects.
+    """Context manager to apply specific optimizations specifically during image sampling.
+
+    Currently checks for SageAttention and Triton. It safely ensures that any specific 
+    library state or tracking is initialized before yielding to the inner block,
+    restoring or ignoring side effects afterwards.
+
+    Yields:
+        None
     """
     # Track what we activated for logging
     active_optimizations = []
@@ -96,10 +110,15 @@ def SamplerContext():
 _WARMED_UP_SHAPES = set()
 
 def warmup_vae(vae, latent_image):
-    """
-    Forces Triton/SageAttention to compile VAE kernels BEFORE the heavy KSampler fills VRAM.
-    Uses the exact target shape of the user's incoming latent_image.
-    This guarantees Triton compiles the correct resolution kernel safely in advance.
+    """Forces an initial VAE compilation pass using an empty tensor of the accurate target resolution.
+
+    This prevents JIT compilers (like Triton or SageAttention) from stalling heavily or spiking VRAM 
+    during the first generated frame. By pre-compiling the exact (C, H, W) kernel sizes, 
+    subsequent generations are fluid and out-of-memory spikes are avoided.
+
+    Args:
+        vae (comfy.sd.VAE): The loaded VAE instance from ComfyUI.
+        latent_image (dict): A dictionary containing at least a "samples" key with the target latent shape.
     """
     if not isinstance(latent_image, dict) or "samples" not in latent_image:
         return

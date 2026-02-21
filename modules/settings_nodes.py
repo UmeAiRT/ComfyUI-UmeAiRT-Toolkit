@@ -8,6 +8,7 @@ from .common import (
 # --- GUIDANCE NODES ---
 
 class UmeAiRT_Guidance_Input:
+    """Node to set the global CFG Scale (Guidance Scale) value in the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -25,10 +26,19 @@ class UmeAiRT_Guidance_Input:
     OUTPUT_NODE = True
 
     def set_value(self, guidance):
+        """Updates the global CFG scale value.
+
+        Args:
+            guidance (float): The CFG scale to store.
+
+        Returns:
+            tuple: An empty tuple as this is an output node.
+        """
         UME_SHARED_STATE[KEY_CFG] = guidance
         return ()
 
 class UmeAiRT_Guidance_Output:
+    """Node to retrieve the global CFG Scale (Guidance Scale) value from the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -45,6 +55,11 @@ class UmeAiRT_Guidance_Output:
         return float("nan")
 
     def get_value(self):
+        """Fetches the global CFG scale value.
+
+        Returns:
+            tuple: A tuple containing the CFG scale (float). Defaults to 8.0 if not set.
+        """
         val = UME_SHARED_STATE.get(KEY_CFG, 8.0)
         return (float(val),)
 
@@ -52,6 +67,7 @@ class UmeAiRT_Guidance_Output:
 # --- IMAGE SIZE NODES ---
 
 class UmeAiRT_ImageSize_Input:
+    """Node to set the global Image Size (Width and Height) in the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -67,10 +83,20 @@ class UmeAiRT_ImageSize_Input:
     OUTPUT_NODE = True
 
     def set_size(self, width, height):
+        """Updates the global image dimensions.
+
+        Args:
+            width (int): The target width in pixels.
+            height (int): The target height in pixels.
+
+        Returns:
+            tuple: An empty tuple.
+        """
         UME_SHARED_STATE[KEY_IMAGESIZE] = {"width": width, "height": height}
         return ()
 
 class UmeAiRT_ImageSize_Output:
+    """Node to retrieve the global Image Size (Width and Height) from the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -87,6 +113,11 @@ class UmeAiRT_ImageSize_Output:
         return float("nan")
 
     def get_size(self):
+        """Fetches the global image dimensions.
+
+        Returns:
+            tuple: A tuple containing (width, height) as integers. Defaults to (1024, 1024).
+        """
         val = UME_SHARED_STATE.get(KEY_IMAGESIZE, {"width": 1024, "height": 1024})
         return (int(val.get("width", 1024)), int(val.get("height", 1024)))
 
@@ -94,6 +125,7 @@ class UmeAiRT_ImageSize_Output:
 # --- FPS NODES ---
 
 class UmeAiRT_FPS_Input:
+    """Node to set the global Frames Per Second (FPS) value in the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -111,10 +143,19 @@ class UmeAiRT_FPS_Input:
     OUTPUT_NODE = True
 
     def set_val(self, fps):
+        """Updates the global FPS value.
+
+        Args:
+            fps (int): The target frames per second.
+
+        Returns:
+            tuple: An empty tuple.
+        """
         UME_SHARED_STATE[KEY_FPS] = fps
         return ()
 
 class UmeAiRT_FPS_Output:
+    """Node to retrieve the global Frames Per Second (FPS) value from the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return { "required": {} }
@@ -129,6 +170,11 @@ class UmeAiRT_FPS_Output:
         return float("nan")
 
     def get_val(self):
+        """Fetches the global FPS value.
+
+        Returns:
+            tuple: A tuple containing the FPS (int). Defaults to 24.
+        """
         val = UME_SHARED_STATE.get(KEY_FPS, 24)
         return (int(val),)
 
@@ -136,6 +182,7 @@ class UmeAiRT_FPS_Output:
 # --- STEPS NODES ---
 
 class UmeAiRT_Steps_Input:
+    """Node to set the global Sampling Steps value in the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -153,10 +200,19 @@ class UmeAiRT_Steps_Input:
     OUTPUT_NODE = True
 
     def set_val(self, steps):
+        """Updates the global sampling steps.
+
+        Args:
+            steps (int): The number of steps for generation.
+
+        Returns:
+            tuple: An empty tuple.
+        """
         UME_SHARED_STATE[KEY_STEPS] = steps
         return ()
 
 class UmeAiRT_Steps_Output:
+    """Node to retrieve the global Sampling Steps value from the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return { "required": {} }
@@ -171,6 +227,11 @@ class UmeAiRT_Steps_Output:
         return float("nan")
 
     def get_val(self):
+        """Fetches the global sampling steps value.
+
+        Returns:
+            tuple: A tuple containing the steps (int). Defaults to 20.
+        """
         val = UME_SHARED_STATE.get(KEY_STEPS, 20)
         return (int(val),)
 
@@ -178,6 +239,7 @@ class UmeAiRT_Steps_Output:
 # --- DENOISE NODES ---
 
 class UmeAiRT_Denoise_Input:
+    """Node to set the global Denoise strength value in the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -195,10 +257,19 @@ class UmeAiRT_Denoise_Input:
     OUTPUT_NODE = True
 
     def set_val(self, denoise):
+        """Updates the global denoise strength.
+
+        Args:
+            denoise (float): The denoise value (0.0 to 1.0).
+
+        Returns:
+            tuple: An empty tuple.
+        """
         UME_SHARED_STATE[KEY_DENOISE] = denoise
         return ()
 
 class UmeAiRT_Denoise_Output:
+    """Node to retrieve the global Denoise strength value from the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return { "required": {} }
@@ -213,6 +284,11 @@ class UmeAiRT_Denoise_Output:
         return float("nan")
 
     def get_val(self):
+        """Fetches the global denoise strength value.
+
+        Returns:
+            tuple: A tuple containing the denoise strength (float). Defaults to 1.0.
+        """
         val = UME_SHARED_STATE.get(KEY_DENOISE, 1.0)
         return (float(val),)
 
@@ -220,6 +296,7 @@ class UmeAiRT_Denoise_Output:
 # --- SEED NODES ---
 
 class UmeAiRT_Seed_Input:
+    """Node to set the global Random Seed value in the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -237,10 +314,19 @@ class UmeAiRT_Seed_Input:
     OUTPUT_NODE = True
 
     def set_val(self, seed):
+        """Updates the global random seed.
+
+        Args:
+            seed (int): The generation seed.
+
+        Returns:
+            tuple: An empty tuple.
+        """
         UME_SHARED_STATE[KEY_SEED] = seed
         return ()
 
 class UmeAiRT_Seed_Output:
+    """Node to retrieve the global Random Seed value from the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return { "required": {} }
@@ -255,6 +341,11 @@ class UmeAiRT_Seed_Output:
         return float("nan")
 
     def get_val(self):
+        """Fetches the global random seed value.
+
+        Returns:
+            tuple: A tuple containing the seed (int). Defaults to 0.
+        """
         val = UME_SHARED_STATE.get(KEY_SEED, 0)
         return (int(val),)
 
@@ -262,6 +353,7 @@ class UmeAiRT_Seed_Output:
 # --- SCHEDULER NODES ---
 
 class UmeAiRT_Scheduler_Input:
+    """Node to set the global Scheduler algorithm in the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -276,10 +368,19 @@ class UmeAiRT_Scheduler_Input:
     OUTPUT_NODE = True
 
     def set_val(self, scheduler):
+        """Updates the global scheduler algorithm.
+
+        Args:
+            scheduler (str): The name of the scheduler.
+
+        Returns:
+            tuple: An empty tuple.
+        """
         UME_SHARED_STATE[KEY_SCHEDULER] = scheduler
         return ()
 
 class UmeAiRT_Scheduler_Output:
+    """Node to retrieve the global Scheduler algorithm from the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return { "required": {} }
@@ -294,6 +395,11 @@ class UmeAiRT_Scheduler_Output:
         return float("nan")
 
     def get_val(self):
+        """Fetches the global scheduler algorithm.
+
+        Returns:
+            tuple: A tuple containing the scheduler name (str). Defaults to 'normal'.
+        """
         # Default to first scheduler if missing
         default = comfy.samplers.KSampler.SCHEDULERS[0] if comfy.samplers.KSampler.SCHEDULERS else "normal"
         val = UME_SHARED_STATE.get(KEY_SCHEDULER, default)
@@ -303,6 +409,7 @@ class UmeAiRT_Scheduler_Output:
 # --- SAMPLER NODES ---
 
 class UmeAiRT_Sampler_Input:
+    """Node to set the global Sampler algorithm in the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -317,10 +424,19 @@ class UmeAiRT_Sampler_Input:
     OUTPUT_NODE = True
 
     def set_val(self, sampler_name):
+        """Updates the global sampler algorithm.
+
+        Args:
+            sampler_name (str): The name of the sampler.
+
+        Returns:
+            tuple: An empty tuple.
+        """
         UME_SHARED_STATE[KEY_SAMPLER] = sampler_name
         return ()
 
 class UmeAiRT_Sampler_Output:
+    """Node to retrieve the global Sampler algorithm from the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return { "required": {} }
@@ -335,6 +451,11 @@ class UmeAiRT_Sampler_Output:
         return float("nan")
 
     def get_val(self):
+        """Fetches the global sampler algorithm.
+
+        Returns:
+            tuple: A tuple containing the sampler name (str). Defaults to 'euler'.
+        """
         # Default to first sampler if missing
         default = comfy.samplers.KSampler.SAMPLERS[0] if comfy.samplers.KSampler.SAMPLERS else "euler"
         val = UME_SHARED_STATE.get(KEY_SAMPLER, default)
@@ -342,6 +463,7 @@ class UmeAiRT_Sampler_Output:
 
 
 class UmeAiRT_SamplerScheduler_Input:
+    """Combo Node to set both Sampler and Scheduler algorithms in the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -357,6 +479,15 @@ class UmeAiRT_SamplerScheduler_Input:
     OUTPUT_NODE = True
 
     def set_val(self, sampler, scheduler):
+        """Updates both the global sampler and scheduler algorithms simultaneously.
+
+        Args:
+            sampler (str): The name of the sampler.
+            scheduler (str): The name of the scheduler.
+
+        Returns:
+            tuple: An empty tuple.
+        """
         UME_SHARED_STATE[KEY_SAMPLER] = sampler
         UME_SHARED_STATE[KEY_SCHEDULER] = scheduler
         return ()
@@ -365,6 +496,7 @@ class UmeAiRT_SamplerScheduler_Input:
 # --- POSITIVE PROMPT NODES ---
 
 class UmeAiRT_Positive_Input:
+    """Node to set the global Positive Prompt text in the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -380,10 +512,19 @@ class UmeAiRT_Positive_Input:
     OUTPUT_NODE = True
 
     def set_val(self, positive):
+        """Updates the global positive prompt and passes it through.
+
+        Args:
+            positive (str): The positive prompt text.
+
+        Returns:
+            tuple: A tuple containing the positive prompt string.
+        """
         UME_SHARED_STATE[KEY_POSITIVE] = positive
         return (positive,)
 
 class UmeAiRT_Positive_Output:
+    """Node to retrieve the global Positive Prompt text from the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return { "required": {} }
@@ -398,6 +539,11 @@ class UmeAiRT_Positive_Output:
         return float("nan")
 
     def get_val(self):
+        """Fetches the global positive prompt.
+
+        Returns:
+            tuple: A tuple containing the positive prompt string. Defaults to empty string.
+        """
         val = UME_SHARED_STATE.get(KEY_POSITIVE, "")
         return (str(val),)
 
@@ -405,6 +551,7 @@ class UmeAiRT_Positive_Output:
 # --- NEGATIVE PROMPT NODES ---
 
 class UmeAiRT_Negative_Input:
+    """Node to set the global Negative Prompt text in the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -420,10 +567,19 @@ class UmeAiRT_Negative_Input:
     OUTPUT_NODE = True
 
     def set_val(self, negative):
+        """Updates the global negative prompt and passes it through.
+
+        Args:
+            negative (str): The negative prompt text.
+
+        Returns:
+            tuple: A tuple containing the negative prompt string.
+        """
         UME_SHARED_STATE[KEY_NEGATIVE] = negative
         return (negative,)
 
 class UmeAiRT_Negative_Output:
+    """Node to retrieve the global Negative Prompt text from the Wireless State."""
     @classmethod
     def INPUT_TYPES(s):
         return { "required": {} }
@@ -438,6 +594,11 @@ class UmeAiRT_Negative_Output:
         return float("nan")
 
     def get_val(self):
+        """Fetches the global negative prompt.
+
+        Returns:
+            tuple: A tuple containing the negative prompt string. Defaults to empty string.
+        """
         val = UME_SHARED_STATE.get(KEY_NEGATIVE, "")
         return (str(val),)
 

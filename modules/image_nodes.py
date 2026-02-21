@@ -27,10 +27,17 @@ from .logger import logger
 from .image_saver_core.logic import ImageSaverLogic
 
 class UmeAiRT_WirelessImageLoader(comfy_nodes.LoadImage):
-    """
-    Advanced Wireless Image Loader.
-    Loads an image and updates the global Wireless State (Source Image & Mask).
-    Supports optional Resizing and Mode selection (Inpaint vs Img2Img).
+    """Advanced Wireless Image Loader.
+
+    Loads an image from the input directory and immediately updates the global 
+    Wireless State. It supports optional resizing based on the global target 
+    resolution and handles masking behavior depending on the selected mode.
+
+    Attributes:
+        RETURN_TYPES (tuple): The data types returned to ComfyUI ("IMAGE", "MASK").
+        RETURN_NAMES (tuple): The semantic names of the returned data.
+        FUNCTION (str): The main execution method.
+        CATEGORY (str): The category under which the node appears in ComfyUI.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -52,6 +59,16 @@ class UmeAiRT_WirelessImageLoader(comfy_nodes.LoadImage):
     CATEGORY = "UmeAiRT/Wireless/Loaders"
 
     def load_image_wireless(self, image, resize, mode):
+        """Loads and processes the selected image, updating the global state.
+
+        Args:
+            image (str): The filename of the image to load from the input directory.
+            resize (bool): If True, resizes the image and mask to match the global target resolution.
+            mode (str): Processing mode, either "Inpaint" (preserves mask) or "Img2Img" (ignores mask).
+
+        Returns:
+            tuple: A tuple containing (image_tensor, mask_tensor).
+        """
         # 1. Load Image (Parent Method)
         out = super().load_image(image)
         img = out[0]
@@ -83,8 +100,9 @@ class UmeAiRT_WirelessImageLoader(comfy_nodes.LoadImage):
         return (img, mask)
 
 class UmeAiRT_SourceImage_Output:
-    """
-    Outputs the currently stored Wireless Source Image and Mask.
+    """Retrieves and outputs the currently stored Source Image and Mask from the Wireless State.
+
+    If no image is present in the state, it outputs a dummy black image to prevent workflow crashes.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -96,6 +114,11 @@ class UmeAiRT_SourceImage_Output:
     CATEGORY = "UmeAiRT/Wireless/Accessors"
 
     def get_source(self):
+        """Fetches the source image and mask from the shared state.
+
+        Returns:
+            tuple: A tuple containing (image_tensor, mask_tensor). Returns dummy zero tensors if state is empty.
+        """
         img = UME_SHARED_STATE.get(KEY_SOURCE_IMAGE)
         mask = UME_SHARED_STATE.get(KEY_SOURCE_MASK)
         
@@ -109,10 +132,13 @@ class UmeAiRT_SourceImage_Output:
         return (img, mask)
 
 class UmeAiRT_WirelessImageProcess:
-    """
-    Central node for Wireless Image Editing (Inpaint, Outpaint, Img2Img, Txt2Img).
-    Handles Resizing, Padding (Outpaint), Mask Blurring (Inpaint), and Denoise.
-    Updates Wireless Global State.
+    """Central processing node for Wireless Image Editing operations.
+
+    Handles structural modifications to the source image before generation, including:
+    Resizing, Padding (for Outpainting algorithms), Gaussian Mask Blurring (for Inpainting), 
+    and defining the Denoise strength context safely based on the chosen Mode 
+    (Img2Img, Inpaint, Outpaint, Txt2Img).
+    It updates the Global Wireless State with its modifications.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -141,6 +167,23 @@ class UmeAiRT_WirelessImageProcess:
 
     def process_image(self, denoise=1.0, mode="img2img", image=None, mask=None, resize=False, mask_blur=0, 
                       padding_left=0, padding_top=0, padding_right=0, padding_bottom=0):
+        """Processes the image and mask according to the selected mode and parameters.
+
+        Args:
+            denoise (float, optional): The noise reduction strength. Defaults to 1.0.
+            mode (str, optional): The generation mode ("img2img", "inpaint", "outpaint", "txt2img"). Defaults to "img2img".
+            image (torch.Tensor, optional): Optional override for the source image. Defaults to None (uses state).
+            mask (torch.Tensor, optional): Optional override for the source mask. Defaults to None (uses state).
+            resize (bool, optional): If True, resizes inputs to global target dimensions. Defaults to False.
+            mask_blur (int, optional): The kernel size for Gaussian blur applied to the mask (Inpaint). Defaults to 0.
+            padding_left (int, optional): Outpaint padding pixels on the left. Defaults to 0.
+            padding_top (int, optional): Outpaint padding pixels on the top. Defaults to 0.
+            padding_right (int, optional): Outpaint padding pixels on the right. Defaults to 0.
+            padding_bottom (int, optional): Outpaint padding pixels on the bottom. Defaults to 0.
+
+        Returns:
+            tuple: A tuple (final_image, final_mask) which are also stored in the global state.
+        """
         
         if mode == "txt2img":
              log_node("Wireless Process: Txt2Img Mode (Forcing Denoise=1.0, Ignoring Mask).", color="YELLOW")
@@ -272,9 +315,10 @@ class UmeAiRT_WirelessImageProcess:
 
 
 class UmeAiRT_WirelessInpaintComposite:
-    """
-    Composites the generated image onto the original source image using the Wireless Mask.
-    Useful for seamless Inpainting.
+    """Composites the newly generated latent/image seamlessly back onto the original source.
+
+    It uses the original, optionally blurred, Wireless Mask to blend the generated
+    content perfectly over the designated inpaint regions while keeping the rest identical.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -290,6 +334,14 @@ class UmeAiRT_WirelessInpaintComposite:
     CATEGORY = "UmeAiRT/Wireless/Post-Processing"
 
     def composite(self, generated_image):
+        """Performs the alpha compositing math using the global state buffers.
+
+        Args:
+            generated_image (torch.Tensor): The output tensor from the Sampler or VAE Decoder.
+
+        Returns:
+            tuple: A tuple containing the final composited image tensor.
+        """
         # Fetch Source from Wireless
         source_image = UME_SHARED_STATE.get(KEY_SOURCE_IMAGE)
         source_mask = UME_SHARED_STATE.get(KEY_SOURCE_MASK)
@@ -351,9 +403,11 @@ class UmeAiRT_WirelessInpaintComposite:
 
 
 class UmeAiRT_WirelessImageSaver:
-    """
-    Saves the image with filename based on Wireless settings (Model Name, Seed, Date/Time).
-    Includes simplified metadata.
+    """Advanced Output Node for saving images silently using global contexts.
+
+    Generates dynamic filenames, supports injecting custom metadata headers based 
+    on the current Wireless State (Seed, Steps, Modifiers, etc.), and avoids 
+    cache collisions gracefully.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -374,6 +428,17 @@ class UmeAiRT_WirelessImageSaver:
     CATEGORY = "UmeAiRT/Wireless/IO"
     
     def save_images(self, images, filename, prompt=None, extra_pnginfo=None):
+        """Gathers metadata, resolves placeholders in the filename, and saves the file to disk.
+
+        Args:
+            images (torch.Tensor): A batch tensor of images to be saved.
+            filename (str): The string pattern for the filename (supports placeholders like %seed%).
+            prompt (dict, optional): The raw ComfyUI workflow JSON mapping. Defaults to None.
+            extra_pnginfo (dict, optional): Extra UI data payload. Defaults to None.
+
+        Returns:
+            dict: An interface dictionary containing relative UI path data for displaying in the dashboard.
+        """
         # 1. Resolve Path and Filename (Standardize splitting)
         full_pattern = filename.replace("\\", "/")
         if "/" in full_pattern:

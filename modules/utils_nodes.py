@@ -7,8 +7,10 @@ from .common import UME_SHARED_STATE, log_node
 from .logger import logger
 
 class UmeAiRT_Label:
-    """
-    Simple Label Node for organizing workflows.
+    """A purely visual node used for organizing and annotating ComfyUI workflows.
+
+    It does not process any actual data but provides a customizable text label 
+    that can be placed anywhere on the canvas.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -27,12 +29,25 @@ class UmeAiRT_Label:
     OUTPUT_NODE = True 
 
     def do_label(self, title, text, color, font_size):
+        """Executes the visual node.
+
+        Args:
+            title (str): The title text of the label.
+            text (str): The main descriptive text.
+            color (str): The chosen color theme constraint.
+            font_size (int): The relative font size for display.
+
+        Returns:
+            dict: An empty dictionary as this is purely a frontend visual element.
+        """
         # Does nothing functionally, just frontend visual
         return {}
 
 class UmeAiRT_Wireless_Debug:
-    """
-    Prints the current Wireless Shared State to the console/log.
+    """A utility node for developers to inspect the current Wireless Shared State.
+
+    When triggered, it parses the `UME_SHARED_STATE` dictionary and prints 
+    its keys and abstract values (like tensor shapes) to the console log.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -47,6 +62,14 @@ class UmeAiRT_Wireless_Debug:
     OUTPUT_NODE = True
 
     def debug_state(self, trigger=None):
+        """Reads and logs the global state out to the standardized logger.
+
+        Args:
+            trigger (Any, optional): Anything connected to forcefully trigger node execution.
+
+        Returns:
+            dict: Empty dictionary.
+        """
         log_node("--- Wireless State Debug ---", color="CYAN")
         for k, v in UME_SHARED_STATE.items():
             val_str = str(v)
@@ -60,8 +83,10 @@ class UmeAiRT_Wireless_Debug:
         return {}
 
 class UmeAiRT_Bundle_Downloader:
-    """
-    Downloads model/workflow bundles from a JSON source.
+    """A Node designed to download specific model bundles or workflows.
+
+    It reads from a `bundles.json` manifest located at the root of the node directory 
+    to dynamically populate its ComfyUI dropdowns.
     """
     def __init__(self):
         self.bundles_data = {}
@@ -100,6 +125,16 @@ class UmeAiRT_Bundle_Downloader:
     OUTPUT_NODE = True
 
     def download(self, category, bundle_name, download_path):
+        """Mocks the download action and returns a status string.
+
+        Args:
+            category (str): The selected category from the dropdown.
+            bundle_name (str): The selected bundle item to download.
+            download_path (str): The target destination folder.
+
+        Returns:
+            tuple: A tuple containing the execution status string.
+        """
         log_node(f"Bundle Download requested: {category}/{bundle_name}", color="YELLOW")
         # Implementation of actual download logic would go here
         # For refactor, we keep it safe.
@@ -107,6 +142,7 @@ class UmeAiRT_Bundle_Downloader:
 
 
 class UmeAiRT_Unpack_Settings:
+    """Extracts multiple individual variables from a single UME_SETTINGS dictionary bundle."""
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {"settings": ("UME_SETTINGS",)}}
@@ -115,6 +151,14 @@ class UmeAiRT_Unpack_Settings:
     FUNCTION = "unpack"
     CATEGORY = "UmeAiRT/Utils/Unpack"
     def unpack(self, settings):
+        """Unpacks the provided settings dictionary.
+
+        Args:
+            settings (dict): The UME_SETTINGS bundle containing generation variables.
+
+        Returns:
+            tuple: A sequence containing (width, height, steps, cfg, sampler, scheduler, seed).
+        """
         return (
             settings.get("width", 1024), settings.get("height", 1024),
             settings.get("steps", 20), settings.get("cfg", 8.0),
@@ -123,8 +167,9 @@ class UmeAiRT_Unpack_Settings:
         )
 
 class UmeAiRT_Unpack_FilesBundle:
-    """
-    Unpacks UME_FILES bundle into Model, Clip, VAE, and Name.
+    """Deconstructs a unified UME_FILES bundle into standard ComfyUI data pipes.
+
+    Outputs Model, Clip, VAE, and the readable Model Name separately for native nodes.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -140,6 +185,17 @@ class UmeAiRT_Unpack_FilesBundle:
     CATEGORY = "UmeAiRT/Unpack"
 
     def unpack(self, files_bundle):
+        """Extracts internal variables from the files dictionary.
+
+        Args:
+            files_bundle (dict): The custom dictionary holding loaded models.
+
+        Returns:
+            tuple: A tuple containing the (comfy_model, comfy_clip, comfy_vae, string_name).
+
+        Raises:
+            ValueError: If the input is not a recognized dictionary mapping.
+        """
         if not isinstance(files_bundle, dict):
             raise ValueError("UmeAiRT Unpack: Input is not a valid UME_FILES bundle.")
         return (
@@ -150,9 +206,7 @@ class UmeAiRT_Unpack_FilesBundle:
         )
 
 class UmeAiRT_Unpack_ImageBundle:
-    """
-    Unpacks UME_IMAGE bundle into Image and Mask.
-    """
+    """Deconstructs a unified UME_IMAGE bundle into standalone IMAGE and MASK tensors."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -167,6 +221,17 @@ class UmeAiRT_Unpack_ImageBundle:
     CATEGORY = "UmeAiRT/Unpack"
 
     def unpack(self, image_bundle):
+        """Separates the image and its associated mask.
+
+        Args:
+            image_bundle (dict): The bundled mapping containing "image" and "mask" keys.
+
+        Returns:
+            tuple: A tuple containing (torch.Tensor(image), torch.Tensor(mask)).
+
+        Raises:
+            ValueError: If the input object is not a valid dictionary.
+        """
         if not isinstance(image_bundle, dict):
             raise ValueError("UmeAiRT Unpack: Input is not a valid UME_IMAGE bundle.")
         
@@ -176,6 +241,7 @@ class UmeAiRT_Unpack_ImageBundle:
         return (image, mask)
 
 class UmeAiRT_Unpack_Prompt:
+    """Deconstructs a UME_PROMPTS bundle into distinct Positive and Negative text strings."""
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {"prompts": ("UME_PROMPTS",)}}
@@ -184,11 +250,21 @@ class UmeAiRT_Unpack_Prompt:
     FUNCTION = "unpack"
     CATEGORY = "UmeAiRT/Utils/Unpack"
     def unpack(self, prompts):
+        """Extracts text prompts from the dictionary.
+
+        Args:
+            prompts (dict): The bundle containing "positive" and "negative" keys.
+
+        Returns:
+            tuple: A tuple containing (str(positive_prompt), str(negative_prompt)).
+        """
         return (prompts.get("positive", ""), prompts.get("negative", ""))
 
 class UmeAiRT_Log_Viewer:
-    """
-    Displays the last N log entries from the UmeAiRT Logger.
+    """A Node that retrieves and outputs the most recent logs from the UmeAiRT_Logger instance.
+
+    Ideal for creating debugging panels directly inside ComfyUI interfaces without 
+    relying exclusively on the background terminal window.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -204,6 +280,15 @@ class UmeAiRT_Log_Viewer:
     CATEGORY = "UmeAiRT/Utils"
     
     def get_logs(self, refresh_trigger, limit):
+        """Pulls the log history to a single formatted string.
+
+        Args:
+            refresh_trigger (int): A pseudo-variable to force ComfyUI execution.
+            limit (int): How many historical log lines to fetch.
+
+        Returns:
+            tuple: A tuple containing a single multiline string of recent logs.
+        """
         logs = logger.get_logs(limit)
         text = "\n".join(logs)
         return (text,)
@@ -212,9 +297,7 @@ class UmeAiRT_Log_Viewer:
 # --- Legacy Unpack Nodes Restoration ---
 
 class UmeAiRT_Faces_Unpack_Node:
-    """
-    Unpacks FACES_DATA bundle.
-    """
+    """A legacy passthrough node ensuring old workflows using UME_FACES do not break."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -229,12 +312,18 @@ class UmeAiRT_Faces_Unpack_Node:
     CATEGORY = "UmeAiRT/Unpack"
 
     def unpack(self, faces_bundle):
+        """Passes the object forward.
+
+        Args:
+            faces_bundle (Any): The legacy faces data object.
+
+        Returns:
+            tuple: The untouched object.
+        """
         return (faces_bundle,)
 
 class UmeAiRT_Tags_Unpack_Node:
-    """
-    Unpacks UME_TAGS bundle.
-    """
+    """Legacy unpacking for UME_TAGS bundled data into a raw string."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -249,12 +338,18 @@ class UmeAiRT_Tags_Unpack_Node:
     CATEGORY = "UmeAiRT/Unpack"
 
     def unpack(self, tags_bundle):
+        """Forces the generic tags bundle into a string representation.
+
+        Args:
+            tags_bundle (Any): The legacy tags object.
+
+        Returns:
+            tuple: A tuple containing the string cast.
+        """
         return (str(tags_bundle),)
 
 class UmeAiRT_Pipe_Unpack_Node:
-    """
-    Unpacks UME_PIPE bundle (Model, Clip, Vae, Positive, Negative).
-    """
+    """Legacy unpacking node mapping a monolithic UME_PIPE tuple/dict into standard outputs."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -269,6 +364,17 @@ class UmeAiRT_Pipe_Unpack_Node:
     CATEGORY = "UmeAiRT/Unpack"
 
     def unpack(self, pipe_bundle):
+         """Analyzes the legacy pipeline format (list or dict) and extracts the 5 core variables.
+
+         Args:
+             pipe_bundle (dict|list): The incoming structured pipeline.
+
+         Returns:
+             tuple: A tuple mapping to (Model, Clip, VAE, Positive_text, Negative_text).
+
+         Raises:
+             ValueError: If the structure is completely unrecognized.
+         """
          if not isinstance(pipe_bundle, dict):
              if isinstance(pipe_bundle, (list, tuple)) and len(pipe_bundle) >= 5:
                   return (pipe_bundle[0], pipe_bundle[1], pipe_bundle[2], pipe_bundle[3], pipe_bundle[4])
@@ -285,9 +391,10 @@ class UmeAiRT_Pipe_Unpack_Node:
 
 
 class UmeAiRT_Signature:
-    """
-    Displays a custom aesthetic signature directly on the canvas without any inputs.
-    Place your transparent PNG signature in `ComfyUI-UmeAiRT-Toolkit/assets/signature.png`.
+    """A Node designed purely for aesthetic and branding purposes on the canvas.
+
+    It renders a custom transparent PNG signature (`assets/signature.png`) via JavaScript.
+    It has no inputs, and running the node yields an empty result.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -301,6 +408,11 @@ class UmeAiRT_Signature:
     OUTPUT_NODE = True 
 
     def display_signature(self):
+        """Silently short-circuits execution context.
+
+        Returns:
+            dict: An empty UI images dictionary since rendering is entirely handled client-side.
+        """
         # The node execution does nothing except return the path relative to ComfyUI for preview.
         # But this node is for frontend visual mostly!
         # If the user somehow executes it, we just return empty.

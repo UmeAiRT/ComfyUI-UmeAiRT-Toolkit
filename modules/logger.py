@@ -19,11 +19,33 @@ except ImportError:
     CYAN = GREEN = RED = MAGENTA = YELLOW = ORANGE = RESET = ""
 
 class UmeAiRT_Logger:
+    """Centralized logger class to handle stylized output and store history.
+
+    Attributes:
+        logs (list): A list storing the most recent formatted log messages.
+        max_buffer (int): The maximum number of log messages retained in memory.
+    """
+
     def __init__(self, max_buffer=100):
+        """Initializes the UmeAiRT_Logger with a specific buffer size.
+
+        Args:
+            max_buffer (int, optional): The limit of log entries to keep. Defaults to 100.
+        """
         self.logs = []
         self.max_buffer = max_buffer
     
     def log(self, msg, color=None, prefix="UmeAiRT-Toolkit"):
+        """Prints and stores a colored log message to the console.
+
+        Automatically formats node names (text before the first colon) in yellow
+        for better readability in the terminal.
+
+        Args:
+            msg (str): The main message content to log.
+            color (str, optional): The desired color for the message (e.g., "GREEN", "RED"). Defaults to None.
+            prefix (str, optional): The prefix tag displayed before the message. Defaults to "UmeAiRT-Toolkit".
+        """
         c = ""
         if color == "GREEN": c = GREEN
         elif color == "CYAN": c = MAGENTA # Kept for legacy compatibility
@@ -49,12 +71,28 @@ class UmeAiRT_Logger:
             self.logs.pop(0)
 
     def get_logs(self, limit=20):
+        """Retrieves the most recent log entries.
+
+        Args:
+            limit (int, optional): The number of recent logs to return. Defaults to 20.
+
+        Returns:
+            list: A list of string containing the most recent logs.
+        """
         return self.logs[-limit:]
 
 # Global Instance
 logger = UmeAiRT_Logger()
 
 def log_node(msg, color=None, prefix="UmeAiRT-Toolkit"):
-    """Standardized logger for UmeAiRT nodes. Redirects to global logger instance."""
+    """Standardized logger wrapper for UmeAiRT nodes. 
+    
+    Redirects to the global logger instance method to ensure consistent formatting.
+
+    Args:
+        msg (str): The main message content to log.
+        color (str, optional): The desired color for the message (e.g., "GREEN", "RED"). Defaults to None.
+        prefix (str, optional): The prefix tag displayed before the message. Defaults to "UmeAiRT-Toolkit".
+    """
     logger.log(msg, color, prefix)
 

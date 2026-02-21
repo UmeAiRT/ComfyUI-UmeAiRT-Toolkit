@@ -48,10 +48,12 @@ def _ensure_vram_for_seedvr2():
 # --- Wireless KSampler ---
 
 class UmeAiRT_WirelessKSampler:
-    """
-    Central Wireless Sampler.
-    Fetches all required inputs (Model, VAE, CLIP, Latent, Params) from Wireless State.
-    Handles ControlNet application and LoRA loading if present in state.
+    """Central Wireless Sampler node for generating images based on global state.
+
+    Fetches all required inputs (Model, VAE, CLIP, Latent, Params) automatically 
+    from the Wireless State. Analyzes the presence of masks to autonomously determine 
+    whether to perform Img2Img, Inpaint, or Txt2Img. It also handles ControlNet 
+    applications and LoRA offloads natively.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -212,10 +214,7 @@ class UmeAiRT_WirelessKSampler:
 # --- Upscalers ---
 
 class UmeAiRT_WirelessUltimateUpscale_Base:
-    """
-    Base class for Wireless Ultimate Upscale nodes.
-    Contains logic for prompt encoding and node execution.
-    """
+    """Base class providing prompt encoding utilities for Ultimate Upscaler nodes."""
     def encode_prompts(self, clip, pos_text, neg_text):
         tokens = clip.tokenize(pos_text)
         cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
@@ -240,6 +239,7 @@ class UmeAiRT_WirelessUltimateUpscale_Base:
             raise ImportError(f"UmeAiRT: Could not load bundled UltimateSDUpscale node from usdu_core. Error: {e}")
 
 class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
+    """Simple wrapper for Ultimate SD Upscale utilizing Wireless State for rapid setup."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -319,6 +319,7 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         return res
 
 class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_Base):
+    """Advanced Ultimate SD Upscale node exposing granular control parameters to the UI."""
     @classmethod
     def INPUT_TYPES(s):
         usdu_modes = ["Linear", "Chess", "None"]

@@ -59,6 +59,7 @@ def process_lora_stack(loras, **kwargs):
     return (current_stack,)
 
 class UmeAiRT_LoraBlock_1:
+    """A Node to select and stack 1 LoRA model with its strength."""
     @classmethod
     def INPUT_TYPES(s): return get_lora_inputs(1)
     RETURN_TYPES = ("UME_LORA_STACK",)
@@ -68,6 +69,7 @@ class UmeAiRT_LoraBlock_1:
     def process(self, loras=None, **kwargs): return process_lora_stack(loras, **kwargs)
 
 class UmeAiRT_LoraBlock_3:
+    """A Node to select and stack up to 3 LoRA models with their strengths."""
     @classmethod
     def INPUT_TYPES(s): return get_lora_inputs(3)
     RETURN_TYPES = ("UME_LORA_STACK",)
@@ -77,6 +79,7 @@ class UmeAiRT_LoraBlock_3:
     def process(self, loras=None, **kwargs): return process_lora_stack(loras, **kwargs)
 
 class UmeAiRT_LoraBlock_5:
+    """A Node to select and stack up to 5 LoRA models with their strengths."""
     @classmethod
     def INPUT_TYPES(s): return get_lora_inputs(5)
     RETURN_TYPES = ("UME_LORA_STACK",)
@@ -86,6 +89,7 @@ class UmeAiRT_LoraBlock_5:
     def process(self, loras=None, **kwargs): return process_lora_stack(loras, **kwargs)
 
 class UmeAiRT_LoraBlock_10:
+    """A Node to select and stack up to 10 LoRA models with their strengths."""
     @classmethod
     def INPUT_TYPES(s): return get_lora_inputs(10)
     RETURN_TYPES = ("UME_LORA_STACK",)
@@ -98,6 +102,10 @@ class UmeAiRT_LoraBlock_10:
 # --- ControlNet Blocks ---
 
 class UmeAiRT_ControlNetImageApply_Advanced:
+    """Injects deeply parameterized ControlNet configuration into an image bundle.
+    
+    Allows explicitly separating the target image mapped from the control image (optional).
+    """
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -141,6 +149,7 @@ class UmeAiRT_ControlNetImageApply_Advanced:
         return (new_bundle,)
 
 class UmeAiRT_ControlNetImageApply_Simple(UmeAiRT_ControlNetImageApply_Advanced):
+    """Injects a simplified ControlNet configuration into an image bundle."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -151,9 +160,23 @@ class UmeAiRT_ControlNetImageApply_Simple(UmeAiRT_ControlNetImageApply_Advanced)
             }
         }
     def apply_controlnet(self, image_bundle, control_net_name, strength):
+        """Funnels simple parameters down to the advanced method safely.
+
+        Args:
+            image_bundle (dict): The target UME_IMAGE bundle.
+            control_net_name (str): Selected model filename.
+            strength (float): ControlNet force multiplier.
+
+        Returns:
+            tuple: A tuple containing the updated image bundle.
+        """
         return super().apply_controlnet(image_bundle, control_net_name, strength, 0.0, 1.0, None)
 
 class UmeAiRT_ControlNetImageProcess:
+    """Pre-processes image data (resize, mask blurring, inversion) before embedding ControlNets.
+    
+    Provides specialized routing for specific control scenarios.
+    """
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -226,6 +249,7 @@ class UmeAiRT_ControlNetImageProcess:
 
 
 class UmeAiRT_GenerationSettings:
+    """Compact parameter builder mapping foundational diffusion variables into a UME_SETTINGS bundle."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -260,6 +284,7 @@ class UmeAiRT_GenerationSettings:
 # --- Files / Model Loaders (Block) ---
 
 class UmeAiRT_FilesSettings_Checkpoint:
+    """Basic Loader for Standard Checkpoints."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -273,6 +298,14 @@ class UmeAiRT_FilesSettings_Checkpoint:
     CATEGORY = "UmeAiRT/Blocks/Loaders"
     
     def load(self, ckpt_name):
+        """Loads a model, clip, and vae from a single checkpoint file.
+
+        Args:
+            ckpt_name (str): The filename of the checkpoint.
+
+        Returns:
+            tuple: A tuple containing the `{"model": model, "clip": clip, "vae": vae, "model_name": ckpt_name}` bundle.
+        """
         model, clip, vae = comfy_nodes.CheckpointLoaderSimple().load_checkpoint(ckpt_name)
         
         UME_SHARED_STATE[KEY_MODEL] = model
@@ -284,6 +317,7 @@ class UmeAiRT_FilesSettings_Checkpoint:
         return ({"model": model, "clip": clip, "vae": vae, "model_name": ckpt_name},)
 
 class UmeAiRT_FilesSettings_FLUX(UmeAiRT_FilesSettings_Checkpoint):
+    """Simplified Loader specifically for FLUX architecture."""
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -295,6 +329,17 @@ class UmeAiRT_FilesSettings_FLUX(UmeAiRT_FilesSettings_Checkpoint):
             }
         }
     def load(self, unet_name, clip_name1, clip_name2, vae_name):
+         """Loads a FLUX unet, dual clips, and vae.
+
+         Args:
+             unet_name (str): The unet filename.
+             clip_name1 (str): The primary clip filename (e.g. t5xxl).
+             clip_name2 (str): The secondary clip filename (e.g. clip_l).
+             vae_name (str): The vae filename.
+
+         Returns:
+             tuple: A tuple containing the `{"model": model, "clip": clip, "vae": vae, "model_name": unet_name}` bundle.
+         """
          # Helper to load models manually
          # Using standard comfy nodes
          from nodes import UNETLoader, CLIPLoader, VAELoader, DualCLIPLoader
@@ -323,6 +368,7 @@ class UmeAiRT_FilesSettings_FLUX(UmeAiRT_FilesSettings_Checkpoint):
          return ({"model": model, "clip": clip, "vae": vae, "model_name": unet_name},)
 
 class UmeAiRT_FilesSettings_Fragmented:
+    """Simplified Fragmented Loader for separate model, clip, and vae files."""
     @classmethod
     def INPUT_TYPES(s):
         # Combined list for flexible loading
@@ -342,6 +388,16 @@ class UmeAiRT_FilesSettings_Fragmented:
     CATEGORY = "UmeAiRT/Blocks/Loaders"
     
     def load(self, model_name, clip_name, vae_name):
+        """Smart-loads from either checkpoints or unet folders.
+
+        Args:
+            model_name (str): Checkpoint or Unet filename.
+            clip_name (str): Clip filename.
+            vae_name (str): VAE filename.
+
+        Returns:
+            tuple: A tuple containing the bundled models.
+        """
         from nodes import CheckpointLoaderSimple, UNETLoader, CLIPLoader, VAELoader
         
         # Smart Load Model
@@ -409,6 +465,16 @@ class UmeAiRT_FilesSettings_Checkpoint_Advanced:
     CATEGORY = "UmeAiRT/Blocks"
 
     def load_files(self, ckpt_name, vae_name="Baked", clip_skip=-1):
+        """Loads a checkpoint with optional VAE override and CLIP skip.
+
+        Args:
+            ckpt_name (str): The checkpoint filename.
+            vae_name (str, optional): The VAE filename. Defaults to "Baked".
+            clip_skip (int, optional): The CLIP skip layer. Defaults to -1.
+
+        Returns:
+            tuple: A tuple containing the bundled models.
+        """
         # 1. Load Checkpoint
         ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
         out = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
@@ -467,6 +533,18 @@ class UmeAiRT_FilesSettings_FLUX:
     CATEGORY = "UmeAiRT/Blocks/Models"
 
     def load_files(self, unet_name, weight_dtype, clip_name1, clip_name2, vae_name):
+        """Loads a FLUX model with explicit weight dtype.
+
+        Args:
+            unet_name (str): The UNET filename.
+            weight_dtype (str): The weight data type (e.g. fp8_e4m3fn).
+            clip_name1 (str): The primary CLIP filename.
+            clip_name2 (str): The secondary CLIP filename.
+            vae_name (str): The VAE filename.
+
+        Returns:
+            tuple: A tuple containing the bundled models.
+        """
         # 1. Load UNET
         unet_path = folder_paths.get_full_path("unet", unet_name)
         model = comfy.sd.load_unet(unet_path)
@@ -547,6 +625,20 @@ class UmeAiRT_FilesSettings_Fragmented:
     CATEGORY = "UmeAiRT/Blocks/Models"
 
     def load_files(self, model_name, clip_name, vae_name, weight_dtype="default", clip_type="stable_diffusion", clip_skip=-1, device="default"):
+        """Loads components from multiple distinct folders with explicit typing.
+
+        Args:
+            model_name (str): The model/unet filename.
+            clip_name (str): The clip filename.
+            vae_name (str): The vae filename.
+            weight_dtype (str, optional): The model dtype. Defaults to "default".
+            clip_type (str, optional): The clip architecture type. Defaults to "stable_diffusion".
+            clip_skip (int, optional): The clip skip layer. Defaults to -1.
+            device (str, optional): The target device. Defaults to "default".
+
+        Returns:
+            tuple: A tuple containing the bundled models.
+        """
         # 1. Load Model (Checkpoint/UNET)
         # Determine path and type
         ckpt_path = folder_paths.get_full_path("checkpoints", model_name)
@@ -684,6 +776,16 @@ class UmeAiRT_FilesSettings_ZIMG:
     CATEGORY = "UmeAiRT/Blocks/Loaders"
 
     def load_files(self, model_name, clip_name, vae_name):
+        """Loads models tailored for the Z-IMG unified format, including auto-dtype detection and GGUF support.
+
+        Args:
+            model_name (str): The diffusion model filename.
+            clip_name (str): The clip filename.
+            vae_name (str): The vae filename.
+
+        Returns:
+            tuple: A tuple containing the bundled models.
+        """
         # 1. Load Model (Z-IMG / Diffusion Model)
         if model_name.endswith(".gguf"):
             from ..vendor.comfyui_gguf.gguf_nodes import UnetLoaderGGUF
@@ -760,6 +862,10 @@ class UmeAiRT_FilesSettings_ZIMG:
 # --- Image Blocks ---
 
 class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
+    """Standard image loader formatted as a Block.
+
+    Outputs a unified UME_IMAGE bundle containing the image and its associated mask.
+    """
     @classmethod
     def INPUT_TYPES(s):
         input_dir = folder_paths.get_input_directory()
@@ -776,6 +882,14 @@ class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
     CATEGORY = "UmeAiRT/Blocks/Images"
 
     def load_block_image(self, image):
+        """Loads the specified image file and wraps it in a dictionary.
+
+        Args:
+            image (str): The filename to load from the input directory.
+
+        Returns:
+            tuple: A tuple containing the `{"image": img, "mask": mask}` bundle.
+        """
         out = super().load_image(image)
         img, mask = out[0], out[1]
         
@@ -786,13 +900,26 @@ class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
         return (image_bundle,)
 
 class UmeAiRT_BlockImageLoader_Advanced(UmeAiRT_BlockImageLoader):
+    """Advanced Image Loader providing both bundled and fragmented UI outputs."""
     RETURN_TYPES = ("UME_IMAGE", "IMAGE", "MASK")
     RETURN_NAMES = ("image_bundle", "image", "mask")
     def load_block_image(self, image):
+        """Loads the image and returns both the bundle and the raw tensors.
+
+        Args:
+            image (str): The filename.
+
+        Returns:
+            tuple: `(bundle_dict, image_tensor, mask_tensor)`
+        """
         res = super().load_block_image(image)
         return (res[0], res[0]["image"], res[0]["mask"])
 
 class UmeAiRT_BlockImageProcess:
+    """Structural pre-processor for UME_IMAGE bundles in Block-based workflows.
+
+    Handles cropping, padding (Outpaint mapping), and conditional context tagging.
+    """
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -815,6 +942,22 @@ class UmeAiRT_BlockImageProcess:
 
     def process_image(self, image_bundle, denoise=0.75, mode="img2img", resize=False, mask_blur=0, 
                       padding_left=0, padding_top=0, padding_right=0, padding_bottom=0):
+        """Modifies the image state based on the chosen mode.
+
+        Args:
+            image_bundle (dict): The target dictionary containing image data.
+            denoise (float, optional): Diffusion interference depth. Defaults to 0.75.
+            mode (str, optional): Scenario switch (Img2Img, Inpaint). Defaults to "img2img".
+            resize (bool, optional): Stretch to match global settings. Defaults to False.
+            mask_blur (int, optional): Inpaint gradient transition bleed. Defaults to 0.
+            padding_left (int, optional): Horizontal shift. Defaults to 0.
+            padding_top (int, optional): Vertical shift. Defaults to 0.
+            padding_right (int, optional): Horizontal shift. Defaults to 0.
+            padding_bottom (int, optional): Vertical shift. Defaults to 0.
+
+        Returns:
+            tuple: The updated bundle with a new state.
+        """
         
         image = image_bundle.get("image")
         mask = image_bundle.get("mask")
@@ -913,6 +1056,11 @@ class UmeAiRT_BlockImageProcess:
 # --- Processor Blocks ---
 
 class UmeAiRT_BlockSampler:
+    """Consolidated Processing Block containing VAE encode/decode logic, KSampling, ControlNet and LoRAs.
+
+    It accepts explicitly piped bundles rather than global states, ensuring 
+    deterministic graph execution for advanced isolated workflows.
+    """
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -945,6 +1093,19 @@ class UmeAiRT_BlockSampler:
         self._cached_negative = None
 
     def process(self, settings=None, models=None, loras=None, positive=None, negative=None, image=None):
+        """Unpacks all explicit pipes, delegates conditioning, and performs inference.
+
+        Args:
+            settings (dict, optional): Parameter dictionary (steps, size, seed).
+            models (dict, optional): Loaders mapping (unet, vae, clip).
+            loras (list, optional): Sequence of LoRA configurations.
+            positive (str, optional): Overriding prompt string.
+            negative (str, optional): Overriding constraint string.
+            image (dict, optional): The structural bounds & source mapping.
+
+        Returns:
+            tuple: The tensor result wrapping the `(generated_image,)`.
+        """
         controlnets = []
         if image and isinstance(image, dict):
             controlnets = image.get("controlnets", [])
@@ -1079,6 +1240,7 @@ class UmeAiRT_BlockSampler:
         return (image_out,)
 
 class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
+    """Rigidly integrated node for UltimateSDUpscale explicitly mapping piped inputs."""
     def __init__(self): self.lora_loader = comfy_nodes.LoraLoader()
     @classmethod
     def INPUT_TYPES(s):
@@ -1106,6 +1268,24 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
     CATEGORY = "UmeAiRT/Blocks/Post-Processing"
 
     def upscale(self, image, model, upscale_by, settings=None, models=None, loras=None, prompts=None, denoise=0.35, clean_prompt=True, mode_type="Linear", tile_padding=32):
+        """Splices Block inputs with the embedded UltimateSDUpscale math.
+
+        Args:
+             image (torch.Tensor): Native tensor to tile.
+             model (str): Folder path / name of the specific Upscaler network.
+             upscale_by (float): Ratio.
+             settings (dict, optional): Overriding steps, sampler, configs.
+             models (dict, optional): Overriding models payload.
+             loras (list, optional): Modifier weights.
+             prompts (dict, optional): Overriding conditioning.
+             denoise (float, optional): Intensity. Defaults to 0.35.
+             clean_prompt (bool, optional): Strip logic. Defaults to True.
+             mode_type (str, optional): Tile geometry. Defaults to "Linear".
+             tile_padding (int, optional): Overlaps. Defaults to 32.
+
+         Returns:
+             tuple: `(upscaled_image,)` tensor tuple.
+        """
         if models: sd_model, vae, clip = models.get("model"), models.get("vae"), models.get("clip")
         else: sd_model, vae, clip = UME_SHARED_STATE.get(KEY_MODEL), UME_SHARED_STATE.get(KEY_VAE), UME_SHARED_STATE.get(KEY_CLIP)
 
@@ -1160,6 +1340,7 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         return res
 
 class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
+    """Integrated FaceDetailer processing blocks delegating bounds calculations via YOLO logic."""
     def __init__(self): self.lora_loader = comfy_nodes.LoraLoader()
     @classmethod
     def INPUT_TYPES(s):
@@ -1184,6 +1365,22 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
     CATEGORY = "UmeAiRT/Blocks/Post-Processing"
 
     def face_detail(self, image, model, denoise, settings=None, models=None, loras=None, prompts=None, guide_size=512, max_size=1024):
+        """Performs iterative cropping, processing, and recompositing for detected faces.
+
+         Args:
+             image (torch.Tensor): Native target.
+             model (str): The YOLO bounding-box detection network.
+             denoise (float): Diffusion strength targeting face crops.
+             settings (dict, optional): Passed configs.
+             models (dict, optional): Extrapolated pipeline.
+             loras (list, optional): Modifier nodes.
+             prompts (dict, optional): Re-conditioning text maps.
+             guide_size (int, optional): YOLO anchor space. Defaults to 512.
+             max_size (int, optional): Image scaling ceiling. Defaults to 1024.
+
+         Returns:
+             tuple: `(composite_faces_image,)`
+        """
         if models: sd_model, vae, clip = models.get("model"), models.get("vae"), models.get("clip")
         else: sd_model, vae, clip = UME_SHARED_STATE.get(KEY_MODEL), UME_SHARED_STATE.get(KEY_VAE), UME_SHARED_STATE.get(KEY_CLIP)
 
