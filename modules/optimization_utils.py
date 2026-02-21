@@ -115,18 +115,19 @@ def warmup_vae(vae):
         import comfy_extras.nodes_custom_sampler as comfy_nodes
         import nodes
         
-        # Dynamically determine the correct latent channels
-        # ComfyUI wraps the PyTorch model inside a VAE class. We need to reach the inner model.
-        channels = 4 # default SD1.5/SDXL
-        if hasattr(vae, "first_stage_model"):
-             channels = getattr(vae.first_stage_model, "latent_channels", channels)
-        
-        # Create a tiny 64x64 empty tensor
-        empty_latent = torch.zeros([1, channels, 8, 8], device="cpu")
-        latent_dict = {"samples": empty_latent}
-        
-        # Decode it silently
-        nodes.VAEDecode().decode(vae, latent_dict)
+        # ComfyUI's VAE object structure is highly variable between models (FLUX vs SD).
+        # We brute-force the compilation warmup: try FLUX (16ch) first, fallback to SD (4ch).
+        try:
+            # Attempt 1: 16 Channels (FLUX)
+            empty_latent = torch.zeros([1, 16, 8, 8], device="cpu")
+            nodes.VAEDecode().decode(vae, {"samples": empty_latent})
+        except Exception as e:
+            if "channels" in str(e).lower() or "size" in str(e).lower():
+                # Attempt 2: 4 Channels (SD1.5 / SDXL)
+                empty_latent = torch.zeros([1, 4, 8, 8], device="cpu")
+                nodes.VAEDecode().decode(vae, {"samples": empty_latent})
+            else:
+                raise e
     except Exception as e:
         log_node(f"VAE Warmup failed (Safe to ignore): {e}", color="YELLOW")
     finally:
