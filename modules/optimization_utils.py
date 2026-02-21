@@ -115,8 +115,11 @@ def warmup_vae(vae):
         import comfy_extras.nodes_custom_sampler as comfy_nodes
         import nodes
         
-        # Create a tiny 64x64 empty tensor (1, 4, 8, 8 in latent space)
-        empty_latent = torch.zeros([1, 4, 8, 8], device="cpu")
+        # Dynamically determine the correct latent channels (SD1.5/SDXL = 4, FLUX = 16)
+        channels = getattr(vae, "latent_channels", 16)
+        
+        # Create a tiny 64x64 empty tensor
+        empty_latent = torch.zeros([1, channels, 8, 8], device="cpu")
         latent_dict = {"samples": empty_latent}
         
         # Decode it silently
