@@ -91,3 +91,44 @@ def SamplerContext():
         yield
     finally:
         pass
+
+# --- Target-Resolution VAE Warmup ---
+_WARMED_UP_SHAPES = set()
+
+def warmup_vae(vae, latent_image):
+    """
+    Forces Triton/SageAttention to compile VAE kernels BEFORE the heavy KSampler fills VRAM.
+    Uses the exact target shape of the user's incoming latent_image.
+    This guarantees Triton compiles the correct resolution kernel safely in advance.
+    """
+    if not isinstance(latent_image, dict) or "samples" not in latent_image:
+        return
+        
+    if not check_library("triton"):
+        return # No Triton = No heavy JIT stall
+
+    try:
+        # Extract the exact shape (B, C, H, W) of the target image
+        shape = tuple(latent_image["samples"].shape)
+        
+        # If we already compiled this exact resolution this session, skip
+        if shape in _WARMED_UP_SHAPES:
+            return
+            
+        log_node(f"⚡ Optimisation: VAE Target-Resolution Warmup {shape} (Preventing VRAM spikes)...", color="CYAN")
+        
+        import comfy_extras.nodes_custom_sampler as comfy_nodes
+        import nodes
+        
+        # Create an empty tensor of the EXACT same shape
+        empty_latent = torch.zeros(shape, device="cpu")
+        latent_dict = {"samples": empty_latent}
+        
+        # Decode it silently
+        nodes.VAEDecode().decode(vae, latent_dict)
+        
+        # Remember this shape so we don't compile it again
+        _WARMED_UP_SHAPES.add(shape)
+        
+    except Exception as e:
+        log_node(f"VAE Warmup failed (Safe to ignore): {e}", color="YELLOW")
