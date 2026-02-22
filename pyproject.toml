@@ -8,7 +8,21 @@ authors = [
 ]
 license = { file = "LICENSE" }
 dependencies = [
-    "ultralytics>=8.0.0"
+    "ultralytics>=8.0.0",
+    "colorama",
+    "opencv-python",
+    "requests",
+    "tqdm",
+    "scipy",
+    "omegaconf>=2.3.0",
+    "diffusers>=0.33.1",
+    "peft>=0.17.0",
+    "rotary_embedding_torch>=0.5.3",
+    "einops",
+    "gguf",
+    "psutil",
+    "safetensors",
+    "matplotlib"
 ]
 requires-python = ">=3.8"
 keywords = ["comfyui", "stable-diffusion", "wireless", "workflow", "ai"]

@@ -38,7 +38,7 @@ def get_timestamp(time_format: str) -> str:
     now = datetime.now()
     try:
         timestamp = now.strftime(time_format)
-    except:
+    except Exception:
         timestamp = now.strftime("%Y-%m-%d-%H%M%S")
     return timestamp
 
@@ -49,7 +49,7 @@ def apply_custom_time_format(filename: str) -> str:
         format_str = match.group(1)
         try:
             return now.strftime(format_str)
-        except:
+        except Exception:
             return match.group(0)
     return re.sub(pattern, replace_format, filename)
 

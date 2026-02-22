@@ -30,8 +30,9 @@ def get_lora_inputs(count):
     }
     lora_list = ["None"] + folder_paths.get_filename_list("loras")
     for i in range(1, count + 1):
+        inputs["optional"][f"lora_{i}_on"] = ("BOOLEAN", {"default": True, "label_on": "On", "label_off": "Off", "tooltip": f"Toggle LoRA {i} on or off."})
         inputs["optional"][f"lora_{i}_name"] = (lora_list, {"tooltip": f"Select LoRA model {i}."})
-        inputs["optional"][f"lora_{i}_strength"] = ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider", "tooltip": f"Strength for LoRA {i}."})
+        inputs["optional"][f"lora_{i}_strength"] = ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01, "display": "slider", "tooltip": f"Strength for LoRA {i}."})
     return inputs
 
 def process_lora_stack(loras, **kwargs):
@@ -49,10 +50,11 @@ def process_lora_stack(loras, **kwargs):
     sorted_indices = sorted(list(indices))
 
     for i in sorted_indices:
+        is_on = kwargs.get(f"lora_{i}_on", True)
         name = kwargs.get(f"lora_{i}_name")
         strength = kwargs.get(f"lora_{i}_strength", 1.0)
         
-        if name and name != "None":
+        if is_on and name and name != "None":
             # Unified strength for model and clip
             current_stack.append((name, strength, strength))
             
@@ -316,131 +318,6 @@ class UmeAiRT_FilesSettings_Checkpoint:
         log_node(f"Block Checkpoint Loaded: {ckpt_name}", color="GREEN")
         return ({"model": model, "clip": clip, "vae": vae, "model_name": ckpt_name},)
 
-class UmeAiRT_FilesSettings_FLUX(UmeAiRT_FilesSettings_Checkpoint):
-    """Simplified Loader specifically for FLUX architecture."""
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-            "required": {
-                "unet_name": (folder_paths.get_filename_list("diffusion_models"),),
-                "clip_name1": (folder_paths.get_filename_list("text_encoders"),),
-                "clip_name2": (folder_paths.get_filename_list("text_encoders"),),
-                "vae_name": (folder_paths.get_filename_list("vae"),),
-            }
-        }
-    def load(self, unet_name, clip_name1, clip_name2, vae_name):
-         """Loads a FLUX unet, dual clips, and vae.
-
-         Args:
-             unet_name (str): The unet filename.
-             clip_name1 (str): The primary clip filename (e.g. t5xxl).
-             clip_name2 (str): The secondary clip filename (e.g. clip_l).
-             vae_name (str): The vae filename.
-
-         Returns:
-             tuple: A tuple containing the `{"model": model, "clip": clip, "vae": vae, "model_name": unet_name}` bundle.
-         """
-         # Helper to load models manually
-         # Using standard comfy nodes
-         from nodes import UNETLoader, CLIPLoader, VAELoader, DualCLIPLoader
-         
-         model = UNETLoader().load_unet(unet_name, "default")[0]
-         
-         # Dual Clip Logic
-         # If clip1 is t5 and clip2 is clip_l, use DualCLIPLoader? Or direct?
-         # Comfy's DualCLIPLoader expects (clip_name1, clip_name2, type)
-         
-         try:
-             clip = DualCLIPLoader().load_clip(clip_name1, clip_name2, "flux")[0]
-         except:
-             # Fallback if specific node fails or user selects wrong types
-             # Just load clip1?
-             clip = CLIPLoader().load_clip(clip_name1)[0]
-             
-         vae = VAELoader().load_vae(vae_name)[0]
-         
-         UME_SHARED_STATE[KEY_MODEL] = model
-         UME_SHARED_STATE[KEY_CLIP] = clip
-         UME_SHARED_STATE[KEY_VAE] = vae
-         UME_SHARED_STATE[KEY_MODEL_NAME] = unet_name
-         
-         log_node(f"Block FLUX Loaded: {unet_name}", color="GREEN")
-         return ({"model": model, "clip": clip, "vae": vae, "model_name": unet_name},)
-
-class UmeAiRT_FilesSettings_Fragmented:
-    """Simplified Fragmented Loader for separate model, clip, and vae files."""
-    @classmethod
-    def INPUT_TYPES(s):
-        # Combined list for flexible loading
-        models = folder_paths.get_filename_list("checkpoints") + folder_paths.get_filename_list("diffusion_models")
-        clips = folder_paths.get_filename_list("checkpoints") + folder_paths.get_filename_list("text_encoders") # Sometimes clip in ckpt?
-        vaes = folder_paths.get_filename_list("vae")
-        return {
-            "required": {
-                "model_name": (models,),
-                "clip_name": (clips,),
-                "vae_name": (vaes,),
-            }
-        }
-    RETURN_TYPES = ("UME_FILES",)
-    RETURN_NAMES = ("files",)
-    FUNCTION = "load"
-    CATEGORY = "UmeAiRT/Blocks/Loaders"
-    
-    def load(self, model_name, clip_name, vae_name):
-        """Smart-loads from either checkpoints or unet folders.
-
-        Args:
-            model_name (str): Checkpoint or Unet filename.
-            clip_name (str): Clip filename.
-            vae_name (str): VAE filename.
-
-        Returns:
-            tuple: A tuple containing the bundled models.
-        """
-        from nodes import CheckpointLoaderSimple, UNETLoader, CLIPLoader, VAELoader
-        
-        # Smart Load Model
-        # Try Checkpoint first, then UNET
-        model = None
-        clip = None
-        vae = None
-        
-        # 1. Model
-        if model_name in folder_paths.get_filename_list("checkpoints"):
-             m, c, v = CheckpointLoaderSimple().load_checkpoint(model_name)
-             model = m
-             # If clip/vae are "None" or same, use these?
-             # But user selected explicit clip/vae. Use those.
-        else:
-             model = UNETLoader().load_unet(model_name, "default")[0]
-             
-        # 2. Clip
-        if clip_name != "None":
-             clip = CLIPLoader().load_clip(clip_name)[0]
-        elif clip is None:
-             # If we loaded checkpoint, we have clip.
-             # If we loaded UNET, we need clip.
-             pass
-
-        # 3. VAE
-        if vae_name != "None":
-             vae = VAELoader().load_vae(vae_name)[0]
-             
-        # Fallback for Checkpoint Loading
-        if model is None: raise ValueError("Fragmented Loader: Failed to load model.")
-        if clip is None: raise ValueError("Fragmented Loader: Failed to load CLIP.")
-        if vae is None: raise ValueError("Fragmented Loader: Failed to load VAE.")
-
-        UME_SHARED_STATE[KEY_MODEL] = model
-        UME_SHARED_STATE[KEY_CLIP] = clip
-        UME_SHARED_STATE[KEY_VAE] = vae
-        UME_SHARED_STATE[KEY_MODEL_NAME] = model_name
-        
-        log_node(f"Block Fragmented Loaded: {model_name}", color="GREEN")
-        return ({"model": model, "clip": clip, "vae": vae, "model_name": model_name},)
-
-
 class UmeAiRT_FilesSettings_Checkpoint_Advanced:
     """
     Advanced version - loads Model, CLIP, and VAE from Checkpoint.
@@ -599,7 +476,7 @@ class UmeAiRT_FilesSettings_Fragmented:
             tes = folder_paths.get_filename_list("text_encoders")
             if tes:
                 clips = sorted(list(set(clips + tes)))
-        except:
+        except Exception:
             pass
             
         # 3. Get VAEs
@@ -679,7 +556,7 @@ class UmeAiRT_FilesSettings_Fragmented:
         if clip_path is None:
             try:
                 clip_path = folder_paths.get_full_path("text_encoders", clip_name)
-            except:
+            except Exception:
                 pass
         
         if clip_path is None:
@@ -823,7 +700,7 @@ class UmeAiRT_FilesSettings_ZIMG:
             if clip_path is None:
                 try:
                     clip_path = folder_paths.get_full_path("text_encoders", clip_name)
-                except:
+                except Exception:
                      pass
             
             if clip_path is None:
@@ -1294,7 +1171,7 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
                 name, str_model, str_clip = lora_def
                 if name != "None":
                      try: sd_model, clip = self.lora_loader.load_lora(sd_model, clip, name, str_model, str_clip)
-                     except: pass
+                     except Exception: pass
             UME_SHARED_STATE[KEY_MODEL], UME_SHARED_STATE[KEY_CLIP] = sd_model, clip
 
         if not sd_model or not vae or not clip: raise ValueError("Block Upscale: Missing Model/VAE/CLIP")
@@ -1325,7 +1202,7 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         positive, negative = self.encode_prompts(clip, "" if clean_prompt else pos_text, neg_text)
         
         try: from comfy_extras.nodes_upscale_model import UpscaleModelLoader; upscale_model = UpscaleModelLoader().load_model(model)[0]
-        except: raise ImportError("UpscaleModelLoader not found")
+        except Exception: raise ImportError("UpscaleModelLoader not found")
 
         with SamplerContext():
              res = self.get_usdu_node().upscale(
@@ -1389,7 +1266,7 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
                 name, str_model, str_clip = lora_def
                 if name != "None":
                      try: sd_model, clip = self.lora_loader.load_lora(sd_model, clip, name, str_model, str_clip)
-                     except: pass
+                     except Exception: pass
             UME_SHARED_STATE[KEY_MODEL], UME_SHARED_STATE[KEY_CLIP] = sd_model, clip
 
         if not sd_model or not vae or not clip: raise ValueError("Block FaceDetailer: Missing Model/VAE/CLIP")

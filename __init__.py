@@ -46,7 +46,7 @@ import folder_paths
 import os
 try:
     folder_paths.add_model_folder_path("bbox", os.path.join(folder_paths.models_dir, "bbox"))
-except:
+except Exception:
     pass
 # Ensure it exists in folder_names_and_paths just in case add_model_folder_path didn't create the key (older comfy versions)
 if "bbox" not in folder_paths.folder_names_and_paths:
@@ -92,7 +92,8 @@ from .modules.utils_nodes import (
     UmeAiRT_Unpack_PromptsBundle,
     UmeAiRT_Unpack_ImageBundle,
     UmeAiRT_Unpack_FilesBundle,
-    UmeAiRT_Signature
+    UmeAiRT_Signature,
+    UmeAiRT_HealthCheck
 )
 
 NODE_CLASS_MAPPINGS = {
@@ -205,6 +206,7 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_Wireless_Debug": UmeAiRT_Wireless_Debug,
     "UmeAiRT_Bundle_Downloader": UmeAiRT_Bundle_Downloader,
     "UmeAiRT_Log_Viewer": UmeAiRT_Log_Viewer,
+    "UmeAiRT_HealthCheck": UmeAiRT_HealthCheck,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -295,6 +297,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     # Tools
     "UmeAiRT_Bundle_Downloader": "💾 Bundle Model Downloader",
     "UmeAiRT_Log_Viewer": "📜 UmeAiRT Log Viewer",
+    "UmeAiRT_HealthCheck": "🩺 UmeAiRT Health Check",
 }
 
 WEB_DIRECTORY = "./web"

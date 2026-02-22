@@ -38,7 +38,7 @@ def _ensure_vram_for_decode():
         torch.cuda.empty_cache()
         try:
             torch.cuda.ipc_collect()
-        except:
+        except Exception:
             pass
 
 def _ensure_vram_for_seedvr2():

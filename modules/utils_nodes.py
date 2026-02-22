@@ -90,7 +90,7 @@ class UmeAiRT_Bundle_Downloader:
     """
     def __init__(self):
         self.bundles_data = {}
-        self.json_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "bundles.json")
+        self.json_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "umeairt_bundles.json")
         if os.path.exists(self.json_path):
             try:
                 with open(self.json_path, 'r', encoding='utf-8') as f:
@@ -102,12 +102,12 @@ class UmeAiRT_Bundle_Downloader:
     def INPUT_TYPES(s):
         # We need to instantiate to load json for dynamic lists?
         # ComfyUI creates strict instances. We can read file in INPUT_TYPES.
-        json_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "bundles.json")
+        json_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "umeairt_bundles.json")
         data = {}
         if os.path.exists(json_path):
              try:
                  with open(json_path, 'r', encoding='utf-8') as f: data = json.load(f)
-             except: pass
+             except Exception: pass
         
         categories = list(data.keys()) if data else ["Error: No Bundles"]
         return {
@@ -422,3 +422,80 @@ class UmeAiRT_Signature:
 # Aliases for legacy compatibility
 UmeAiRT_Unpack_SettingsBundle = UmeAiRT_Unpack_Settings
 UmeAiRT_Unpack_PromptsBundle = UmeAiRT_Unpack_Prompt
+
+class UmeAiRT_HealthCheck:
+    """Startup node to validate dependencies and optimizations."""
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "trigger": ("BOOLEAN", {"default": True, "label_on": "Run", "label_off": "Skip"}),
+            }
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("Report",)
+    FUNCTION = "run_check"
+    CATEGORY = "UmeAiRT/Utils"
+
+    def run_check(self, trigger):
+        if not trigger:
+            return ("Skipped",)
+            
+        from .optimization_utils import check_optimizations, get_cuda_memory
+        import psutil
+        
+        report = []
+        log_node("--- UmeAiRT Toolkit Health Check ---", color="CYAN")
+        
+        # 1. System Memory
+        try:
+            ram = psutil.virtual_memory()
+            ram_report = f"RAM: {ram.available / (1024**3):.2f}GB / {ram.total / (1024**3):.2f}GB"
+            log_node(ram_report, color="WHITE")
+            report.append(ram_report)
+        except Exception as e:
+            err = f"RAM Check Failed: {e}"
+            log_node(err, color="RED")
+            report.append(err)
+            
+        # 2. VRAM
+        try:
+            vram_report = f"VRAM: {get_cuda_memory()}"
+            log_node(vram_report, color="WHITE")
+            report.append(vram_report)
+        except Exception as e:
+            err = f"VRAM Check Failed: {e}"
+            log_node(err, color="RED")
+            report.append(err)
+            
+        # 3. Optimizations
+        try:
+            opt_report = f"Optimizations: {check_optimizations()}"
+            log_node(opt_report, color="WHITE")
+            report.append(opt_report)
+        except Exception as e:
+            err = f"Opt Check Failed: {e}"
+            log_node(err, color="RED")
+            report.append(err)
+            
+        # 4. Bundles JSON
+        try:
+            json_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "umeairt_bundles.json")
+            if os.path.exists(json_path):
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    json.load(f)
+                b_report = "Bundles JSON: Valid"
+            else:
+                b_report = "Bundles JSON: Not Found"
+            log_node(b_report, color="WHITE")
+            report.append(b_report)
+        except Exception as e:
+            err = f"Bundles JSON: parsing failed ({e})"
+            log_node(err, color="RED")
+            report.append(err)
+            
+        log_node("------------------------------------", color="CYAN")
+        
+        return ("\\n".join(report),)
+

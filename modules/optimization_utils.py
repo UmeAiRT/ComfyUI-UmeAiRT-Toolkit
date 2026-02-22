@@ -40,7 +40,7 @@ def get_cuda_memory():
             total_gb = total / (1024 ** 3)
             return f"{free_gb:.2f}GB free / {total_gb:.2f}GB total"
         return "CUDA not available"
-    except:
+    except Exception:
         return "Unknown"
 
 def check_optimizations():

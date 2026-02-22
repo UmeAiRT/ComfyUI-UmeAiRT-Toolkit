@@ -77,6 +77,14 @@ Nodes are color-coded by category in `web/umeairt_colors.js`:
 | **Utilities**             | Dark Gray      | `#1A252F` / `#34495E` | Debug, Label, UmeAiRT Signature |
 | **Image Inputs**          | Rust Red       | `#35160D` / `#6B2D1A` | Image Loaders |
 
+## Project Maintenance & Stability Rules
+
+To avoid regressions and maintain a stable, production-ready codebase, adhere strictly to the following rules:
+
+1. **Dependency Synchronization**: Always update `pyproject.toml` instantly when adding a new package to `requirements.txt`. They must mirror each other to guarantee seamless node installation for users.
+2. **Proper Exception Handling**: **NEVER** use bare exceptions (`except:` or `except: pass`). Always catch specific exceptions or use `except Exception as e:` and log the error via `log_node()` so failures are visible during debugging.
+3. **Changelog Maintenance**: All notable modifications, bug fixes, or additions must be immediately documented in `CHANGELOG.md` following the *Keep a Changelog* format.
+
 ## Critical Files
 
 | File | Notes |
