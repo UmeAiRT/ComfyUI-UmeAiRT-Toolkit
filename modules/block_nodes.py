@@ -12,6 +12,7 @@ from .common import (
 )
 from .logger import logger
 from .logic_nodes import UmeAiRT_WirelessUltimateUpscale_Base
+from .optimization_utils import SamplerContext
 
 
 try:
@@ -1098,7 +1099,11 @@ class UmeAiRT_BlockSampler:
         from .optimization_utils import warmup_vae
         warmup_vae(vae, latent_image)
         
-        result_latent = comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive_cond, negative_cond, latent_image, denoise)[0]
+        try:
+             with SamplerContext():
+                 result_latent = comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive_cond, negative_cond, latent_image, denoise)[0]
+        except Exception as e:
+             raise RuntimeError(f"Sampling Failed: {e}")
 
         log_node("Block Sampler: Decoding VAE")
         image_out = comfy_nodes.VAEDecode().decode(vae, result_latent)[0]
@@ -1291,13 +1296,14 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
             bbox_detector = detector.load_bbox_model(model)
             segs = bbox_detector.detect(image, 0.5, 10, 3.0, 10)
             
-            return fd_logic.do_detail(
-                    image=image, segs=segs, model=sd_model, clip=clip, vae=vae,
-                    guide_size=guide_size, guide_size_for_bbox=True, max_size=max_size,
-                    seed=seed, steps=steps, cfg=cfg, sampler_name=sampler_name, scheduler=scheduler,
-                    positive=positive, negative=negative, denoise=denoise,
-                    feather=5, noise_mask=True, force_inpaint=True, drop_size=10
-                )
+            with SamplerContext():
+                return fd_logic.do_detail(
+                        image=image, segs=segs, model=sd_model, clip=clip, vae=vae,
+                        guide_size=guide_size, guide_size_for_bbox=True, max_size=max_size,
+                        seed=seed, steps=steps, cfg=cfg, sampler_name=sampler_name, scheduler=scheduler,
+                        positive=positive, negative=negative, denoise=denoise,
+                        feather=5, noise_mask=True, force_inpaint=True, drop_size=10
+                    )
         except Exception as e:
             log_node(f"FaceDetailer Error: {e}", color="RED")
             return (image,)

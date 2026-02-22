@@ -31,6 +31,7 @@ except ImportError:
 
 # --- Helpers ---
 
+from .optimization_utils import SamplerContext
 
 # --- Wireless KSampler ---
 

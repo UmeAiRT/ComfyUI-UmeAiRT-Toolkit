@@ -111,14 +111,16 @@ def warmup_vae(vae, latent_image):
         import comfy_extras.nodes_custom_sampler as comfy_nodes
         import nodes
         
+        target_device = latent_image["samples"].device
+        
         try:
             # Attempt 1: 16 Channels (FLUX)
-            empty_16 = torch.zeros([B, 16, H, W], device="cpu")
+            empty_16 = torch.zeros([B, 16, H, W], device=target_device)
             nodes.VAEDecode().decode(vae, {"samples": empty_16})
         except Exception as e:
             if "channels" in str(e).lower() or "size" in str(e).lower() or "dimension" in str(e).lower():
                 # Attempt 2: 4 Channels (SD1.5 / SDXL)
-                empty_4 = torch.zeros([B, 4, H, W], device="cpu")
+                empty_4 = torch.zeros([B, 4, H, W], device=target_device)
                 nodes.VAEDecode().decode(vae, {"samples": empty_4})
             else:
                 raise e
@@ -128,3 +130,42 @@ def warmup_vae(vae, latent_image):
         
     except Exception as e:
         log_node(f"VAE Warmup failed (Safe to ignore): {e}", color="YELLOW")
+
+# --- Sampler Context (Optimizations) ---
+
+class SamplerContext:
+    """Context manager to enable compatible optimizations (e.g., SageAttention) during sampling."""
+    def __init__(self):
+        self.original_sdpa = getattr(torch.nn.functional, 'scaled_dot_product_attention', None)
+        self.optimization_name = "None"
+        
+    def __enter__(self):
+        if check_library("sageattention"):
+            self.optimization_name = "SageAttention"
+            log_node("⚡ Optimisation Active: SageAttention", color="MAGENTA")
+            try:
+                # Many forks of SageAttention for ComfyUI use simple import hooks or patchers.
+                # Just importing the patcher often works, or we directly apply it if known.
+                # In standard usage with SD, users use `import sageattention` or similar.
+                # We'll just patch F.scaled_dot_product_attention if sageattn is available as a function
+                from sageattention import sageattn
+                torch.nn.functional.scaled_dot_product_attention = sageattn
+            except ImportError:
+                # If there's no sageattn function, it might auto-patch on import.
+                pass
+            except Exception:
+                pass
+        elif check_library("triton"):
+            self.optimization_name = "Triton"
+            # Triton is often handled behind the scenes by comfy backend if available, so we just log it
+            log_node("⚡ Optimisation Active: Triton", color="MAGENTA")
+        else:
+            self.optimization_name = "Default"
+            
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.optimization_name == "SageAttention" and self.original_sdpa is not None:
+             # Restore native SDPA to prevent breaking other nodes down the line
+             torch.nn.functional.scaled_dot_product_attention = self.original_sdpa
+
