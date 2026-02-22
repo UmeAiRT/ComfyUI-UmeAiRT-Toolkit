@@ -1,0 +1,615 @@
+{
+  "id": "bca225df-bf0c-4c55-8288-d33b4a371e1a",
+  "revision": 0,
+  "last_node_id": 114,
+  "last_link_id": 157,
+  "nodes": [
+    {
+      "id": 75,
+      "type": "UmeAiRT_Detailer_Daemon_Simple",
+      "pos": [
+        30.001130186076807,
+        -279.998860031656
+      ],
+      "size": [
+        600,
+        108
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 144
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            125
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit",
+        "ver": "89e14ad718dd6129a7e69497eb25746fac37841b",
+        "Node name for S&R": "UmeAiRT_Detailer_Daemon_Simple"
+      },
+      "widgets_values": [
+        false,
+        1
+      ],
+      "color": "#2471A3",
+      "bgcolor": "#123851"
+    },
+    {
+      "id": 81,
+      "type": "UmeAiRT_GenerationSettings",
+      "pos": [
+        -1189.9997775592847,
+        -639.9988221898592
+      ],
+      "size": [
+        600,
+        279.328125
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "settings",
+          "type": "UME_SETTINGS",
+          "links": [
+            148
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit",
+        "ver": "eba94b1d7ed7d434b60a892f25873c96032aa1cf",
+        "Node name for S&R": "UmeAiRT_GenerationSettings"
+      },
+      "widgets_values": [
+        1024,
+        1024,
+        8,
+        1,
+        "sa_solver_pece",
+        "simple",
+        60205857348109,
+        "randomize"
+      ],
+      "color": "#935116",
+      "bgcolor": "#4A290B"
+    },
+    {
+      "id": 91,
+      "type": "UmeAiRT_WirelessImageSaver",
+      "pos": [
+        640.0009470806081,
+        -1060.0000581517734
+      ],
+      "size": [
+        960,
+        1040
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 145
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit",
+        "ver": "eba94b1d7ed7d434b60a892f25873c96032aa1cf",
+        "Node name for S&R": "UmeAiRT_WirelessImageSaver"
+      },
+      "widgets_values": [
+        "Z-IMG/%date/%time_%seed"
+      ],
+      "color": "#1A5653",
+      "bgcolor": "#0D2B29"
+    },
+    {
+      "id": 100,
+      "type": "UmeAiRT_Positive_Input",
+      "pos": [
+        -1190.000072969441,
+        -1060.0000581517734
+      ],
+      "size": [
+        600,
+        240
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "positive",
+          "type": "POSITIVE",
+          "links": [
+            141
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit",
+        "ver": "eba94b1d7ed7d434b60a892f25873c96032aa1cf",
+        "Node name for S&R": "UmeAiRT_Positive_Input"
+      },
+      "widgets_values": [
+        "A wide cinematic shot of a surreal dreamscape, mystical forest at night, a giant glowing orange moon in the background, turquoise bioluminescent bird perched on a branch with melting liquid flowing into a dark pond, hanging vines, silhouettes of twisted trees, ethereal atmosphere, digital painting style, rich textures, deep teal and vibrant orange color palette, high detail, masterpiece."
+      ],
+      "color": "#145A32",
+      "bgcolor": "#0A2D19"
+    },
+    {
+      "id": 101,
+      "type": "UmeAiRT_Negative_Input",
+      "pos": [
+        -1189.9995744648022,
+        -810.0000557103671
+      ],
+      "size": [
+        600,
+        160
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "negative",
+          "type": "NEGATIVE",
+          "links": [
+            142
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit",
+        "ver": "eba94b1d7ed7d434b60a892f25873c96032aa1cf",
+        "Node name for S&R": "UmeAiRT_Negative_Input"
+      },
+      "widgets_values": [
+        "borders, frames, white edges, distorted, blurry, low resolution, noisy, simple background, bright daylight."
+      ],
+      "color": "#641E16",
+      "bgcolor": "#3B100C"
+    },
+    {
+      "id": 108,
+      "type": "UmeAiRT_BlockImageLoader",
+      "pos": [
+        -579.9988344135327,
+        -1060.0000581517734
+      ],
+      "size": [
+        600,
+        702
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "image_bundle",
+          "type": "UME_IMAGE",
+          "links": [
+            155
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit",
+        "ver": "b0dc35892b4accaa649773d75a742ffd54a66352",
+        "Node name for S&R": "UmeAiRT_BlockImageLoader",
+        "image": "clipspace/clipspace-painted-masked-1771597624785.png [input]"
+      },
+      "widgets_values": [
+        "vivid_sky__1_by_umeairt_dhmd6x2i.png",
+        "image"
+      ],
+      "color": "#6B2D1A",
+      "bgcolor": "#35160D"
+    },
+    {
+      "id": 111,
+      "type": "UmeAiRT_BlockImageProcess",
+      "pos": [
+        -579.9986128559156,
+        -319.998576828531
+      ],
+      "size": [
+        600,
+        302.65625
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_bundle",
+          "type": "UME_IMAGE",
+          "link": 155
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_bundle",
+          "type": "UME_IMAGE",
+          "links": [
+            157
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit",
+        "ver": "b0dc35892b4accaa649773d75a742ffd54a66352",
+        "Node name for S&R": "UmeAiRT_BlockImageProcess"
+      },
+      "widgets_values": [
+        0.65,
+        "img2img",
+        true,
+        15,
+        398,
+        0,
+        398,
+        0
+      ],
+      "color": "#935116",
+      "bgcolor": "#4A290B"
+    },
+    {
+      "id": 113,
+      "type": "UmeAiRT_Signature",
+      "pos": [
+        1340.0007175884207,
+        -79.9996113744296
+      ],
+      "size": [
+        250,
+        80
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit",
+        "ver": "da1915624e1cdc7b7fff82fdec9aba61129e7071",
+        "Node name for S&R": "UmeAiRT_Signature"
+      },
+      "widgets_values": [],
+      "color": "transparent",
+      "bgcolor": "transparent"
+    },
+    {
+      "id": 90,
+      "type": "UmeAiRT_WirelessSeedVR2Upscale",
+      "pos": [
+        30.00201641654553,
+        -129.9977803197421
+      ],
+      "size": [
+        600,
+        142.65625
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 125
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            145
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit",
+        "ver": "eba94b1d7ed7d434b60a892f25873c96032aa1cf",
+        "Node name for S&R": "UmeAiRT_WirelessSeedVR2Upscale"
+      },
+      "widgets_values": [
+        false,
+        "seedvr2_ema_3b-Q4_K_M.gguf",
+        2
+      ],
+      "color": "#2471A3",
+      "bgcolor": "#123851"
+    },
+    {
+      "id": 68,
+      "type": "UmeAiRT_FilesSettings_ZIMG",
+      "pos": [
+        30.000243955608084,
+        -1060.0000581517734
+      ],
+      "size": [
+        600,
+        151.328125
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "models",
+          "type": "UME_FILES",
+          "links": [
+            93,
+            154
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit",
+        "ver": "89e14ad718dd6129a7e69497eb25746fac37841b",
+        "Node name for S&R": "UmeAiRT_FilesSettings_ZIMG"
+      },
+      "widgets_values": [
+        "z_image_turbo_fp8_e4m3fn.safetensors",
+        "qwen_3_4b_fp8_mixed.safetensors",
+        "ae.safetensors"
+      ],
+      "color": "#154360",
+      "bgcolor": "#0A2130"
+    },
+    {
+      "id": 102,
+      "type": "UmeAiRT_BlockSampler",
+      "pos": [
+        30.000539365764325,
+        -870.0002217259921
+      ],
+      "size": [
+        600,
+        520
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "models",
+          "type": "UME_FILES",
+          "link": 154
+        },
+        {
+          "name": "settings",
+          "type": "UME_SETTINGS",
+          "link": 148
+        },
+        {
+          "name": "positive",
+          "type": "POSITIVE",
+          "link": 141
+        },
+        {
+          "name": "negative",
+          "shape": 7,
+          "type": "NEGATIVE",
+          "link": 142
+        },
+        {
+          "name": "loras",
+          "shape": 7,
+          "type": "UME_LORA_STACK",
+          "link": 143
+        },
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "UME_IMAGE",
+          "link": 157
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            144
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit",
+        "ver": "eba94b1d7ed7d434b60a892f25873c96032aa1cf",
+        "Node name for S&R": "UmeAiRT_BlockSampler"
+      },
+      "widgets_values": [],
+      "color": "#2C3E50",
+      "bgcolor": "#1A252F"
+    },
+    {
+      "id": 78,
+      "type": "UmeAiRT_LoraBlock_3",
+      "pos": [
+        -1190.000072969441,
+        -319.9997584691562
+      ],
+      "size": [
+        600,
+        300
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "loras",
+          "shape": 7,
+          "type": "UME_LORA_STACK",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "loras",
+          "type": "UME_LORA_STACK",
+          "links": [
+            143
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit",
+        "ver": "eba94b1d7ed7d434b60a892f25873c96032aa1cf",
+        "Node name for S&R": "UmeAiRT_LoraBlock_3"
+      },
+      "widgets_values": [
+        "Z-Image-Fun-Lora-Distill-8-Steps_ComfyUI.safetensors",
+        0.7,
+        "None",
+        1,
+        "None",
+        1
+      ],
+      "color": "#4A235A",
+      "bgcolor": "#25122D"
+    }
+  ],
+  "links": [
+    [
+      125,
+      75,
+      0,
+      90,
+      0,
+      "IMAGE"
+    ],
+    [
+      141,
+      100,
+      0,
+      102,
+      2,
+      "POSITIVE"
+    ],
+    [
+      142,
+      101,
+      0,
+      102,
+      3,
+      "NEGATIVE"
+    ],
+    [
+      143,
+      78,
+      0,
+      102,
+      4,
+      "UME_LORA_STACK"
+    ],
+    [
+      144,
+      102,
+      0,
+      75,
+      0,
+      "IMAGE"
+    ],
+    [
+      145,
+      90,
+      0,
+      91,
+      0,
+      "IMAGE"
+    ],
+    [
+      148,
+      81,
+      0,
+      102,
+      1,
+      "UME_SETTINGS"
+    ],
+    [
+      154,
+      68,
+      0,
+      102,
+      0,
+      "UME_FILES"
+    ],
+    [
+      155,
+      108,
+      0,
+      111,
+      0,
+      "UME_IMAGE"
+    ],
+    [
+      157,
+      111,
+      0,
+      102,
+      5,
+      "UME_IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "UmeAiRT - Z-IMG - All in One",
+      "bounding": [
+        -1200,
+        -1130,
+        2810,
+        1150
+      ],
+      "color": "#444",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.8264462809917354,
+      "offset": [
+        1369.4900099506422,
+        1381.6951362767734
+      ]
+    },
+    "workflowRendererVersion": "Vue",
+    "frontendVersion": "1.38.14"
+  },
+  "version": 0.4
+}
