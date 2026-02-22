@@ -67,11 +67,9 @@ Stop fighting with "noodle soup"! The UmeAiRT Toolkit provides two workflow para
 
 ### Utilities
 
-| Category | Node | Description |
-|:---|:---|:---|
-| `Label` | Aesthetic sticky notes for documentation |
+| Category | Description | 
+|:---|:---|
 | `Debug` | Inspect current global wireless state |
-| `UmeAiRT Signature` | Aesthetic frameless canvas branding watermark |
 | `Unpack Nodes` | Extract individual data from bundles (Image, Settings, Tags, etc.) |
 | `📜 UmeAiRT Log Viewer` | View toolkit activity directly on the canvas |
 
@@ -114,5 +112,7 @@ This toolkit bundles or adapts code from the following open-source projects. We 
 
 ## ❤️ Credits
 
-Developed by **UmeAiRT Team**.  
+Developed by **UmeAiRT**.  
 License: MIT
+
+![Signature](assets/signature.png)
