@@ -12,7 +12,7 @@ from .common import (
 )
 from .logger import logger
 from .logic_nodes import UmeAiRT_WirelessUltimateUpscale_Base
-from .optimization_utils import SamplerContext
+
 
 try:
     from .facedetailer_core import detector, logic as fd_logic
@@ -422,9 +422,14 @@ class UmeAiRT_FilesSettings_FLUX:
         Returns:
             tuple: A tuple containing the bundled models.
         """
-        # 1. Load UNET
+        # 1. Load UNET (with weight dtype)
         unet_path = folder_paths.get_full_path("unet", unet_name)
-        model = comfy.sd.load_unet(unet_path)
+        model_options = {}
+        if weight_dtype == "fp8_e4m3fn":
+            model_options["dtype"] = torch.float8_e4m3fn
+        elif weight_dtype == "fp8_e5m2":
+            model_options["dtype"] = torch.float8_e5m2
+        model = comfy.sd.load_diffusion_model(unet_path, model_options=model_options)
         
         # 2. Load CLIPs (Dual Clip Loader Logic)
         clip_path1 = folder_paths.get_full_path("clip", clip_name1)
@@ -686,8 +691,6 @@ class UmeAiRT_FilesSettings_ZIMG:
             
             # Load Model
             model = comfy.sd.load_diffusion_model(diff_path, model_options=model_options)
-            # Verify actual Dtype using Safetensors metadata natively if not Forced
-            detected_dtype = "Unquantized"
             log_node(f"Z-IMG Model Loader: Loaded '{model_name}' [Auto-DType: {detected_dtype}]")
         
         # 2. Load CLIP (Hardcoded to LUMINA2 or loaded via GGUF)
@@ -1050,8 +1053,14 @@ class UmeAiRT_BlockSampler:
              wireless_latent = UME_SHARED_STATE.get(KEY_LATENT)
              if wireless_latent is not None: latent_image = wireless_latent
 
+             # Empty Latent — detect channels from model (SD=4, FLUX=16)
         if latent_image is None:
-             l = torch.zeros([1, 4, height // 8, width // 8], device="cpu")
+             latent_channels = 4
+             try:
+                 latent_channels = model.model.latent_format.latent_channels
+             except Exception:
+                 pass
+             l = torch.zeros([1, latent_channels, height // 8, width // 8], device="cpu")
              latent_image = {"samples": l}
              denoise = 1.0
 
@@ -1089,8 +1098,7 @@ class UmeAiRT_BlockSampler:
         from .optimization_utils import warmup_vae
         warmup_vae(vae, latent_image)
         
-        with SamplerContext():
-             result_latent = comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive_cond, negative_cond, latent_image, denoise)[0]
+        result_latent = comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive_cond, negative_cond, latent_image, denoise)[0]
 
         log_node("Block Sampler: Decoding VAE")
         image_out = comfy_nodes.VAEDecode().decode(vae, result_latent)[0]
@@ -1283,8 +1291,7 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
             bbox_detector = detector.load_bbox_model(model)
             segs = bbox_detector.detect(image, 0.5, 10, 3.0, 10)
             
-            with SamplerContext():
-                return fd_logic.do_detail(
+            return fd_logic.do_detail(
                     image=image, segs=segs, model=sd_model, clip=clip, vae=vae,
                     guide_size=guide_size, guide_size_for_bbox=True, max_size=max_size,
                     seed=seed, steps=steps, cfg=cfg, sampler_name=sampler_name, scheduler=scheduler,

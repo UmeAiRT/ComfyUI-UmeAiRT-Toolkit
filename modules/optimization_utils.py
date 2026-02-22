@@ -69,42 +69,12 @@ def check_optimizations():
     mem_str = get_cuda_memory()
     log_node(f"📊 Initial CUDA memory: {mem_str}")
 
-@contextlib.contextmanager
-def SamplerContext():
-    """Context manager to apply specific optimizations specifically during image sampling.
+    # Return summary for HealthCheck usage
+    sage = "✅" if check_library("sageattention") else "❌"
+    flash = "✅" if check_library("flash_attn") else "❌"
+    triton = "✅" if check_library("triton") else "❌"
+    return f"SageAttn={sage} | Flash={flash} | Triton={triton}"
 
-    Currently checks for SageAttention and Triton. It safely ensures that any specific 
-    library state or tracking is initialized before yielding to the inner block,
-    restoring or ignoring side effects afterwards.
-
-    Yields:
-        None
-    """
-    # Track what we activated for logging
-    active_optimizations = []
-    
-    # 1. SageAttention
-    if check_library("sageattention"):
-        try:
-            # We assume if it's installed, it might be patching things or available for use
-            # Just importing it to ensure it's loaded if needed
-            import sageattention
-            active_optimizations.append(f"{GREEN}SageAttention{RESET}")
-        except Exception as e:
-            log_node(f"Failed to init SageAttention: {e}", color="RED")
-
-    # 2. Triton (Implicitly used by torch.compile or some attention backends)
-    if check_library("triton"):
-         active_optimizations.append(f"{GREEN}Triton{RESET}")
-
-    # Log specific Optimization usage for this run
-    if active_optimizations:
-        log_node(f"⚡ Optimisation Active: {' | '.join(active_optimizations)}", color="GREEN")
-    
-    try:
-        yield
-    finally:
-        pass
 
 # --- Target-Resolution VAE Warmup ---
 _WARMED_UP_SHAPES = set()

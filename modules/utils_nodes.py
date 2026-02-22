@@ -98,16 +98,22 @@ class UmeAiRT_Bundle_Downloader:
             except Exception as e:
                 log_node(f"Error loading bundles.json: {e}", color="RED")
     
+    _bundles_cache = None
+
     @classmethod
     def INPUT_TYPES(s):
-        # We need to instantiate to load json for dynamic lists?
-        # ComfyUI creates strict instances. We can read file in INPUT_TYPES.
-        json_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "umeairt_bundles.json")
-        data = {}
-        if os.path.exists(json_path):
-             try:
-                 with open(json_path, 'r', encoding='utf-8') as f: data = json.load(f)
-             except Exception: pass
+        # Use class-level cache to avoid re-reading bundles.json on every UI refresh
+        if UmeAiRT_Bundle_Downloader._bundles_cache is None:
+            json_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "umeairt_bundles.json")
+            if os.path.exists(json_path):
+                try:
+                    with open(json_path, 'r', encoding='utf-8') as f:
+                        UmeAiRT_Bundle_Downloader._bundles_cache = json.load(f)
+                except Exception:
+                    UmeAiRT_Bundle_Downloader._bundles_cache = {}
+            else:
+                UmeAiRT_Bundle_Downloader._bundles_cache = {}
+        data = UmeAiRT_Bundle_Downloader._bundles_cache
         
         categories = list(data.keys()) if data else ["Error: No Bundles"]
         return {

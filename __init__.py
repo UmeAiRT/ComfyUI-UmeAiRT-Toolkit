@@ -180,9 +180,6 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_Detailer_Daemon_Simple": UmeAiRT_Detailer_Daemon_Simple,
     "UmeAiRT_Detailer_Daemon_Advanced": UmeAiRT_Detailer_Daemon_Advanced,
 
-    "UmeAiRT_FilesSettings_Fragmented": UmeAiRT_FilesSettings_Fragmented,
-    "UmeAiRT_FilesSettings_ZIMG": UmeAiRT_FilesSettings_ZIMG,
-
     # Blocks
     "UmeAiRT_LoraBlock_1": UmeAiRT_LoraBlock_1,
     "UmeAiRT_LoraBlock_3": UmeAiRT_LoraBlock_3,
@@ -346,7 +343,7 @@ try:
     if os.path.exists(os.path.join(comfy_root, "user", "default")):
         os.makedirs(palettes_dir, exist_ok=True)
         
-        if True: # Always process so injection catches new color fields
+        if not os.path.exists(theme_file):  # Only inject if theme file doesn't exist yet (respect user customization)
             umeairt_theme = {
               "id": "umeairt_dark",
               "name": "UmeAiRT Dark",
@@ -427,8 +424,9 @@ try:
                 if "Comfy.CustomColorPalettes" not in settings:
                     settings["Comfy.CustomColorPalettes"] = {}
                 
-                # Always overwrite/update to ensure latest custom node colors apply
-                settings["Comfy.CustomColorPalettes"]["umeairt_dark"] = umeairt_theme
+                # Only inject if the theme doesn't already exist (respect user customization)
+                if "umeairt_dark" not in settings["Comfy.CustomColorPalettes"]:
+                    settings["Comfy.CustomColorPalettes"]["umeairt_dark"] = umeairt_theme
                 
                 with open(settings_file, "w", encoding="utf-8") as f:
                     json.dump(settings, f, indent=4)

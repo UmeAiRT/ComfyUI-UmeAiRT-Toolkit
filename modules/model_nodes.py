@@ -238,8 +238,7 @@ class UmeAiRT_MultiLoraLoader:
                    lora_3, lora_3_name, lora_3_strength):
         
         # Helper to apply lora if enabled
-        loaded_loras = UME_SHARED_STATE.get(KEY_LORAS, [])
-        if not isinstance(loaded_loras, list): loaded_loras = []
+        loaded_loras = []  # Fresh list per execution (prevents accumulation from prior runs)
 
         def apply_lora(curr_model, curr_clip, is_on, name, strength):
             if is_on and name != "None":

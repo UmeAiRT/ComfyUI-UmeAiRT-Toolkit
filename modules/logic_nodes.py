@@ -31,19 +31,6 @@ except ImportError:
 
 # --- Helpers ---
 
-from .optimization_utils import SamplerContext
-
-def _ensure_vram_for_decode():
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-        try:
-            torch.cuda.ipc_collect()
-        except Exception:
-            pass
-
-def _ensure_vram_for_seedvr2():
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
 
 # --- Wireless KSampler ---
 
@@ -118,7 +105,6 @@ class UmeAiRT_WirelessKSampler:
         
         if latent_image is None:
             # Img2Img / Inpaint Check
-            mode_from_state = UME_SHARED_STATE.get(KEY_MODE, "img2img")  # Fallback logic
 
             if source_image is not None and source_mask is not None:
                  # For inpaint/outpaint, ALWAYS encode and use the mask, even if denoise >= 1.0
@@ -137,15 +123,17 @@ class UmeAiRT_WirelessKSampler:
                  h = int(size.get("height", 1024))
                  batch_size = 1
                  
-                 # Empty Latent Logic
-                 l = torch.zeros([batch_size, 4, h // 8, w // 8], device="cpu")
+                 # Empty Latent Logic — detect channels from model (SD=4, FLUX=16)
+                 latent_channels = 4
+                 try:
+                     latent_channels = model.model.latent_format.latent_channels
+                 except Exception:
+                     pass
+                 l = torch.zeros([batch_size, latent_channels, h // 8, w // 8], device="cpu")
                  latent_image = {"samples": l}
                  mode = "Txt2Img"
                  denoise = 1.0
         
-        # Just in case KEY_MODE wasn't exactly set
-        if mode != "Txt2Img":
-             pass
 
         # 4. Encoding Prompts
         if self._last_pos_text == pos_text and self._last_neg_text == neg_text and self._last_clip is clip:
@@ -303,8 +291,7 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         tile_width = int(size.get("width", 1024))
         tile_height = int(size.get("height", 1024))
 
-        with SamplerContext():
-             res = usdu_node.upscale(
+        res = usdu_node.upscale(
                  image=image, model=sd_model, positive=positive, negative=negative, vae=vae,
                  upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
                  sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
@@ -384,8 +371,7 @@ class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_B
 
         usdu_node = self.get_usdu_node()
         
-        with SamplerContext():
-             res = usdu_node.upscale(
+        res = usdu_node.upscale(
                  image=image, model=sd_model, positive=positive, negative=negative, vae=vae,
                  upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
                  sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
@@ -830,8 +816,7 @@ class UmeAiRT_WirelessFaceDetailer_Advanced:
 
         segs = bbox_detector.detect(image, 0.5, 10, 3.0, 10)
         
-        with SamplerContext():
-             result = fd_logic.do_detail(
+        result = fd_logic.do_detail(
                  image=image, segs=segs, model=model, clip=clip, vae=vae,
                  guide_size=guide_size, guide_size_for_bbox=True, max_size=max_size,
                  seed=seed, steps=steps, cfg=cfg, sampler_name=sampler_name, scheduler=scheduler,
@@ -1022,11 +1007,11 @@ class UmeAiRT_Detailer_Daemon_Simple:
         sigmas = sampler_obj.sigmas
         noise = torch.randn(latent_image["samples"].size(), dtype=latent_image["samples"].dtype, layout=latent_image["samples"].layout, generator=torch.manual_seed(seed), device="cpu")
 
+        log_node(f"Detail Daemon: Processing | Amount: {detail_amount} | Steps: {steps} | Denoise: {denoise}")
+
         samples = comfy.sample.sample_custom(
             model, noise, cfg, wrapped_sampler, sigmas, positive, negative, latent_image["samples"], noise_mask=None, callback=None, disable_pbar=False, seed=seed
         )
-
-        log_node(f"Detail Daemon: Processing | Amount: {detail_amount} | Steps: {steps} | Denoise: {denoise}")
 
         if refine_denoise > 0.0:
             refine_steps = max(1, int(steps * 0.25))
@@ -1127,11 +1112,11 @@ class UmeAiRT_Detailer_Daemon_Advanced(UmeAiRT_Detailer_Daemon_Simple):
         sigmas = sampler_obj.sigmas
         noise = torch.randn(latent_image["samples"].size(), dtype=latent_image["samples"].dtype, layout=latent_image["samples"].layout, generator=torch.manual_seed(seed), device="cpu")
 
+        log_node(f"Detail Daemon: Processing | Amount: {detail_amount} | Steps: {steps} | Denoise: {denoise}")
+
         samples = comfy.sample.sample_custom(
             model, noise, cfg, wrapped_sampler, sigmas, positive, negative, latent_image["samples"], noise_mask=None, callback=None, disable_pbar=False, seed=seed
         )
-
-        log_node(f"Detail Daemon: Processing | Amount: {detail_amount} | Steps: {steps} | Denoise: {denoise}")
 
         if refine_denoise > 0.0:
             refine_sampler_obj = comfy.samplers.KSampler(model, steps=refine_steps, device=model.load_device, sampler=sampler_name, scheduler=scheduler, denoise=refine_denoise, model_options=model.model_options)
