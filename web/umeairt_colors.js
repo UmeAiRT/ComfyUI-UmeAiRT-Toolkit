@@ -435,28 +435,20 @@ app.registerExtension({
     },
 
     async setup() {
-        // Inject UME slot colors into the active theme's connection color map.
-        // ComfyUI's theme manager may overwrite this map AFTER setup() runs,
-        // so we re-inject periodically until the colors stick.
-        function injectSlotColors() {
-            if (app.canvas && app.canvas.default_connection_color_byType) {
-                const map = app.canvas.default_connection_color_byType;
-                for (const [type, color] of Object.entries(UME_SLOT_COLORS)) {
-                    // Only inject if the color is missing or was cleared by the theme manager
-                    if (!map[type]) {
-                        map[type] = color;
-                    }
-                }
-            }
+        // === Modern Vue ComfyUI: inject CSS custom properties ===
+        // The Vue frontend uses CSS variables (--color-datatype-[TYPE]) for connection colors.
+        // If a type is unknown, it falls back to a gray color. We inject our custom types here.
+        const cssRules = Object.entries(UME_SLOT_COLORS)
+            .map(([type, color]) => `--color-datatype-${type}: ${color};`)
+            .join('\n            ');
+        const style = document.createElement('style');
+        style.id = 'umeairt-slot-colors';
+        style.textContent = `:root {\n            ${cssRules}\n        }`;
+        document.head.appendChild(style);
+
+        // === Legacy LiteGraph fallback (older ComfyUI versions) ===
+        if (app.canvas && app.canvas.default_connection_color_byType) {
+            Object.assign(app.canvas.default_connection_color_byType, UME_SLOT_COLORS);
         }
-
-        injectSlotColors();
-
-        // Re-inject for 5 seconds to survive theme application after setup
-        let attempts = 0;
-        const interval = setInterval(() => {
-            injectSlotColors();
-            if (++attempts >= 10) clearInterval(interval);
-        }, 500);
     }
 });
