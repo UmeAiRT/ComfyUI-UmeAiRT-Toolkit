@@ -75,7 +75,8 @@ from .modules.block_nodes import (
     UmeAiRT_FilesSettings_ZIMG,
     UmeAiRT_BlockImageLoader,
  UmeAiRT_BlockImageLoader_Advanced, UmeAiRT_BlockImageProcess,
-    UmeAiRT_BlockSampler, UmeAiRT_BlockUltimateSDUpscale, UmeAiRT_BlockFaceDetailer
+    UmeAiRT_BlockSampler, UmeAiRT_BlockUltimateSDUpscale, UmeAiRT_BlockFaceDetailer,
+    UmeAiRT_BundleLoader
 )
 from .modules.utils_nodes import (
     UmeAiRT_Label,
@@ -202,6 +203,7 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_Signature": UmeAiRT_Signature,
     "UmeAiRT_Wireless_Debug": UmeAiRT_Wireless_Debug,
     "UmeAiRT_Bundle_Downloader": UmeAiRT_Bundle_Downloader,
+    "UmeAiRT_BundleLoader": UmeAiRT_BundleLoader,
     "UmeAiRT_Log_Viewer": UmeAiRT_Log_Viewer,
     "UmeAiRT_HealthCheck": UmeAiRT_HealthCheck,
 }
@@ -293,6 +295,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     
     # Tools
     "UmeAiRT_Bundle_Downloader": "💾 Bundle Model Downloader",
+    "UmeAiRT_BundleLoader": "📦 Bundle Auto-Loader",
     "UmeAiRT_Log_Viewer": "📜 UmeAiRT Log Viewer",
     "UmeAiRT_HealthCheck": "🩺 UmeAiRT Health Check",
 }

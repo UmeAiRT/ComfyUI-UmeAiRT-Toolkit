@@ -21,7 +21,7 @@ The toolkit is organized into functional modules to maintain scalability:
 - `settings_nodes.py`: Wireless Variable Setters/Getters (Steps, CFG, Prompts).
 - `model_nodes.py`: Wireless and Block-based Model/LoRA loaders.
 - `logic_nodes.py`: The "Brains" - Wireless Samplers, Upscalers, and Detailers.
-- `block_nodes.py`: The Block-based equivalents of samplers and loaders.
+- `block_nodes.py`: The Block-based equivalents of samplers, loaders, and the Bundle Auto-Loader.
 - `image_nodes.py`: Wireless image loading, processing, and saving.
 - `utils_nodes.py`: Labels, state debuggers, and bundle Unpack nodes.
 
@@ -31,6 +31,8 @@ The toolkit is organized into functional modules to maintain scalability:
 - `seedvr2_core/`: Ported tiling upscaler for high-VRAM efficiency.
 - `usdu_core/`: Integrated Ultimate SD Upscale logic.
 - `image_saver_core/`: Robust image saving with metadata.
+- `vendor/comfyui_gguf/`: GGUF model loading support.
+- `vendor/aria2/`: Bundled aria2c binary for accelerated model downloads.
 
 ## Registration Workflow
 

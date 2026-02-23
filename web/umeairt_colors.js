@@ -208,6 +208,12 @@ const UME_NODE_COLORS = {
         bgcolor: "#D5D8DC"
     },
 
+    // Bundle Auto-Loader - Blue (Loader family)
+    "UmeAiRT_BundleLoader": {
+        color: "#154360",
+        bgcolor: "#0A2130"
+    },
+
     // Label - Dark Gray (utility)
     "UmeAiRT_Label": {
         color: "#34495E",

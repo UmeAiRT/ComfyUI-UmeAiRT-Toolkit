@@ -60,6 +60,7 @@ Stop fighting with "noodle soup"! The UmeAiRT Toolkit provides two workflow para
 |:---|:---|:---|
 | **Models** | `Model Loader (Block)` | Checkpoint loader with bundle output |
 | **Models** | `FLUX Loader (Block)` | UNET + Dual CLIP + VAE loader |
+| **Models** | `📦 Bundle Auto-Loader` | Select category + version, auto-download & load (aria2 accelerated) |
 | **Generation** | `Generation Settings` | Width, Height, Steps, CFG, Seed bundle |
 | **LoRA** | `LoRA 1x/3x/5x/10x (Block)` | Stackable LoRA loaders |
 | **Samplers** | `Block Sampler` | Full sampler with bundle and direct prompt inputs |
@@ -67,10 +68,11 @@ Stop fighting with "noodle soup"! The UmeAiRT Toolkit provides two workflow para
 
 ### Utilities
 
-| Category | Description | 
+| Category | Description |
 |:---|:---|
 | `Debug` | Inspect current global wireless state |
 | `Unpack Nodes` | Extract individual data from bundles (Image, Settings, Tags, etc.) |
+| `💾 Bundle Model Downloader` | Download model bundles from HuggingFace |
 | `📜 UmeAiRT Log Viewer` | View toolkit activity directly on the canvas |
 
 ---
@@ -107,6 +109,7 @@ This toolkit bundles or adapts code from the following open-source projects. We 
 | Detail Daemon logic | [sd-webui-detail-daemon](https://github.com/muerrilla/sd-webui-detail-daemon) | muerrilla | MIT |
 | `facedetailer_core/` | Inspired by [ComfyUI-Impact-Pack](https://github.com/ltdrdata/ComfyUI-Impact-Pack) | ltdrdata | GPL-3.0 |
 | `vendor/comfyui_gguf/` | [ComfyUI-GGUF](https://github.com/city96/ComfyUI-GGUF) | City96 | Apache-2.0 |
+| `vendor/aria2/` | [aria2](https://github.com/aria2/aria2) | Tatsuhiro Tsujikawa | GPL-2.0 |
 
 ---
 
