@@ -26,9 +26,9 @@ Stop fighting with "noodle soup"! The UmeAiRT Toolkit provides two workflow para
 - **Direct Prompting**: Connect standard `STRING` inputs (Positive/Negative) directly to your Samplers
 - **Hybrid Ready**: Blocks also update global state for Wireless compatibility
 
-### 🎨 Custom Color Theme & UI
+### 🎨 Custom Colors & UI
 
-- **UmeAiRT Dark Theme**: Automatically installs an optimized color palette for better node/cable visibility
+- **Automatic Connection Colors**: Custom connection colors for UME types are automatically injected into any active ComfyUI theme
 - **Intelligent Resizing**: Prompt nodes automatically maintain readable sizes in Nodes 2.0
 - **Node Coloring**:
   - 🔵 **Blue**: Model Loaders
@@ -93,7 +93,7 @@ git clone https://github.com/UmeAiRT/ComfyUI-UmeAiRT-Toolkit.git
 pip install -r ComfyUI-UmeAiRT-Toolkit/requirements.txt
 ```
 
-> **Note**: An optimized theme "UmeAiRT Dark" is automatically installed. Select it in ComfyUI Settings > Color Palette.
+> **Note**: Custom connection colors for UmeAiRT types (Files, Settings, Prompts, LoRA, Image) are automatically injected into any active theme.
 
 ---
 

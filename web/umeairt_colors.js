@@ -435,12 +435,28 @@ app.registerExtension({
     },
 
     async setup() {
-        // Register custom slot colors
-        if (app.canvas && app.canvas.default_connection_color_byType) {
-            Object.assign(app.canvas.default_connection_color_byType, UME_SLOT_COLORS);
+        // Inject UME slot colors into the active theme's connection color map.
+        // ComfyUI's theme manager may overwrite this map AFTER setup() runs,
+        // so we re-inject periodically until the colors stick.
+        function injectSlotColors() {
+            if (app.canvas && app.canvas.default_connection_color_byType) {
+                const map = app.canvas.default_connection_color_byType;
+                for (const [type, color] of Object.entries(UME_SLOT_COLORS)) {
+                    // Only inject if the color is missing or was cleared by the theme manager
+                    if (!map[type]) {
+                        map[type] = color;
+                    }
+                }
+            }
         }
 
-        // Note: LiteGraph.slot_types_default_out/in are for suggesting node names, not colors.
-        // Colors are handled natively by app.canvas.default_connection_color_byType above.
+        injectSlotColors();
+
+        // Re-inject for 5 seconds to survive theme application after setup
+        let attempts = 0;
+        const interval = setInterval(() => {
+            injectSlotColors();
+            if (++attempts >= 10) clearInterval(interval);
+        }, 500);
     }
 });

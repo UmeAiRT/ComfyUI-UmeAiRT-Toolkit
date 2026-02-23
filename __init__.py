@@ -309,7 +309,6 @@ from .modules.common import log_node
 from .modules.optimization_utils import check_optimizations
 import colorama
 from colorama import Fore, Style
-import json
 import server
 from aiohttp import web
 
@@ -335,108 +334,5 @@ try:
 except Exception as e:
     log_node(f"Optimization check failed: {e}", color="RED")
 
-# 3. Theme Installation
-try:
-    # ComfyUI usually stores themes in user/default/color_palettes
-    # We navigate up from custom_nodes/ComfyUI-UmeAiRT-Toolkit to the ComfyUI root
-    comfy_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    palettes_dir = os.path.join(comfy_root, "user", "default", "color_palettes")
-    theme_file = os.path.join(palettes_dir, "UmeAiRT_Dark.json")
-    
-    if os.path.exists(os.path.join(comfy_root, "user", "default")):
-        os.makedirs(palettes_dir, exist_ok=True)
-        
-        if not os.path.exists(theme_file):  # Only inject if theme file doesn't exist yet (respect user customization)
-            umeairt_theme = {
-              "id": "umeairt_dark",
-              "name": "UmeAiRT Dark",
-              "colors": {
-                "node_slot": {
-                  "CLIP": "#FFD500",
-                  "CLIP_VISION": "#A8DADC",
-                  "CLIP_VISION_OUTPUT": "#ad7452",
-                  "CONDITIONING": "#FFA931",
-                  "CONTROL_NET": "#6EE7B7",
-                  "IMAGE": "#64B5F6",
-                  "LATENT": "#FF9CF9",
-                  "MASK": "#81C784",
-                  "MODEL": "#B39DDB",
-                  "STYLE_MODEL": "#C2FFAE",
-                  "VAE": "#FF6E6E",
-                  "TAESD": "#DCC274",
-                  "UME_FILES": "#2980B9",
-                  "UME_SETTINGS": "#D4AC0D",
-                  "UME_PROMPTS": "#1E8449",
-                  "POSITIVE": "#52BE80",
-                  "NEGATIVE": "#E74C3C",
-                  "UME_LORA_STACK": "#7D3C98",
-                  "UME_IMAGE": "#A04000"
-                },
-                "litegraph_base": {
-                  "BACKGROUND_IMAGE": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAQBJREFUeNrs1rEKwjAUhlETUkj3vP9rdmr1Ysammk2w5wdxuLgcMHyptfawuZX4pJSWZTnfnu/lnIe/jNNxHHGNn//HNbbv+4dr6V+11uF527arU7+u63qfa/bnmh8sWLBgwYJlqRf8MEptXPBXJXa37BSl3ixYsGDBMliwFLyCV/DeLIMFCxYsWLBMwSt4Be/NggXLYMGCBUvBK3iNruC9WbBgwYJlsGApeAWv4L1ZBgsWLFiwYJmCV/AK3psFC5bBggULloJX8BpdwXuzYMGCBctgwVLwCl7Be7MMFixYsGDBsu8FH1FaSmExVfAxBa/gvVmwYMGCZbBg/W4vAQYA5tRF9QYlv/QAAAAASUVORK5CYII=",
-                  "CLEAR_BACKGROUND_COLOR": "#222222",
-                  "NODE_TITLE_COLOR": "#999",
-                  "NODE_SELECTED_TITLE_COLOR": "#FFF",
-                  "NODE_TEXT_SIZE": 14,
-                  "NODE_TEXT_COLOR": "#AAA",
-                  "NODE_SUBTEXT_SIZE": 12,
-                  "NODE_DEFAULT_COLOR": "#333",
-                  "NODE_DEFAULT_BGCOLOR": "#353535",
-                  "NODE_DEFAULT_BOXCOLOR": "#666",
-                  "NODE_DEFAULT_SHAPE": "box",
-                  "NODE_BOX_OUTLINE_COLOR": "#666",
-                  "DEFAULT_SHADOW_COLOR": "rgba(0,0,0,0)",
-                  "DEFAULT_GROUP_FONT": 24,
-                  "WIDGET_BGCOLOR": "#222",
-                  "WIDGET_OUTLINE_COLOR": "#666",
-                  "WIDGET_TEXT_COLOR": "#DDD",
-                  "WIDGET_SECONDARY_TEXT_COLOR": "#999",
-                  "LINK_COLOR": "#9A9",
-                  "EVENT_LINK_COLOR": "#A86",
-                  "CONNECTING_LINK_COLOR": "#AFA"
-                },
-                "comfy_base": {
-                  "fg-color": "#fff",
-                  "bg-color": "#202020",
-                  "comfy-menu-bg": "#353535",
-                  "comfy-input-bg": "#222",
-                  "input-text": "#ddd",
-                  "descrip-text": "#999",
-                  "drag-text": "#ccc",
-                  "error-text": "#ff4444",
-                  "border-color": "#4e4e4e",
-                  "tr-even-bg-color": "#222",
-                  "tr-odd-bg-color": "#353535",
-                  "comfy-menu-secondary-bg": "#353535"
-                }
-              }
-            }
-            # 1. Update legacy color_palettes folder
-            with open(theme_file, "w", encoding="utf-8") as f:
-                json.dump(umeairt_theme, f, indent=4)
-                
-            # 2. Inject directly into comfy.settings.json (Modern / Vue ComfyUI)
-            settings_file = os.path.join(comfy_root, "user", "default", "comfy.settings.json")
-            if os.path.exists(settings_file):
-                try:
-                    with open(settings_file, "r", encoding="utf-8") as f:
-                        settings = json.load(f)
-                except Exception:
-                    settings = {}
-                
-                if "Comfy.CustomColorPalettes" not in settings:
-                    settings["Comfy.CustomColorPalettes"] = {}
-                
-                # Only inject if the theme doesn't already exist (respect user customization)
-                if "umeairt_dark" not in settings["Comfy.CustomColorPalettes"]:
-                    settings["Comfy.CustomColorPalettes"]["umeairt_dark"] = umeairt_theme
-                
-                with open(settings_file, "w", encoding="utf-8") as f:
-                    json.dump(settings, f, indent=4)
-
-            log_node(f"🎨 A theme optimized for UmeAiRT workflows is now available in ComfyUI options (Color Palette).", color="CYAN")
-except Exception as e:
-    log_node(f"Theme installation skipped: {e}", color="YELLOW")
-
-# 4. Final Summary
+# 3. Final Summary
 log_node(f"✅ Initialization Complete.", color="GREEN")
