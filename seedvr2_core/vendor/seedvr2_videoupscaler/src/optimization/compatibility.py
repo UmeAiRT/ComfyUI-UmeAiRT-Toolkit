@@ -640,44 +640,9 @@ def _check_conv3d_memory_bug():
 NVIDIA_CONV3D_MEMORY_BUG_WORKAROUND = _check_conv3d_memory_bug()
 
 
-# Log all optimization status once globally (cross-process) using environment variable
-if not os.environ.get("SEEDVR2_OPTIMIZATIONS_LOGGED"):
-    os.environ["SEEDVR2_OPTIMIZATIONS_LOGGED"] = "1"
-    
-    # Build status strings
-    sage_status = "✅" if SAGE_ATTN_AVAILABLE else "❌"
-    flash_status = "✅" if FLASH_ATTN_AVAILABLE else "❌"
-    triton_status = "✅" if TRITON_AVAILABLE else "❌"
-    
-    # Count available optimizations
-    available = [SAGE_ATTN_AVAILABLE, FLASH_ATTN_AVAILABLE, TRITON_AVAILABLE]
-    num_available = sum(available)
-    
-    if num_available == 3:
-        print(f"⚡ SeedVR2 optimizations check: SageAttention {sage_status} | Flash Attention {flash_status} | Triton {triton_status}")
-    elif num_available == 0:
-        print(f"⚠️  SeedVR2 optimizations check: SageAttention {sage_status} | Flash Attention {flash_status} | Triton {triton_status}")
-        print("💡 For best performance: pip install sageattention flash-attn triton")
-    else:
-        icon = "⚡" if num_available >= 2 else "⚠️ "
-        print(f"{icon} SeedVR2 optimizations check: SageAttention {sage_status} | Flash Attention {flash_status} | Triton {triton_status}")
-        
-        # Build install suggestions for missing packages
-        missing = []
-        if not SAGE_ATTN_AVAILABLE:
-            missing.append("sageattention")
-        if not FLASH_ATTN_AVAILABLE:
-            missing.append("flash-attn")
-        if not TRITON_AVAILABLE:
-            missing.append("triton")
-        if missing:
-            print(f"💡 Optional: pip install {' '.join(missing)}")
-    
-    # Conv3d workaround status (if applicable)
-    if NVIDIA_CONV3D_MEMORY_BUG_WORKAROUND:
-        torch_ver = torch.__version__.split('+')[0]
-        cudnn_ver = torch.backends.cudnn.version()
-        print(f"🔧 Conv3d workaround active: PyTorch {torch_ver}, cuDNN {cudnn_ver} (fixing VAE 3x memory bug)")
+# NOTE: Startup logging disabled — the toolkit's own check_optimizations()
+# in modules/optimization_utils.py already reports this information with
+# proper formatting and the [UmeAiRT-Toolkit] prefix.
 
 
 # Bfloat16 CUBLAS support
