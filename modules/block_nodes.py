@@ -12,7 +12,7 @@ from .common import (
     KEY_SAMPLER, KEY_SCHEDULER, KEY_DENOISE, KEY_SOURCE_IMAGE, KEY_SOURCE_MASK,
     KEY_IMAGESIZE, KEY_MODEL_NAME, resize_tensor, log_node
 )
-from .logger import logger
+from .logger import logger, log_progress
 from .logic_nodes import UmeAiRT_WirelessUltimateUpscale_Base
 from .optimization_utils import SamplerContext
 
@@ -1511,7 +1511,7 @@ def _download_with_aria2(url, dest_path, connections=8, hf_token=""):
         pass
 
     size_mb = f" ({total_size / 1024 / 1024:.0f} MB)" if total_size else ""
-    log_node(f"Bundle Loader: Downloading '{filename}'{size_mb} via aria2c ({connections} connections)...", color="CYAN")
+    log_node(f"Bundle Loader: Downloading '{filename}'{size_mb} via aria2c ({connections} connections)...")
 
     try:
         aria2_exe = _ARIA2_PATH
@@ -1540,7 +1540,6 @@ def _download_with_aria2(url, dest_path, connections=8, hf_token=""):
 
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         pbar = comfy.utils.ProgressBar(100)
-        last_log_pct = -10  # Log every 10%
         last_pct = 0
 
         # Read aria2c output line by line in real-time
@@ -1554,14 +1553,13 @@ def _download_with_aria2(url, dest_path, connections=8, hf_token=""):
                 pct = int(match.group(1))
                 last_pct = pct
                 pbar.update_absolute(pct)
-                if pct >= last_log_pct + 10:
-                    last_log_pct = pct
-                    log_node(f"  ⬇️ '{filename}': {pct}%", color="CYAN")
+                log_progress(filename, pct)
 
         process.wait()
         returncode = process.returncode
 
-        # Final progress update
+        # Finalize progress bar line and UI bar
+        log_progress(filename, 100, done=True)
         pbar.update_absolute(100)
 
         if returncode == 0 and os.path.exists(dest_path):
@@ -1577,6 +1575,7 @@ def _download_with_aria2(url, dest_path, connections=8, hf_token=""):
         return False
 
 
+
 def _download_with_urllib(url, dest_path, hf_token=""):
     """Download a file with urllib and a ComfyUI progress bar (fallback).
 
@@ -1587,7 +1586,7 @@ def _download_with_urllib(url, dest_path, hf_token=""):
     """
     filename = os.path.basename(dest_path)
     temp_path = dest_path + ".download"
-    log_node(f"Bundle Loader: Downloading '{filename}' via urllib...", color="CYAN")
+    log_node(f"Bundle Loader: Downloading '{filename}' via urllib...")
 
     headers = {"User-Agent": "ComfyUI-UmeAiRT-Toolkit"}
     if hf_token:
@@ -1736,7 +1735,7 @@ class UmeAiRT_BundleLoader:
         files = bundle.get("files", [])
         min_vram = bundle.get("min_vram", 0)
 
-        log_node(f"Bundle Loader: {category} / {version} (min VRAM: {min_vram}GB)", color="CYAN")
+        log_node(f"Bundle Loader: {category} / {version} (min VRAM: {min_vram}GB)")
 
         # --- Phase 1: Check & Download ---
         resolved_files = {}  # path_type -> list of filenames

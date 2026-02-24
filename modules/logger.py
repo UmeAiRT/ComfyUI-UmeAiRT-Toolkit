@@ -96,3 +96,27 @@ def log_node(msg, color=None, prefix="UmeAiRT-Toolkit"):
     """
     logger.log(msg, color, prefix)
 
+
+def log_progress(filename, pct, prefix="UmeAiRT-Toolkit", bar_width=30, done=False):
+    """Render an inline progress bar that updates on the same console line.
+
+    Uses carriage return (\\r) to overwrite the previous output, avoiding
+    the flood of separate log lines per percentage increment.
+
+    Args:
+        filename (str): The file being downloaded (displayed in the bar).
+        pct (int): Current percentage (0-100).
+        prefix (str): The log prefix tag. Defaults to "UmeAiRT-Toolkit".
+        bar_width (int): Width of the bar in characters. Defaults to 30.
+        done (bool): If True, finalizes the line with a newline.
+    """
+    import sys
+    pct = max(0, min(100, pct))
+    filled = int(bar_width * pct / 100)
+    bar = "█" * filled + "░" * (bar_width - filled)
+    line = f"\r[{CYAN}{prefix}{RESET}]   ⬇️ '{MAGENTA}{filename}{RESET}': [{GREEN}{bar}{RESET}] {pct}%"
+    # Pad with spaces to clear any leftover characters from longer previous lines
+    sys.stdout.write(line + "   ")
+    if done:
+        sys.stdout.write("\n")
+    sys.stdout.flush()
