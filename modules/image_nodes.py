@@ -439,6 +439,9 @@ class UmeAiRT_WirelessImageSaver:
         Returns:
             dict: An interface dictionary containing relative UI path data for displaying in the dashboard.
         """
+        # Sanitize input to prevent directory traversal
+        filename = filename.replace("..", "")
+
         # 1. Resolve Path and Filename (Standardize splitting)
         full_pattern = filename.replace("\\", "/")
         if "/" in full_pattern:
@@ -446,6 +449,9 @@ class UmeAiRT_WirelessImageSaver:
         else:
              path = ""
              filename = full_pattern
+        
+        # Sanitize Path (Remove invalid characters but keep '/')
+        path = re.sub(r'[<>:"\\|?*]', '', path)
         
         # Sanitize Filename (Manager Request)
         # Remove invalid characters: < > : " / \ | ? *
