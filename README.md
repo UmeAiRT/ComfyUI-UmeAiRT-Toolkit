@@ -113,6 +113,12 @@ This toolkit bundles or adapts code from the following open-source projects. We 
 
 ---
 
+## 🔒 Security
+
+UmeAiRT Toolkit has been audited for common vulnerabilities (Command Injection, SSRF, Deserialization). A critical Path Traversal vulnerability in the `UmeAiRT_WirelessImageSaver` node, which allowed arbitrary file writes outside the ComfyUI output directory, was identified and patched. The node now forces relative pathing and validates outputs cryptographically against the root directory.
+
+---
+
 ## ❤️ Credits
 
 Developed by **UmeAiRT**.  

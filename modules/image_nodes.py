@@ -450,11 +450,11 @@ class UmeAiRT_WirelessImageSaver:
              path = ""
              filename = full_pattern
         
-        # Sanitize Path (Remove invalid characters but keep '/')
+        # Sanitize Path: Block absolute paths by removing leading slashes, then remove invalid chars
+        path = path.lstrip("/\\")
         path = re.sub(r'[<>:"\\|?*]', '', path)
         
-        # Sanitize Filename (Manager Request)
-        # Remove invalid characters: < > : " / \ | ? *
+        # Sanitize Filename: Remove invalid characters: < > : " / \ | ? *
         filename = re.sub(r'[<>:"/\\|?*]', '', filename)
         
         # Hardcoded Defaults for Simple Mode
@@ -536,6 +536,16 @@ class UmeAiRT_WirelessImageSaver:
             metadata_obj.sampler_name, metadata_obj.steps, metadata_obj.cfg, metadata_obj.scheduler_name, 
             metadata_obj.denoise, metadata_obj.clip_skip, metadata_obj.custom
         )
+        
+        # Security validation: Ensure resolved_path didn't introduce absolute paths via placeholders
+        resolved_path = resolved_path.lstrip("/\\")
+        output_dir_abs = os.path.abspath(folder_paths.output_directory)
+        final_abs_path = os.path.abspath(os.path.join(output_dir_abs, resolved_path))
+        
+        if not final_abs_path.startswith(output_dir_abs):
+             log_node(f"Security Warning: Path Traversal blocked. Attempted to write to: {final_abs_path}", color="RED")
+             # Fallback to base output directory
+             resolved_path = ""
         
         try:
             if not hasattr(self, "counter"):
