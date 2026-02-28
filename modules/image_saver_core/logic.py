@@ -295,11 +295,17 @@ class ImageSaverLogic:
         # Apply placeholders to path
         path = ImageSaverLogic.replace_placeholders(path, metadata.width, metadata.height, metadata.seed, metadata.modelname, counter, time_format, metadata.sampler_name, metadata.steps, metadata.cfg, metadata.scheduler_name, metadata.denoise, metadata.clip_skip, metadata.custom)
         
-        output_path = os.path.join(folder_paths.output_directory, path)
+        output_dir_abs = os.path.abspath(folder_paths.output_directory)
+        output_path = os.path.abspath(os.path.join(folder_paths.output_directory, path))
+
+        # Defensive path traversal guard: ensure output stays within output_directory
+        if not output_path.startswith(output_dir_abs):
+            log_node(f'Security: Path traversal blocked in save_images(). '
+                     f'Attempted: {output_path}. Falling back to base output directory.', color="RED")
+            output_path = output_dir_abs
 
         if output_path.strip() != '':
             if not os.path.exists(output_path.strip()):
-                # print(f'UmeAiRT-Image-Saver: Creating directory `{output_path.strip()}`')
                 log_node(f'ImageSaver Creating directory `{output_path.strip()}`', color="CYAN")
                 os.makedirs(output_path, exist_ok=True)
 

@@ -19,3 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added automated `tests/test_smoke.py` for validating core module imports and node class mappings.
 - Implemented a startup "Health Check" node (or process) to validate dependencies and optimizations.
+- Added `tests/test_traversal.py` for path traversal security regression testing.
+
+### Security
+
+- Added defense-in-depth path traversal guard in `ImageSaverLogic.save_images()` (`modules/image_saver_core/logic.py`). The output path is now validated with `os.path.abspath()` + `startswith()` to ensure it stays within the output directory, independently of caller-side sanitization.
