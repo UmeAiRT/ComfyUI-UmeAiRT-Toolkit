@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Prompt Caching**: Enhanced `BlockSampler` "Fast Start" caching to be explicitly LoRA-aware, preserving ~30s performance gains while safely recompiling when upstream modifiers change.
+- **Type Hinting**: Added strict Python type hints to core processor methods across `block_sampler.py`, `block_loaders.py`, and `block_inputs.py` to formally enforce `common.py` bundle contracts (`UME_BUNDLE`, `UME_SETTINGS`, `UME_IMAGE`, `UME_PIPELINE`).
+- **Code Cleanup**: Removed unused legacy pipeline imports from `block_sampler.py` and `logic_nodes.py`.
+
+### Fixed
+
+- **Silent Exceptions**: Refactored multiple generic `except Exception: pass` blocks in `block_loaders.py` and `logic_nodes.py` to properly surface warnings (via `log_node(color="YELLOW")`) regarding missing HF tokens, missing Text Encoders, GGUF failures, and unavailable internals.
+
+### Changed
+
 - **Wireless → Pipeline Rename**: Renamed all 11 `Wireless*` classes and `NODE_CLASS_MAPPINGS` keys to `Pipeline*` (e.g., `UmeAiRT_WirelessImageSaver` → `UmeAiRT_PipelineImageSaver`).
 - **Category Normalization**: Standardized all node categories to `UmeAiRT/Block/*`, `UmeAiRT/Pipeline/*`, `UmeAiRT/Utils/*` hierarchy.
 - **DRY: Outpaint code**: Extracted ~40 lines of duplicated outpaint padding logic into `apply_outpaint_padding()` in `common.py`.

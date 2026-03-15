@@ -8,8 +8,9 @@ import comfy.sd
 import comfy.utils
 from .common import GenerationContext, log_node
 from .logger import logger, log_progress
+from typing import Tuple, Dict, Any
 
-def _get_hf_token():
+def _get_hf_token() -> str:
     """Retrieve HuggingFace token from environment or cache file.
 
     Checks in order:
@@ -32,7 +33,9 @@ def _get_hf_token():
                 token = f.read().strip()
             if token:
                 return token
-        except Exception:
+        except Exception as e:
+            from .logger import log_node
+            log_node(f"Bundle Loader: Could not read HF token from cache: {e}", color="YELLOW")
             pass
 
     return ""
@@ -55,7 +58,7 @@ class UmeAiRT_FilesSettings_Checkpoint:
     FUNCTION = "load"
     CATEGORY = "UmeAiRT/Block/Loaders"
     
-    def load(self, ckpt_name):
+    def load(self, ckpt_name: str) -> Tuple[Dict[str, Any]]:
         model, clip, vae = comfy_nodes.CheckpointLoaderSimple().load_checkpoint(ckpt_name)
         log_node(f"Checkpoint Loaded: {ckpt_name}", color="GREEN")
         return ({"model": model, "clip": clip, "vae": vae, "model_name": ckpt_name},)
@@ -83,7 +86,7 @@ class UmeAiRT_FilesSettings_Checkpoint_Advanced:
     FUNCTION = "load_files"
     CATEGORY = "UmeAiRT/Block/Loaders"
 
-    def load_files(self, ckpt_name, vae_name="Baked", clip_skip=-1):
+    def load_files(self, ckpt_name: str, vae_name: str = "Baked", clip_skip: int = -1) -> Tuple[Dict[str, Any]]:
         """Loads a checkpoint with optional VAE override and CLIP skip.
 
         Args:
@@ -139,7 +142,7 @@ class UmeAiRT_FilesSettings_FLUX:
     FUNCTION = "load_files"
     CATEGORY = "UmeAiRT/Block/Loaders"
 
-    def load_files(self, unet_name, weight_dtype, clip_name1, clip_name2, vae_name):
+    def load_files(self, unet_name: str, weight_dtype: str, clip_name1: str, clip_name2: str, vae_name: str) -> Tuple[Dict[str, Any]]:
         unet_path = folder_paths.get_full_path("unet", unet_name)
         model_options = {}
         if weight_dtype == "fp8_e4m3fn":
@@ -182,7 +185,9 @@ class UmeAiRT_FilesSettings_Fragmented:
             tes = folder_paths.get_filename_list("text_encoders")
             if tes:
                 clips = sorted(list(set(clips + tes)))
-        except Exception:
+        except Exception as e:
+            from .logger import log_node
+            log_node(f"Fragmented Loader: Failed to get text_encoders list: {e}", color="YELLOW")
             pass
             
         # 3. Get VAEs
@@ -206,7 +211,7 @@ class UmeAiRT_FilesSettings_Fragmented:
     FUNCTION = "load_files"
     CATEGORY = "UmeAiRT/Block/Loaders"
 
-    def load_files(self, model_name, clip_name, vae_name, weight_dtype="default", clip_type="stable_diffusion", clip_skip=-1, device="default"):
+    def load_files(self, model_name: str, clip_name: str, vae_name: str, weight_dtype: str = "default", clip_type: str = "stable_diffusion", clip_skip: int = -1, device: str = "default") -> Tuple[Dict[str, Any]]:
         """Loads components from multiple distinct folders with explicit typing."""
         ckpt_path = folder_paths.get_full_path("checkpoints", model_name)
         diff_path = folder_paths.get_full_path("diffusion_models", model_name)
@@ -258,7 +263,9 @@ class UmeAiRT_FilesSettings_ZIMG:
     def INPUT_TYPES(s):
         try:
             from ..vendor.comfyui_gguf import gguf_nodes
-        except Exception:
+        except Exception as e:
+            from .logger import log_node
+            log_node(f"ZIMG Loader: Failed to import gguf_nodes: {e}", color="YELLOW")
             pass
 
         # 1. Get Models (Diffusion Models ONLY natively, plus GGUF)
@@ -302,7 +309,7 @@ class UmeAiRT_FilesSettings_ZIMG:
     FUNCTION = "load_files"
     CATEGORY = "UmeAiRT/Block/Loaders"
 
-    def load_files(self, model_name, clip_name, vae_name):
+    def load_files(self, model_name: str, clip_name: str, vae_name: str) -> Tuple[Dict[str, Any]]:
         """Loads models tailored for the Z-IMG format."""
         if model_name.endswith(".gguf"):
             from ..vendor.comfyui_gguf.gguf_nodes import UnetLoaderGGUF
@@ -375,7 +382,9 @@ def _find_file_in_folders(filename, folder_types):
                     log_node(f"  ⚠️ '{filename}' has incomplete download — will resume.", color="YELLOW")
                     return None
                 return path
-        except Exception:
+        except Exception as e:
+            from .logger import log_node
+            log_node(f"Bundle Loader: Error searching in '{folder_type}': {e}", color="YELLOW")
             pass
         # Also try GGUF-specific folders
         if folder_type == "unet":

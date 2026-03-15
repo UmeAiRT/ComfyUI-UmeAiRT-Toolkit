@@ -5,8 +5,8 @@ import comfy.sd
 import comfy.utils
 from .common import GenerationContext, resize_tensor, apply_outpaint_padding, log_node
 from .logger import logger
-from .logic_nodes import UmeAiRT_UltimateUpscale_Base
 from .optimization_utils import SamplerContext
+from typing import Tuple, Dict, Any, Optional, List
 
 try:
     from .facedetailer_core import detector, logic as fd_logic
@@ -47,8 +47,16 @@ class UmeAiRT_BlockSampler:
         self._last_clip = None
         self._cached_positive = None
         self._cached_negative = None
+        self._last_loras = None
+        self._last_controlnets = None
 
-    def process(self, model_bundle, settings, positive=None, negative=None, loras=None, image=None):
+    def process(self, 
+                model_bundle: Dict[str, Any], 
+                settings: Dict[str, Any], 
+                positive: Optional[str] = None, 
+                negative: Optional[str] = None, 
+                loras: Optional[List[Tuple[str, float, float]]] = None, 
+                image: Optional[Dict[str, Any]] = None) -> Tuple[GenerationContext]:
         # 1. Unpack model_bundle and create GenerationContext
         model = model_bundle["model"]
         clip = model_bundle["clip"]
@@ -146,7 +154,18 @@ class UmeAiRT_BlockSampler:
              denoise = 1.0
 
         # 6. Encode prompts
-        if self._last_pos_text == pos_text and self._last_neg_text == neg_text and self._last_clip is clip:
+        # Cache Strategy: If the prompt text matches, the CLIP object matches, and the exact same 
+        # Modifiers (LoRAs/ControlNets configurations) are active, it is safe to use the cache.
+        
+        can_use_cache = (
+            self._last_pos_text == pos_text and 
+            self._last_neg_text == neg_text and 
+            self._last_clip is clip and
+            self._last_loras == loras and
+            self._last_controlnets == controlnets
+        )
+
+        if can_use_cache:
              positive_cond = self._cached_positive
              negative_cond = self._cached_negative
              log_node("Block Sampler: Using cached Prompts (Fast Start)", color="GREEN")
@@ -163,6 +182,8 @@ class UmeAiRT_BlockSampler:
              self._last_pos_text = pos_text
              self._last_neg_text = neg_text
              self._last_clip = clip
+             self._last_loras = loras
+             self._last_controlnets = controlnets
              self._cached_positive = positive_cond
              self._cached_negative = negative_cond
 

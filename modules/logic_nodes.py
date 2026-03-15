@@ -11,8 +11,7 @@ import folder_paths
 import comfy.utils
 import comfy.sd
 import nodes as comfy_nodes
-import comfy.samplers
-import comfy.sample
+import nodes as comfy_nodes
 from .common import log_node, encode_prompts
 from .logger import logger
 
@@ -20,13 +19,17 @@ from .logger import logger
 try:
     from .seedvr2_adapter import execute_seedvr2
     from .stitching import process_and_stitch
-except ImportError:
+except ImportError as e:
+    from .logger import log_node
+    log_node(f"Logic Nodes: Could not import SeedVR2 internals: {e}", color="YELLOW")
     pass
 
 try:
     from .facedetailer_core import logic as fd_logic
     from .facedetailer_core import detector
-except ImportError:
+except ImportError as e:
+    from .logger import log_node
+    log_node(f"Logic Nodes: Could not import FaceDetailer internals: {e}", color="YELLOW")
     pass
 
 
@@ -307,7 +310,9 @@ class UmeAiRT_PipelineSeedVR2Upscale:
              on_disk = list(get_all_model_files().keys())
              extra = [f for f in on_disk if f not in KNOWN_DIT_MODELS and f != "ema_vae_fp16.safetensors"]
              dit_models = KNOWN_DIT_MODELS + sorted(extra)
-        except Exception:
+        except Exception as e:
+             from .logger import log_node
+             log_node(f"SeedVR2 Upscale: Could not map extended models: {e}", color="YELLOW")
              dit_models = KNOWN_DIT_MODELS
 
         return {
@@ -442,7 +447,9 @@ class UmeAiRT_PipelineSeedVR2Upscale_Advanced:
              on_disk = list(get_all_model_files().keys())
              extra = [f for f in on_disk if f not in KNOWN_DIT_MODELS and f != "ema_vae_fp16.safetensors"]
              dit_models = KNOWN_DIT_MODELS + sorted(extra)
-        except Exception:
+        except Exception as e:
+             from .logger import log_node
+             log_node(f"SeedVR2 Advanced: Could not map extended models: {e}", color="YELLOW")
              dit_models = KNOWN_DIT_MODELS
 
         return {

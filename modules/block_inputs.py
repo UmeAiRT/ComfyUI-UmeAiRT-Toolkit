@@ -5,9 +5,9 @@ import nodes as comfy_nodes
 import comfy.sd
 import comfy.utils
 from .common import GenerationContext, resize_tensor, apply_outpaint_padding, log_node
+from .common import GenerationContext, resize_tensor, apply_outpaint_padding, log_node
 from .logger import logger
-
-# --- Helper for LoRA Stacks ---
+from typing import Tuple, Dict, Any, Optional, List
 
 def get_lora_inputs(count):
     inputs = {
@@ -116,7 +116,7 @@ class UmeAiRT_ControlNetImageApply_Advanced:
     FUNCTION = "apply_controlnet"
     CATEGORY = "UmeAiRT/Block/ControlNet"
 
-    def apply_controlnet(self, image_bundle, control_net_name, strength, start_percent, end_percent, optional_control_image=None):
+    def apply_controlnet(self, image_bundle: Dict[str, Any], control_net_name: str, strength: float, start_percent: float, end_percent: float, optional_control_image: Optional[Any] = None) -> Tuple[Dict[str, Any]]:
         if not isinstance(image_bundle, dict):
             raise ValueError("ControlNet Image Apply: Input is not a valid UME_IMAGE bundle.")
 
@@ -148,7 +148,7 @@ class UmeAiRT_ControlNetImageApply_Simple(UmeAiRT_ControlNetImageApply_Advanced)
                 "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05, "display": "slider"}),
             }
         }
-    def apply_controlnet(self, image_bundle, control_net_name, strength):
+    def apply_controlnet(self, image_bundle: Dict[str, Any], control_net_name: str, strength: float) -> Tuple[Dict[str, Any]]:
         """Funnels simple parameters down to the advanced method safely.
 
         Args:
@@ -186,7 +186,7 @@ class UmeAiRT_ControlNetImageProcess:
     FUNCTION = "process"
     CATEGORY = "UmeAiRT/Block/ControlNet"
 
-    def process(self, image_bundle, denoise, mode, control_net_name, strength, pipeline=None, resize=False):
+    def process(self, image_bundle: Dict[str, Any], denoise: float, mode: str, control_net_name: str, strength: float, pipeline: Optional[GenerationContext] = None, resize: bool = False) -> Tuple[Dict[str, Any]]:
         if not isinstance(image_bundle, dict): raise ValueError("ControlNet Image Process: Input is not a valid UME_IMAGE bundle.")
         
         image = image_bundle.get("image")
@@ -256,7 +256,7 @@ class UmeAiRT_GenerationSettings:
     FUNCTION = "process"
     CATEGORY = "UmeAiRT/Block/Settings"
 
-    def process(self, width, height, steps, cfg, sampler_name, scheduler, seed):
+    def process(self, width: int, height: int, steps: int, cfg: float, sampler_name: str, scheduler: str, seed: int) -> Tuple[Dict[str, Any]]:
         return ({"width": width, "height": height, "steps": steps, "cfg": cfg, "sampler_name": sampler_name, "scheduler": scheduler, "seed": seed},)
 
 
@@ -283,7 +283,7 @@ class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
     FUNCTION = "load_block_image"
     CATEGORY = "UmeAiRT/Block/Image"
 
-    def load_block_image(self, image):
+    def load_block_image(self, image: str) -> Tuple[Dict[str, Any]]:
         """Loads the specified image file and wraps it in a dictionary.
 
         Args:
@@ -302,7 +302,7 @@ class UmeAiRT_BlockImageLoader_Advanced(UmeAiRT_BlockImageLoader):
     """Advanced Image Loader providing both bundled and fragmented UI outputs."""
     RETURN_TYPES = ("UME_IMAGE", "IMAGE", "MASK")
     RETURN_NAMES = ("image_bundle", "image", "mask")
-    def load_block_image(self, image):
+    def load_block_image(self, image: str) -> Tuple[Dict[str, Any], Any, Any]:
         """Loads the image and returns both the bundle and the raw tensors.
 
         Args:
@@ -339,8 +339,8 @@ class UmeAiRT_BlockImageProcess:
     FUNCTION = "process_image"
     CATEGORY = "UmeAiRT/Block/Image"
 
-    def process_image(self, image_bundle, denoise=0.75, mode="img2img", auto_resize=False, mask_blur=0, 
-                      padding_left=0, padding_top=0, padding_right=0, padding_bottom=0):
+    def process_image(self, image_bundle: Dict[str, Any], denoise: float = 0.75, mode: str = "img2img", auto_resize: bool = False, mask_blur: int = 0, 
+                      padding_left: int = 0, padding_top: int = 0, padding_right: int = 0, padding_bottom: int = 0) -> Tuple[Dict[str, Any]]:
         """Modifies the image state based on the chosen mode."""
         
         image = image_bundle.get("image")
