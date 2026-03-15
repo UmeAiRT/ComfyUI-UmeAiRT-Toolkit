@@ -127,7 +127,7 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
     def INPUT_TYPES(s):
         return {
             "required": {
-                "pipeline": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
+                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
                 "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
                 "model": (folder_paths.get_filename_list("upscale_models"),),
                 "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider"}),
@@ -139,34 +139,34 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
     FUNCTION = "upscale"
     CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
-    def upscale(self, pipeline, enabled, model, upscale_by):
-        image = pipeline.image
+    def upscale(self, generation, enabled, model, upscale_by):
+        image = generation.image
         if image is None:
             raise ValueError("UltimateUpscale: No image in pipeline.")
         log_node(f"UltimateSDUpscale (Simple): Processing | Ratio: x{upscale_by} | Model: {model}")
         if not enabled:
-            return (pipeline,)
+            return (generation,)
 
         denoise = 0.35
         clean_prompt = True
         mode_type = "Linear"
         tile_padding = 32
 
-        sd_model = pipeline.model
-        vae = pipeline.vae
-        clip = pipeline.clip
+        sd_model = generation.model
+        vae = generation.vae
+        clip = generation.clip
 
-        steps = max(5, int(pipeline.steps or 20) // 4)
+        steps = max(5, int(generation.steps or 20) // 4)
         cfg = 1.0
-        sampler_name = pipeline.sampler_name or "euler"
-        scheduler = pipeline.scheduler or "normal"
-        seed = int(pipeline.seed or 0)
+        sampler_name = generation.sampler_name or "euler"
+        scheduler = generation.scheduler or "normal"
+        seed = int(generation.seed or 0)
 
         if not sd_model or not vae or not clip:
             raise ValueError("UltimateUpscale: Missing Model/VAE/CLIP in pipeline.")
 
-        pos_text = str(pipeline.positive_prompt or "")
-        neg_text = str(pipeline.negative_prompt or "")
+        pos_text = str(generation.positive_prompt or "")
+        neg_text = str(generation.negative_prompt or "")
         target_pos_text = "" if clean_prompt else pos_text
         positive, negative = self.encode_prompts(clip, target_pos_text, neg_text)
 
@@ -178,8 +178,8 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
 
         usdu_node = self.get_usdu_node()
 
-        tile_width = int(pipeline.width or 1024)
-        tile_height = int(pipeline.height or 1024)
+        tile_width = int(generation.width or 1024)
+        tile_height = int(generation.height or 1024)
 
         res = usdu_node.upscale(
                  image=image, model=sd_model, positive=positive, negative=negative, vae=vae,
@@ -193,7 +193,7 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
                  suppress_preview=True,
              )
 
-        ctx = pipeline.clone()
+        ctx = generation.clone()
         ctx.image = res[0]
         return (ctx,)
 
@@ -206,7 +206,7 @@ class UmeAiRT_PipelineUltimateUpscale_Advanced(UmeAiRT_UltimateUpscale_Base):
         seam_fix_modes = ["None", "Band Pass", "Half Tile", "Half Tile + Intersections"]
         return {
              "required": {
-                "pipeline": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
+                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
                 "model": (folder_paths.get_filename_list("upscale_models"),),
                 "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider"}),
                 "denoise": ("FLOAT", {"default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
@@ -232,31 +232,31 @@ class UmeAiRT_PipelineUltimateUpscale_Advanced(UmeAiRT_UltimateUpscale_Base):
     FUNCTION = "upscale"
     CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
-    def upscale(self, pipeline, model, upscale_by, denoise, clean_prompt=True, mode_type="Linear",
+    def upscale(self, generation, model, upscale_by, denoise, clean_prompt=True, mode_type="Linear",
                 tile_width=512, tile_height=512, mask_blur=8, tile_padding=32,
                 seam_fix_mode="None", seam_fix_denoise=1.0, seam_fix_width=64,
                 seam_fix_mask_blur=8, seam_fix_padding=16, force_uniform_tiles=True, tiled_decode=False):
 
-        image = pipeline.image
+        image = generation.image
         if image is None:
             raise ValueError("UltimateUpscale Advanced: No image in pipeline.")
         log_node(f"UltimateSDUpscale (Advanced): Processing | Ratio: x{upscale_by} | Model: {model} | Denoise: {denoise}")
 
-        sd_model = pipeline.model
-        vae = pipeline.vae
-        clip = pipeline.clip
+        sd_model = generation.model
+        vae = generation.vae
+        clip = generation.clip
 
-        steps = max(5, int(pipeline.steps or 20) // 4)
+        steps = max(5, int(generation.steps or 20) // 4)
         cfg = 1.0
-        sampler_name = pipeline.sampler_name or "euler"
-        scheduler = pipeline.scheduler or "normal"
-        seed = int(pipeline.seed or 0)
+        sampler_name = generation.sampler_name or "euler"
+        scheduler = generation.scheduler or "normal"
+        seed = int(generation.seed or 0)
 
         if not sd_model or not vae or not clip:
             raise ValueError("UltimateUpscale Advanced: Missing Model/VAE/CLIP in pipeline.")
 
-        pos_text = str(pipeline.positive_prompt or "")
-        neg_text = str(pipeline.negative_prompt or "")
+        pos_text = str(generation.positive_prompt or "")
+        neg_text = str(generation.negative_prompt or "")
         target_pos_text = "" if clean_prompt else pos_text
         positive, negative = self.encode_prompts(clip, target_pos_text, neg_text)
 
@@ -280,7 +280,7 @@ class UmeAiRT_PipelineUltimateUpscale_Advanced(UmeAiRT_UltimateUpscale_Base):
                  suppress_preview=True,
              )
 
-        ctx = pipeline.clone()
+        ctx = generation.clone()
         ctx.image = res[0]
         return (ctx,)
 
@@ -312,7 +312,7 @@ class UmeAiRT_PipelineSeedVR2Upscale:
 
         return {
             "required": {
-                "pipeline": ("UME_PIPELINE", {"tooltip": "Pipeline context with image (seed used)."}),
+                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image (seed used)."}),
                 "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
                 "model": (dit_models, {"default": default_dit, "tooltip": "DiT model for SeedVR2 upscaling."}),
                 "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.1, "display": "slider"}),
@@ -342,11 +342,11 @@ class UmeAiRT_PipelineSeedVR2Upscale:
         }
         return dit_config, vae_config
 
-    def upscale(self, pipeline, enabled, model, upscale_by):
+    def upscale(self, generation, enabled, model, upscale_by):
         if not enabled:
-            return (pipeline,)
+            return (generation,)
 
-        image = pipeline.image
+        image = generation.image
         if image is None:
             raise ValueError("SeedVR2 Upscale: No image in pipeline.")
 
@@ -357,7 +357,7 @@ class UmeAiRT_PipelineSeedVR2Upscale:
         except ImportError:
              raise ImportError("SeedVR2 Core modules not found in '../seedvr2_core'. Verify installation.")
 
-        seed = int(pipeline.seed or 100) % (2**32)
+        seed = int(generation.seed or 100) % (2**32)
         dit_config, vae_config = self._build_configs(model)
 
         log_node(f"SeedVR2 Upscale: Processing | Ratio: x{upscale_by} | Model: {model} | Seed: {seed}")
@@ -418,7 +418,7 @@ class UmeAiRT_PipelineSeedVR2Upscale:
         mm.soft_empty_cache()
         gc.collect()
 
-        ctx = pipeline.clone()
+        ctx = generation.clone()
         ctx.image = pil_to_tensor(output_image)
         return (ctx,)
 
@@ -447,7 +447,7 @@ class UmeAiRT_PipelineSeedVR2Upscale_Advanced:
 
         return {
             "required": {
-                "pipeline": ("UME_PIPELINE", {"tooltip": "Pipeline context with image (seed used)."}),
+                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image (seed used)."}),
                 "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
                 "model": (dit_models, {"default": default_dit}),
                 "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.1, "display": "slider"}),
@@ -468,14 +468,14 @@ class UmeAiRT_PipelineSeedVR2Upscale_Advanced:
     FUNCTION = "upscale"
     CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
-    def upscale(self, pipeline, enabled, model, upscale_by,
+    def upscale(self, generation, enabled, model, upscale_by,
                 tile_width, tile_height, mask_blur, tile_padding,
                 tile_upscale_resolution, tiling_strategy,
                 anti_aliasing_strength, blending_method, color_correction):
         if not enabled:
-            return (pipeline,)
+            return (generation,)
 
-        image = pipeline.image
+        image = generation.image
         if image is None:
             raise ValueError("SeedVR2 Advanced: No image in pipeline.")
 
@@ -486,7 +486,7 @@ class UmeAiRT_PipelineSeedVR2Upscale_Advanced:
         except ImportError:
              raise ImportError("SeedVR2 Core modules not found. Verify installation.")
 
-        seed = int(pipeline.seed or 100) % (2**32)
+        seed = int(generation.seed or 100) % (2**32)
         dit_config, vae_config = UmeAiRT_PipelineSeedVR2Upscale._build_configs(model)
 
         log_node(f"SeedVR2 Upscale: Processing | Ratio: x{upscale_by} | Model: {model} | Seed: {seed}")
@@ -513,7 +513,7 @@ class UmeAiRT_PipelineSeedVR2Upscale_Advanced:
         mm.soft_empty_cache()
         gc.collect()
 
-        ctx = pipeline.clone()
+        ctx = generation.clone()
         ctx.image = pil_to_tensor(output_image)
         return (ctx,)
 
@@ -526,7 +526,7 @@ class UmeAiRT_PipelineFaceDetailer_Advanced:
     def INPUT_TYPES(s):
         return {
             "required": {
-                 "pipeline": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
+                 "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
                  "bbox_detector": ("BBOX_DETECTOR",),
                  "enabled": ("BOOLEAN", {"default": True}),
                  "guide_size": ("INT", {"default": 512, "min": 64, "max": 2048}),
@@ -540,27 +540,27 @@ class UmeAiRT_PipelineFaceDetailer_Advanced:
     FUNCTION = "face_detail"
     CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
-    def face_detail(self, pipeline, bbox_detector, enabled, guide_size, max_size, denoise):
-        image = pipeline.image
+    def face_detail(self, generation, bbox_detector, enabled, guide_size, max_size, denoise):
+        image = generation.image
         if image is None:
             raise ValueError("FaceDetailer: No image in pipeline.")
-        if not enabled: return (pipeline,)
+        if not enabled: return (generation,)
 
-        model = pipeline.model
-        vae = pipeline.vae
-        clip = pipeline.clip
+        model = generation.model
+        vae = generation.vae
+        clip = generation.clip
 
-        steps = int(pipeline.steps or 20)
-        cfg = float(pipeline.cfg or 8.0)
-        sampler_name = pipeline.sampler_name or "euler"
-        scheduler = pipeline.scheduler or "normal"
-        seed = int(pipeline.seed or 0)
+        steps = int(generation.steps or 20)
+        cfg = float(generation.cfg or 8.0)
+        sampler_name = generation.sampler_name or "euler"
+        scheduler = generation.scheduler or "normal"
+        seed = int(generation.seed or 0)
 
-        pos_text = str(pipeline.positive_prompt or "")
-        neg_text = str(pipeline.negative_prompt or "")
+        pos_text = str(generation.positive_prompt or "")
+        neg_text = str(generation.negative_prompt or "")
 
         if not model or not vae or not clip:
-            return (pipeline,)
+            return (generation,)
 
         positive, negative = encode_prompts(clip, pos_text, neg_text)
 
@@ -573,7 +573,7 @@ class UmeAiRT_PipelineFaceDetailer_Advanced:
                  positive=positive, negative=negative, denoise=denoise,
                  feather=5, noise_mask=True, force_inpaint=True, drop_size=10
              )
-        ctx = pipeline.clone()
+        ctx = generation.clone()
         ctx.image = result[0]
         return (ctx,)
 
@@ -583,13 +583,13 @@ class UmeAiRT_PipelineFaceDetailer(UmeAiRT_PipelineFaceDetailer_Advanced):
     def INPUT_TYPES(s):
         return {
             "required": {
-                 "pipeline": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
+                 "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
                  "bbox_detector": ("BBOX_DETECTOR",),
                  "denoise": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
             }
         }
 
-    def face_detail(self, pipeline, bbox_detector, denoise):
+    def face_detail(self, generation, bbox_detector, denoise):
         return super().face_detail(pipeline, bbox_detector, True, 512, 1024, denoise)
 
 
@@ -680,7 +680,7 @@ class UmeAiRT_Detailer_Daemon_Simple:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "pipeline": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
+                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
                 "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
                 "detail_amount": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider"}),
             },
@@ -691,28 +691,28 @@ class UmeAiRT_Detailer_Daemon_Simple:
     FUNCTION = "process"
     CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
-    def process(self, pipeline, enabled, detail_amount):
+    def process(self, generation, enabled, detail_amount):
         if not enabled:
-            return (pipeline,)
+            return (generation,)
 
-        start_image = pipeline.image
+        start_image = generation.image
         if start_image is None:
             raise ValueError("Detail Daemon: No image in pipeline.")
 
-        model = pipeline.model
-        vae = pipeline.vae
+        model = generation.model
+        vae = generation.vae
 
-        steps = int(pipeline.steps or 20)
-        cfg = float(pipeline.cfg or 8.0)
-        sampler_name = pipeline.sampler_name or "euler"
-        scheduler = pipeline.scheduler or "normal"
-        seed = int(pipeline.seed or 0)
+        steps = int(generation.steps or 20)
+        cfg = float(generation.cfg or 8.0)
+        sampler_name = generation.sampler_name or "euler"
+        scheduler = generation.scheduler or "normal"
+        seed = int(generation.seed or 0)
 
         denoise = 0.5
         refine_denoise = 0.05
-        clip = pipeline.clip
-        pos_text = str(pipeline.positive_prompt or "")
-        neg_text = str(pipeline.negative_prompt or "")
+        clip = generation.clip
+        pos_text = str(generation.positive_prompt or "")
+        neg_text = str(generation.negative_prompt or "")
 
         if any(x is None for x in [model, vae, start_image, clip]):
             log_node("Missing Pipeline Context for Detailer Daemon", color="RED")
@@ -769,7 +769,7 @@ class UmeAiRT_Detailer_Daemon_Simple:
 
         decoded = vae.decode(samples)
         log_node("Detail Daemon: Finished", color="GREEN")
-        ctx = pipeline.clone()
+        ctx = generation.clone()
         ctx.image = decoded
         return (ctx,)
 
@@ -779,7 +779,7 @@ class UmeAiRT_Detailer_Daemon_Advanced(UmeAiRT_Detailer_Daemon_Simple):
     def INPUT_TYPES(s):
         return {
             "required": {
-                "pipeline": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
+                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
                 "detail_amount": ("FLOAT", {"default": 0.5, "min": -5.0, "max": 5.0, "step": 0.01}),
                 "start": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "end": ("FLOAT", {"default": 0.8, "min": 0.0, "max": 1.0, "step": 0.01}),
@@ -804,19 +804,19 @@ class UmeAiRT_Detailer_Daemon_Advanced(UmeAiRT_Detailer_Daemon_Simple):
 
     FUNCTION = "process_advanced"
 
-    def process_advanced(self, pipeline, detail_amount, start, end, bias, exponent, start_offset, end_offset, fade, smooth, denoise, refine_denoise, steps=20, refine_steps=2, cfg=8.0, sampler_name="euler", scheduler="normal", seed=0):
-        start_image = pipeline.image
+    def process_advanced(self, generation, detail_amount, start, end, bias, exponent, start_offset, end_offset, fade, smooth, denoise, refine_denoise, steps=20, refine_steps=2, cfg=8.0, sampler_name="euler", scheduler="normal", seed=0):
+        start_image = generation.image
         if start_image is None:
             raise ValueError("Detail Daemon Advanced: No image in pipeline.")
 
-        model = pipeline.model
-        vae = pipeline.vae
-        clip = pipeline.clip
-        pos_text = str(pipeline.positive_prompt or "")
-        neg_text = str(pipeline.negative_prompt or "")
+        model = generation.model
+        vae = generation.vae
+        clip = generation.clip
+        pos_text = str(generation.positive_prompt or "")
+        neg_text = str(generation.negative_prompt or "")
 
         if any(x is None for x in [model, vae, clip]):
-            return (pipeline,)
+            return (generation,)
 
         tokens = clip.tokenize(pos_text)
         cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
@@ -874,6 +874,6 @@ class UmeAiRT_Detailer_Daemon_Advanced(UmeAiRT_Detailer_Daemon_Simple):
 
         decoded = vae.decode(samples)
         log_node("Detail Daemon Advanced: Finished", color="GREEN")
-        ctx = pipeline.clone()
+        ctx = generation.clone()
         ctx.image = decoded
         return (ctx,)

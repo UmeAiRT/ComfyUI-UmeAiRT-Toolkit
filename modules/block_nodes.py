@@ -187,7 +187,7 @@ class UmeAiRT_ControlNetImageProcess:
                 "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05}),
             },
             "optional": {
-                "pipeline": ("UME_PIPELINE", {"tooltip": "Optional pipeline for resize dimensions."}),
+                "generation": ("UME_PIPELINE", {"tooltip": "Optional pipeline for resize dimensions."}),
                 "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF"}),
             }
         }
@@ -213,8 +213,8 @@ class UmeAiRT_ControlNetImageProcess:
         final_mask = mask
         
         if resize:
-             target_w = pipeline.width if pipeline else 1024
-             target_h = pipeline.height if pipeline else 1024
+             target_w = generation.width if pipeline else 1024
+             target_h = generation.height if pipeline else 1024
              final_image = resize_tensor(final_image, target_h, target_w, interp_mode="bilinear")
              if final_mask is not None:
                  final_mask = resize_tensor(final_mask, target_h, target_w, interp_mode="nearest", is_mask=True)
@@ -891,7 +891,7 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_UltimateUpscale_Base):
         usdu_modes = ["Linear", "Chess", "None"]
         return {
             "required": { 
-                "pipeline": ("UME_PIPELINE", {"tooltip": "Pipeline context with image."}),
+                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image."}),
                 "model": (folder_paths.get_filename_list("upscale_models"),), 
                 "upscale_by": ("FLOAT", {"default": 2.0}),
             },
@@ -909,12 +909,12 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_UltimateUpscale_Base):
     FUNCTION = "upscale"
     CATEGORY = "UmeAiRT/Block/Post-Processing"
 
-    def upscale(self, pipeline, model, upscale_by, loras=None, prompts=None, denoise=0.35, clean_prompt=True, mode_type="Linear", tile_padding=32):
+    def upscale(self, generation, model, upscale_by, loras=None, prompts=None, denoise=0.35, clean_prompt=True, mode_type="Linear", tile_padding=32):
         """Splices Block inputs with the embedded UltimateSDUpscale math."""
-        image = pipeline.image
+        image = generation.image
         if image is None: raise ValueError("Block Upscale: No image in pipeline.")
 
-        sd_model, vae, clip = pipeline.model, pipeline.vae, pipeline.clip
+        sd_model, vae, clip = generation.model, generation.vae, generation.clip
 
         if loras:
             for lora_def in loras:
@@ -926,16 +926,16 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_UltimateUpscale_Base):
 
         if not sd_model or not vae or not clip: raise ValueError("Block Upscale: Missing Model/VAE/CLIP")
 
-        steps = pipeline.steps
-        cfg = pipeline.cfg
-        sampler_name = pipeline.sampler_name
-        scheduler = pipeline.scheduler
-        seed = pipeline.seed
-        tile_width = pipeline.width
-        tile_height = pipeline.height
+        steps = generation.steps
+        cfg = generation.cfg
+        sampler_name = generation.sampler_name
+        scheduler = generation.scheduler
+        seed = generation.seed
+        tile_width = generation.width
+        tile_height = generation.height
 
         if prompts: pos_text, neg_text = prompts.get("positive"), prompts.get("negative")
-        else: pos_text, neg_text = pipeline.positive_prompt, pipeline.negative_prompt
+        else: pos_text, neg_text = generation.positive_prompt, generation.negative_prompt
 
         positive, negative = self.encode_prompts(clip, "" if clean_prompt else pos_text, neg_text)
         
@@ -952,7 +952,7 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_UltimateUpscale_Base):
                  seam_fix_mode="None", seam_fix_denoise=1.0, seam_fix_mask_blur=8, seam_fix_width=64, seam_fix_padding=16,
                  force_uniform_tiles=True, tiled_decode=False, suppress_preview=True
              )
-        ctx = pipeline.clone()
+        ctx = generation.clone()
         ctx.image = res[0]
         return (ctx,)
 
@@ -963,7 +963,7 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_UltimateUpscale_Base):
     def INPUT_TYPES(s):
         return {
             "required": { 
-                "pipeline": ("UME_PIPELINE", {"tooltip": "Pipeline context with image."}),
+                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image."}),
                 "model": (folder_paths.get_filename_list("bbox"),), 
                 "denoise": ("FLOAT", {"default": 0.5}),
             },
@@ -979,12 +979,12 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_UltimateUpscale_Base):
     FUNCTION = "face_detail"
     CATEGORY = "UmeAiRT/Block/Post-Processing"
 
-    def face_detail(self, pipeline, model, denoise, loras=None, prompts=None, guide_size=512, max_size=1024):
+    def face_detail(self, generation, model, denoise, loras=None, prompts=None, guide_size=512, max_size=1024):
         """Performs face detection, cropping, processing and recompositing."""
-        image = pipeline.image
+        image = generation.image
         if image is None: raise ValueError("Block FaceDetailer: No image in pipeline.")
 
-        sd_model, vae, clip = pipeline.model, pipeline.vae, pipeline.clip
+        sd_model, vae, clip = generation.model, generation.vae, generation.clip
 
         if loras:
             for lora_def in loras:
@@ -996,12 +996,12 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_UltimateUpscale_Base):
 
         if not sd_model or not vae or not clip: raise ValueError("Block FaceDetailer: Missing Model/VAE/CLIP")
 
-        steps, cfg = pipeline.steps, pipeline.cfg
-        sampler_name, scheduler = pipeline.sampler_name, pipeline.scheduler
-        seed = pipeline.seed
+        steps, cfg = generation.steps, generation.cfg
+        sampler_name, scheduler = generation.sampler_name, generation.scheduler
+        seed = generation.seed
 
         if prompts: pos_text, neg_text = prompts.get("positive"), prompts.get("negative")
-        else: pos_text, neg_text = pipeline.positive_prompt, pipeline.negative_prompt
+        else: pos_text, neg_text = generation.positive_prompt, generation.negative_prompt
 
         positive, negative = self.encode_prompts(clip, pos_text, neg_text)
         
@@ -1017,12 +1017,12 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_UltimateUpscale_Base):
                         positive=positive, negative=negative, denoise=denoise,
                         feather=5, noise_mask=True, force_inpaint=True, drop_size=10
                     )
-            ctx = pipeline.clone()
+            ctx = generation.clone()
             ctx.image = result[0]
             return (ctx,)
         except Exception as e:
             log_node(f"FaceDetailer Error: {e}", color="RED")
-            return (pipeline,)
+            return (generation,)
 
 
 # --- Bundle Auto-Loader ---

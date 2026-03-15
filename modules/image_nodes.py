@@ -30,7 +30,7 @@ class UmeAiRT_PipelineImageLoader(comfy_nodes.LoadImage):
                 "mode": (["Inpaint", "Img2Img"], {"default": "Inpaint", "tooltip": "Inpaint: Use Mask. Img2Img: Ignore Mask."}),
             },
             "optional": {
-                "pipeline": ("UME_PIPELINE", {"tooltip": "Pipeline context (optional, used for resize dimensions)."}),
+                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context (optional, used for resize dimensions)."}),
             }
         }
 
@@ -45,8 +45,8 @@ class UmeAiRT_PipelineImageLoader(comfy_nodes.LoadImage):
         mask = out[1]
 
         if resize and pipeline is not None:
-            target_w = int(pipeline.width or 1024)
-            target_h = int(pipeline.height or 1024)
+            target_w = int(generation.width or 1024)
+            target_h = int(generation.height or 1024)
             img = resize_tensor(img, target_h, target_w, interp_mode="bilinear", is_mask=False)
             if mask is not None:
                 mask = resize_tensor(mask, target_h, target_w, interp_mode="nearest", is_mask=True)
@@ -91,7 +91,7 @@ class UmeAiRT_PipelineImageProcess:
                 "mode": (["img2img", "inpaint", "outpaint", "txt2img"], {"default": "img2img"}),
             },
             "optional": {
-                "pipeline": ("UME_PIPELINE", {"tooltip": "Pipeline context (for resize dimensions)."}),
+                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context (for resize dimensions)."}),
                 "image": ("IMAGE",),
                 "mask": ("MASK",),
                 "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF"}),
@@ -122,8 +122,8 @@ class UmeAiRT_PipelineImageProcess:
 
         target_w, target_h = W, H
         if resize and pipeline is not None:
-             target_w = int(pipeline.width or 1024)
-             target_h = int(pipeline.height or 1024)
+             target_w = int(generation.width or 1024)
+             target_h = int(generation.height or 1024)
 
         final_image = image
         final_mask = mask
@@ -226,7 +226,7 @@ class UmeAiRT_PipelineImageSaver:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "pipeline": ("UME_PIPELINE", {"tooltip": "Pipeline context with image and metadata."}),
+                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image and metadata."}),
                 "filename": ("STRING", {"default": "%date%_%time%_%model%_%seed%", "multiline": False}),
             },
             "hidden": {
@@ -240,8 +240,8 @@ class UmeAiRT_PipelineImageSaver:
     FUNCTION = "save_images"
     CATEGORY = "UmeAiRT/Pipeline/IO"
 
-    def save_images(self, pipeline, filename, prompt=None, extra_pnginfo=None):
-        images = pipeline.image
+    def save_images(self, generation, filename, prompt=None, extra_pnginfo=None):
+        images = generation.image
         if images is None:
             raise ValueError("Image Saver: No image in pipeline.")
         filename = filename.replace("..", "")
@@ -265,12 +265,12 @@ class UmeAiRT_PipelineImageSaver:
         save_workflow_as_json = False
 
         # Read from pipeline
-        width = int(pipeline.width or 512)
-        height = int(pipeline.height or 512)
+        width = int(generation.width or 512)
+        height = int(generation.height or 512)
         modelname = getattr(pipeline, 'model_name', 'UmeAiRT_Pipeline')
 
         additional_hashes = ""
-        loras = pipeline.loras or []
+        loras = generation.loras or []
         if loras:
             try:
                 from .image_saver_core.utils import full_lora_path_for, get_sha256
@@ -291,16 +291,16 @@ class UmeAiRT_PipelineImageSaver:
         try:
             metadata_obj = ImageSaverLogic.make_metadata(
                 modelname=modelname,
-                positive=str(pipeline.positive_prompt or ""),
-                negative=str(pipeline.negative_prompt or ""),
+                positive=str(generation.positive_prompt or ""),
+                negative=str(generation.negative_prompt or ""),
                 width=width,
                 height=height,
-                seed_value=int(pipeline.seed or 0),
-                steps=int(pipeline.steps or 20),
-                cfg=float(pipeline.cfg or 8.0),
-                sampler_name=pipeline.sampler_name or "euler",
-                scheduler_name=pipeline.scheduler or "normal",
-                denoise=float(pipeline.denoise or 1.0),
+                seed_value=int(generation.seed or 0),
+                steps=int(generation.steps or 20),
+                cfg=float(generation.cfg or 8.0),
+                sampler_name=generation.sampler_name or "euler",
+                scheduler_name=generation.scheduler or "normal",
+                denoise=float(generation.denoise or 1.0),
                 clip_skip=0,
                 custom="UmeAiRT Pipeline",
                 additional_hashes=additional_hashes,
