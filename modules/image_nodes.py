@@ -267,7 +267,7 @@ class UmeAiRT_PipelineImageSaver:
         # Read from pipeline
         width = int(generation.width or 512)
         height = int(generation.height or 512)
-        modelname = getattr(pipeline, 'model_name', 'UmeAiRT_Pipeline')
+        modelname = getattr(generation, 'model_name', 'UmeAiRT_Pipeline')
 
         additional_hashes = ""
         loras = generation.loras or []
