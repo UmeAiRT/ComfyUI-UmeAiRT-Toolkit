@@ -17,7 +17,7 @@ This project is part of a 6-project ecosystem. **Direct** relationships:
 
 | Project | Relationship |
 |---------|-------------|
-| `ComfyUI-Workflows` | All 30+ workflows are built around this Toolkit's wireless nodes — **breaking a node breaks workflows** |
+| `ComfyUI-Workflows` | Workflows will be migrated to use this Toolkit's wireless nodes (Toolkit still in development — not yet integrated) |
 | `ComfyUI-Auto_installer` | The installer auto-installs this Toolkit as a custom node via `custom_nodes.json` |
 | `ComfyUI-UmeAiRT-Sync` | The Sync node distributes workflows that depend on this Toolkit |
 | `UmeAiRT-NAS-Utils` | Orchestration hub — may run consistency checks against this project |
