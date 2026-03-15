@@ -1,11 +1,11 @@
 import { app } from "../../scripts/app.js";
 
-// UmeAiRT Block Node Colors
+// UmeAiRT Node Colors
 // Dark background colors for nodes, lighter for connections
 const UME_NODE_COLORS = {
     // === BLOCK NODES ===
 
-    // Settings Block - Amber/Bronze (more muted than bright yellow)
+    // Settings Block - Amber/Bronze
     "UmeAiRT_GenerationSettings": {
         color: "#935116",
         bgcolor: "#4A290B"
@@ -31,12 +31,6 @@ const UME_NODE_COLORS = {
     "UmeAiRT_FilesSettings_ZIMG": {
         color: "#154360",
         bgcolor: "#0A2130"
-    },
-
-    // Prompt Block - Green
-    "UmeAiRT_PromptBlock": {
-        color: "#145A32",
-        bgcolor: "#0A2D19"
     },
 
     // LoRA Blocks - Violet
@@ -73,27 +67,27 @@ const UME_NODE_COLORS = {
         bgcolor: "#123851"
     },
 
-    // === WIRELESS NODES ===
+    // === PIPELINE NODES ===
 
-    // Wireless Upscale - Pale Blue
-    "UmeAiRT_WirelessUltimateUpscale": {
+    // Pipeline Upscale - Pale Blue
+    "UmeAiRT_PipelineUltimateUpscale": {
         color: "#2471A3",
         bgcolor: "#123851"
     },
-    "UmeAiRT_WirelessUltimateUpscale_Advanced": {
+    "UmeAiRT_PipelineUltimateUpscale_Advanced": {
         color: "#2471A3",
         bgcolor: "#123851"
     },
-    "UmeAiRT_WirelessSeedVR2Upscale": {
+    "UmeAiRT_PipelineSeedVR2Upscale": {
         color: "#2471A3",
         bgcolor: "#123851"
     },
-    "UmeAiRT_WirelessSeedVR2Upscale_Advanced": {
+    "UmeAiRT_PipelineSeedVR2Upscale_Advanced": {
         color: "#2471A3",
         bgcolor: "#123851"
     },
 
-    // Detailer Daemon - Pale Blue (Same as SeedVR2)
+    // Detailer Daemon - Pale Blue
     "UmeAiRT_Detailer_Daemon_Simple": {
         color: "#2471A3",
         bgcolor: "#123851"
@@ -102,37 +96,39 @@ const UME_NODE_COLORS = {
         color: "#2471A3",
         bgcolor: "#123851"
     },
-    // Wireless FaceDetailer - Pale Blue
-    "UmeAiRT_WirelessFaceDetailer_Simple": {
+
+    // Pipeline FaceDetailer - Pale Blue
+    "UmeAiRT_PipelineFaceDetailer": {
         color: "#2471A3",
         bgcolor: "#123851"
     },
-    "UmeAiRT_WirelessFaceDetailer_Advanced": {
-        color: "#2471A3",
-        bgcolor: "#123851"
-    },
-    // Wireless Inpaint Composite - Pale Blue (Post-Process family)
-    "UmeAiRT_WirelessInpaintComposite": {
+    "UmeAiRT_PipelineFaceDetailer_Advanced": {
         color: "#2471A3",
         bgcolor: "#123851"
     },
 
-    // Wireless Image Saver - Blue-Teal (output, distinct from green prompts)
-    "UmeAiRT_WirelessImageSaver": {
+    // Pipeline Inpaint Composite - Pale Blue
+    "UmeAiRT_PipelineInpaintComposite": {
+        color: "#2471A3",
+        bgcolor: "#123851"
+    },
+
+    // Pipeline Image Saver - Blue-Teal
+    "UmeAiRT_PipelineImageSaver": {
         color: "#1A5653",
         bgcolor: "#0D2B29"
     },
 
-    // Wireless Image Loader - Rust Red (input, distinct from amber settings)
-    "UmeAiRT_WirelessImageLoader": {
+    // Pipeline Image Loader - Rust Red
+    "UmeAiRT_PipelineImageLoader": {
         color: "#6B2D1A",
         bgcolor: "#35160D"
     },
 
-    // Wireless Checkpoint Loader - Blue
-    "UmeAiRT_WirelessCheckpointLoader": {
-        color: "#154360",
-        bgcolor: "#0A2130"
+    // Pipeline Image Process - Pale Blue
+    "UmeAiRT_PipelineImageProcess": {
+        color: "#2471A3",
+        bgcolor: "#123851"
     },
 
     // Multi-LoRA Loader - Violet
@@ -143,25 +139,19 @@ const UME_NODE_COLORS = {
 
     // === UTILITY NODES ===
 
-    // Debug - Dark Gray
-    "UmeAiRT_Wireless_Debug": {
-        color: "#34495E",
-        bgcolor: "#1A252F"
-    },
-
-    // Bbox Detector Loader - Pale Blue (same as upscale/detailer family)
+    // Bbox Detector Loader - Pale Blue
     "UmeAiRT_BboxDetectorLoader": {
         color: "#2471A3",
         bgcolor: "#123851"
     },
 
-    // Source Image Output - Rust Red (image family)
+    // Source Image Output - Rust Red
     "UmeAiRT_SourceImage_Output": {
         color: "#6B2D1A",
         bgcolor: "#35160D"
     },
 
-    // Block Image Loader Block - Rust Red
+    // Block Image Loaders - Rust Red
     "UmeAiRT_BlockImageLoader": {
         color: "#6B2D1A",
         bgcolor: "#35160D"
@@ -171,18 +161,13 @@ const UME_NODE_COLORS = {
         bgcolor: "#35160D"
     },
 
-    // Wireless Image Process - Pale Blue
-    "UmeAiRT_WirelessImageProcess": {
-        color: "#2471A3",
-        bgcolor: "#123851"
-    },
     // Block Image Process - Amber/Bronze (Settings family)
     "UmeAiRT_BlockImageProcess": {
         color: "#935116",
         bgcolor: "#4A290B"
     },
 
-    // ControlNet - Amber/Bronze (Same as Image Process)
+    // ControlNet - Amber/Bronze
     "UmeAiRT_ControlNetImageApply_Simple": {
         color: "#935116",
         bgcolor: "#4A290B"
@@ -196,88 +181,35 @@ const UME_NODE_COLORS = {
         bgcolor: "#4A290B"
     },
 
-    // Tools - Light Grey/Dark Text
+    // Bundle Downloader - Light Grey/Dark Text
     "UmeAiRT_Bundle_Downloader": {
         color: "#333333",
         bgcolor: "#D5D8DC"
     },
 
-    // Bundle Auto-Loader - Blue (Loader family)
+    // Bundle Auto-Loader - Blue
     "UmeAiRT_BundleLoader": {
         color: "#154360",
         bgcolor: "#0A2130"
     },
 
-    // Label - Dark Gray (utility)
+    // Label - Dark Gray
     "UmeAiRT_Label": {
         color: "#34495E",
         bgcolor: "#1A252F"
     },
 
-    // === INPUT/OUTPUT NODES (Raw Wireless) - Subtle Gray ===
-
-    // Settings-related I/O - Amber tint
-    "UmeAiRT_Guidance_Input": { color: "#6B4423", bgcolor: "#35220F" },
-    "UmeAiRT_Guidance_Output": { color: "#6B4423", bgcolor: "#35220F" },
-    "UmeAiRT_Steps_Input": { color: "#6B4423", bgcolor: "#35220F" },
-    "UmeAiRT_Steps_Output": { color: "#6B4423", bgcolor: "#35220F" },
-    "UmeAiRT_Denoise_Input": { color: "#6B4423", bgcolor: "#35220F" },
-    "UmeAiRT_Denoise_Output": { color: "#6B4423", bgcolor: "#35220F" },
-    "UmeAiRT_Seed_Input": { color: "#6B4423", bgcolor: "#35220F" },
-    "UmeAiRT_Seed_Output": { color: "#6B4423", bgcolor: "#35220F" },
-    "UmeAiRT_ImageSize_Input": { color: "#6B4423", bgcolor: "#35220F" },
-    "UmeAiRT_ImageSize_Output": { color: "#6B4423", bgcolor: "#35220F" },
-    "UmeAiRT_FPS_Input": { color: "#6B4423", bgcolor: "#35220F" },
-    "UmeAiRT_FPS_Output": { color: "#6B4423", bgcolor: "#35220F" },
-
-    // Sampler/Scheduler I/O - Gray
-    "UmeAiRT_Scheduler_Input": { color: "#2C3E50", bgcolor: "#1A252F" },
-    "UmeAiRT_Scheduler_Output": { color: "#2C3E50", bgcolor: "#1A252F" },
-    "UmeAiRT_Sampler_Input": { color: "#2C3E50", bgcolor: "#1A252F" },
-    "UmeAiRT_Sampler_Output": { color: "#2C3E50", bgcolor: "#1A252F" },
-    "UmeAiRT_SamplerScheduler_Input": { color: "#2C3E50", bgcolor: "#1A252F" },
-
-    // Prompt I/O - Green
-    "UmeAiRT_Positive_Input": { color: "#145A32", bgcolor: "#0A2D19" },
-    "UmeAiRT_Positive_Output": { color: "#145A32", bgcolor: "#0A2D19" },
-    "UmeAiRT_Negative_Input": { color: "#145A32", bgcolor: "#0A2D19" },
-    "UmeAiRT_Negative_Output": { color: "#145A32", bgcolor: "#0A2D19" },
-
-    // Model/VAE/CLIP I/O - Blue
-    "UmeAiRT_Model_Input": { color: "#154360", bgcolor: "#0A2130" },
-    "UmeAiRT_Model_Output": { color: "#154360", bgcolor: "#0A2130" },
-    "UmeAiRT_VAE_Input": { color: "#154360", bgcolor: "#0A2130" },
-    "UmeAiRT_VAE_Output": { color: "#154360", bgcolor: "#0A2130" },
-    "UmeAiRT_CLIP_Input": { color: "#154360", bgcolor: "#0A2130" },
-    "UmeAiRT_CLIP_Output": { color: "#154360", bgcolor: "#0A2130" },
-
-    // Latent I/O - Gray (sampler family)
-    "UmeAiRT_Latent_Input": { color: "#2C3E50", bgcolor: "#1A252F" },
-    "UmeAiRT_Latent_Output": { color: "#2C3E50", bgcolor: "#1A252F" },
-
-    // === RESTORED NODES ===
-
-    // Wireless Model Loader - Blue (Model Family)
-    "UmeAiRT_WirelessModelLoader": {
-        color: "#154360",
-        bgcolor: "#0A2130"
-    },
-
-    // Seed Nodes - Green (Prompt Family)
-    "UmeAiRT_Seed_Node": {
+    // Prompt Inputs - Green
+    "UmeAiRT_Positive_Input": {
         color: "#145A32",
         bgcolor: "#0A2D19"
     },
-    "UmeAiRT_CR_Seed_Node": {
-        color: "#145A32",
-        bgcolor: "#0A2D19"
-    },
-    "UmeAiRT_GlobalSeed": {
-        color: "#145A32",
-        bgcolor: "#0A2D19"
+    "UmeAiRT_Negative_Input": {
+        color: "#641E16",
+        bgcolor: "#3B100C"
     },
 
-    // Unpack Nodes - Amber (Settings/Utility Family)
+    // Unpack Nodes - Amber
     "UmeAiRT_Faces_Unpack_Node": {
         color: "#935116",
         bgcolor: "#4A290B"
@@ -298,20 +230,16 @@ const UME_NODE_COLORS = {
         color: "#935116",
         bgcolor: "#4A290B"
     },
-    "UmeAiRT_Unpack_Files": {
+    "UmeAiRT_Unpack_FilesBundle": {
         color: "#935116",
         bgcolor: "#4A290B"
     },
-    "UmeAiRT_Unpack_Settings": {
-        color: "#935116",
-        bgcolor: "#4A290B"
-    },
-    "UmeAiRT_Unpack_Prompt": {
+    "UmeAiRT_Unpack_ImageBundle": {
         color: "#935116",
         bgcolor: "#4A290B"
     },
 
-    // Pack/Unpack Pipeline - Teal (Pipeline family)
+    // Pack/Unpack Pipeline - Teal
     "UmeAiRT_Unpack_Pipeline": {
         color: "#17A589",
         bgcolor: "#0B5345"
@@ -321,28 +249,10 @@ const UME_NODE_COLORS = {
         bgcolor: "#0A2130"
     },
 
-    // Log Viewer - Dark Grey (Utility)
+    // Log Viewer - Dark Grey
     "UmeAiRT_Log_Viewer": {
         color: "#34495E",
         bgcolor: "#1A252F"
-    },
-
-    // Wireless Inputs - Amber (Settings Family)
-    "UmeAiRT_Resolution": {
-        color: "#935116",
-        bgcolor: "#4A290B"
-    },
-    "UmeAiRT_Positive_Input": {
-        color: "#145A32", // Green for Positive
-        bgcolor: "#0A2D19"
-    },
-    "UmeAiRT_Negative_Input": {
-        color: "#641E16", // Deep Red for Negative
-        bgcolor: "#3B100C"
-    },
-    "UmeAiRT_SpeedMode": {
-        color: "#935116",
-        bgcolor: "#4A290B"
     }
 };
 
@@ -355,7 +265,6 @@ const UME_SLOT_COLORS = {
     "NEGATIVE": "#E74C3C",       // Vibrant Red for Negative
     "UME_LORA_STACK": "#9B59B6", // Purple
     "UME_IMAGE": "#DC7633",      // Orange/Brown
-    "UME_BUNDLE": "#3498DB",     // Bright Blue (model bundle)
     "UME_PIPELINE": "#1ABC9C"    // Teal (generation context)
 };
 
@@ -363,7 +272,6 @@ const UME_SLOT_COLORS = {
 const UME_NODE_SIZES = {
     "UmeAiRT_Positive_Input": [600, 240],
     "UmeAiRT_Negative_Input": [600, 160],
-    "UmeAiRT_Prompt": [600, 300],
     "UmeAiRT_Signature": [250, 80]
 };
 
@@ -425,7 +333,6 @@ app.registerExtension({
             };
 
             // 4. Ultimate Defense against Vue 2.0 background-tab crushing
-            // If the size is wrong when rendering, snap it back to reality!
             const onDrawForeground = nodeType.prototype.onDrawForeground;
             nodeType.prototype.onDrawForeground = function (ctx) {
                 if (onDrawForeground) {
@@ -442,8 +349,6 @@ app.registerExtension({
 
     async setup() {
         // === Modern Vue ComfyUI: inject CSS custom properties ===
-        // The Vue frontend uses CSS variables (--color-datatype-[TYPE]) for connection colors.
-        // If a type is unknown, it falls back to a gray color. We inject our custom types here.
         const cssRules = Object.entries(UME_SLOT_COLORS)
             .map(([type, color]) => `--color-datatype-${type}: ${color};`)
             .join('\n            ');

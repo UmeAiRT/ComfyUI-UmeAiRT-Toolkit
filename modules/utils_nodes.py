@@ -135,7 +135,7 @@ class UmeAiRT_Unpack_FilesBundle:
     RETURN_TYPES = ("MODEL", "CLIP", "VAE", "STRING")
     RETURN_NAMES = ("model", "clip", "vae", "model_name")
     FUNCTION = "unpack"
-    CATEGORY = "UmeAiRT/Unpack"
+    CATEGORY = "UmeAiRT/Utils/Unpack"
 
     def unpack(self, files_bundle):
         """Extracts internal variables from the files dictionary.
@@ -180,7 +180,7 @@ class UmeAiRT_Pack_Bundle:
     RETURN_TYPES = ("UME_BUNDLE",)
     RETURN_NAMES = ("model_bundle",)
     FUNCTION = "pack"
-    CATEGORY = "UmeAiRT/Pack"
+    CATEGORY = "UmeAiRT/Utils/Pack"
 
     def pack(self, model, clip, vae, model_name=""):
         """Packs native ComfyUI models into a UME_BUNDLE dict.
@@ -209,7 +209,7 @@ class UmeAiRT_Unpack_ImageBundle:
     RETURN_TYPES = ("IMAGE", "MASK", "STRING", "FLOAT", "BOOLEAN")
     RETURN_NAMES = ("image", "mask", "mode", "denoise", "auto_resize")
     FUNCTION = "unpack"
-    CATEGORY = "UmeAiRT/Unpack"
+    CATEGORY = "UmeAiRT/Utils/Unpack"
 
     def unpack(self, image_bundle):
         """Extracts all fields from the image bundle.
@@ -247,7 +247,7 @@ class UmeAiRT_Unpack_Pipeline:
     RETURN_TYPES = ("IMAGE", "MODEL", "CLIP", "VAE", "STRING", "STRING", "STRING", "INT", "INT", "INT", "FLOAT", "STRING", "STRING", "INT", "FLOAT")
     RETURN_NAMES = ("image", "model", "clip", "vae", "model_name", "positive", "negative", "width", "height", "steps", "cfg", "sampler_name", "scheduler", "seed", "denoise")
     FUNCTION = "unpack"
-    CATEGORY = "UmeAiRT/Unpack"
+    CATEGORY = "UmeAiRT/Utils/Unpack"
 
     def unpack(self, pipeline):
         """Extracts all fields from the GenerationContext pipeline.
@@ -345,7 +345,7 @@ class UmeAiRT_Faces_Unpack_Node:
     RETURN_TYPES = ("UME_FACES",)
     RETURN_NAMES = ("faces_passthrough",)
     FUNCTION = "unpack"
-    CATEGORY = "UmeAiRT/Unpack"
+    CATEGORY = "UmeAiRT/Utils/Unpack"
 
     def unpack(self, faces_bundle):
         """Passes the object forward.
@@ -371,7 +371,7 @@ class UmeAiRT_Tags_Unpack_Node:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("tags_string",)
     FUNCTION = "unpack"
-    CATEGORY = "UmeAiRT/Unpack"
+    CATEGORY = "UmeAiRT/Utils/Unpack"
 
     def unpack(self, tags_bundle):
         """Forces the generic tags bundle into a string representation.
@@ -397,7 +397,7 @@ class UmeAiRT_Pipe_Unpack_Node:
     RETURN_TYPES = ("MODEL", "CLIP", "VAE", "STRING", "STRING")
     RETURN_NAMES = ("model", "clip", "vae", "positive", "negative")
     FUNCTION = "unpack"
-    CATEGORY = "UmeAiRT/Unpack"
+    CATEGORY = "UmeAiRT/Utils/Unpack"
 
     def unpack(self, pipe_bundle):
          """Analyzes the legacy pipeline format (list or dict) and extracts the 5 core variables.

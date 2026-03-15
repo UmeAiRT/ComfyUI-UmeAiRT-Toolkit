@@ -10,11 +10,11 @@ from .modules.model_nodes import (
     UmeAiRT_MultiLoraLoader
 )
 from .modules.image_nodes import (
-    UmeAiRT_WirelessImageLoader,
+    UmeAiRT_PipelineImageLoader,
     UmeAiRT_SourceImage_Output,
-    UmeAiRT_WirelessImageProcess,
-    UmeAiRT_WirelessInpaintComposite,
-    UmeAiRT_WirelessImageSaver
+    UmeAiRT_PipelineImageProcess,
+    UmeAiRT_PipelineInpaintComposite,
+    UmeAiRT_PipelineImageSaver
 )
 
 # Register 'bbox' folder for FaceDetailer
@@ -28,13 +28,13 @@ if "bbox" not in folder_paths.folder_names_and_paths:
     folder_paths.folder_names_and_paths["bbox"] = ([os.path.join(folder_paths.models_dir, "bbox")], folder_paths.supported_pt_extensions)
 
 from .modules.logic_nodes import (
-    UmeAiRT_WirelessUltimateUpscale,
-    UmeAiRT_WirelessUltimateUpscale_Advanced,
-    UmeAiRT_WirelessSeedVR2Upscale,
-    UmeAiRT_WirelessSeedVR2Upscale_Advanced,
+    UmeAiRT_PipelineUltimateUpscale,
+    UmeAiRT_PipelineUltimateUpscale_Advanced,
+    UmeAiRT_PipelineSeedVR2Upscale,
+    UmeAiRT_PipelineSeedVR2Upscale_Advanced,
     UmeAiRT_BboxDetectorLoader,
-    UmeAiRT_WirelessFaceDetailer_Advanced,
-    UmeAiRT_WirelessFaceDetailer_Simple,
+    UmeAiRT_PipelineFaceDetailer_Advanced,
+    UmeAiRT_PipelineFaceDetailer,
     UmeAiRT_Detailer_Daemon_Simple,
     UmeAiRT_Detailer_Daemon_Advanced
 )
@@ -102,22 +102,22 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_BlockSampler": UmeAiRT_BlockSampler,
     "UmeAiRT_BlockUltimateSDUpscale": UmeAiRT_BlockUltimateSDUpscale,
     "UmeAiRT_BlockFaceDetailer": UmeAiRT_BlockFaceDetailer,
-    "UmeAiRT_WirelessUltimateUpscale": UmeAiRT_WirelessUltimateUpscale,
-    "UmeAiRT_WirelessUltimateUpscale_Advanced": UmeAiRT_WirelessUltimateUpscale_Advanced,
-    "UmeAiRT_WirelessSeedVR2Upscale": UmeAiRT_WirelessSeedVR2Upscale,
-    "UmeAiRT_WirelessSeedVR2Upscale_Advanced": UmeAiRT_WirelessSeedVR2Upscale_Advanced,
-    "UmeAiRT_WirelessFaceDetailer_Advanced": UmeAiRT_WirelessFaceDetailer_Advanced,
-    "UmeAiRT_WirelessFaceDetailer_Simple": UmeAiRT_WirelessFaceDetailer_Simple,
+    "UmeAiRT_PipelineUltimateUpscale": UmeAiRT_PipelineUltimateUpscale,
+    "UmeAiRT_PipelineUltimateUpscale_Advanced": UmeAiRT_PipelineUltimateUpscale_Advanced,
+    "UmeAiRT_PipelineSeedVR2Upscale": UmeAiRT_PipelineSeedVR2Upscale,
+    "UmeAiRT_PipelineSeedVR2Upscale_Advanced": UmeAiRT_PipelineSeedVR2Upscale_Advanced,
+    "UmeAiRT_PipelineFaceDetailer_Advanced": UmeAiRT_PipelineFaceDetailer_Advanced,
+    "UmeAiRT_PipelineFaceDetailer": UmeAiRT_PipelineFaceDetailer,
     "UmeAiRT_Detailer_Daemon_Simple": UmeAiRT_Detailer_Daemon_Simple,
     "UmeAiRT_Detailer_Daemon_Advanced": UmeAiRT_Detailer_Daemon_Advanced,
     "UmeAiRT_BboxDetectorLoader": UmeAiRT_BboxDetectorLoader,
 
     # Image (Pipeline-aware)
-    "UmeAiRT_WirelessImageLoader": UmeAiRT_WirelessImageLoader,
+    "UmeAiRT_PipelineImageLoader": UmeAiRT_PipelineImageLoader,
     "UmeAiRT_SourceImage_Output": UmeAiRT_SourceImage_Output,
-    "UmeAiRT_WirelessImageProcess": UmeAiRT_WirelessImageProcess,
-    "UmeAiRT_WirelessInpaintComposite": UmeAiRT_WirelessInpaintComposite,
-    "UmeAiRT_WirelessImageSaver": UmeAiRT_WirelessImageSaver,
+    "UmeAiRT_PipelineImageProcess": UmeAiRT_PipelineImageProcess,
+    "UmeAiRT_PipelineInpaintComposite": UmeAiRT_PipelineInpaintComposite,
+    "UmeAiRT_PipelineImageSaver": UmeAiRT_PipelineImageSaver,
 
     # Pack/Unpack (Interoperability)
     "UmeAiRT_Pack_Bundle": UmeAiRT_Pack_Bundle,
@@ -169,22 +169,22 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_BlockSampler": "Block Sampler",
     "UmeAiRT_BlockUltimateSDUpscale": "UltimateSD Upscale (Block)",
     "UmeAiRT_BlockFaceDetailer": "Face Detailer (Block)",
-    "UmeAiRT_WirelessUltimateUpscale": "UltimateSDUpscale (Pipeline)",
-    "UmeAiRT_WirelessUltimateUpscale_Advanced": "UltimateSDUpscale Advanced (Pipeline)",
-    "UmeAiRT_WirelessSeedVR2Upscale": "SeedVR2 Upscale (Pipeline)",
-    "UmeAiRT_WirelessSeedVR2Upscale_Advanced": "SeedVR2 Upscale Advanced (Pipeline)",
-    "UmeAiRT_WirelessFaceDetailer_Advanced": "FaceDetailer Advanced (Pipeline)",
-    "UmeAiRT_WirelessFaceDetailer_Simple": "FaceDetailer (Pipeline)",
+    "UmeAiRT_PipelineUltimateUpscale": "UltimateSDUpscale (Pipeline)",
+    "UmeAiRT_PipelineUltimateUpscale_Advanced": "UltimateSDUpscale Advanced (Pipeline)",
+    "UmeAiRT_PipelineSeedVR2Upscale": "SeedVR2 Upscale (Pipeline)",
+    "UmeAiRT_PipelineSeedVR2Upscale_Advanced": "SeedVR2 Upscale Advanced (Pipeline)",
+    "UmeAiRT_PipelineFaceDetailer_Advanced": "FaceDetailer Advanced (Pipeline)",
+    "UmeAiRT_PipelineFaceDetailer": "FaceDetailer (Pipeline)",
     "UmeAiRT_Detailer_Daemon_Simple": "Detailer Daemon (Simple)",
     "UmeAiRT_Detailer_Daemon_Advanced": "Detailer Daemon (Advanced)",
     "UmeAiRT_BboxDetectorLoader": "BBOX Detector Loader",
 
     # Image
-    "UmeAiRT_WirelessImageLoader": "Image Loader (Pipeline)",
+    "UmeAiRT_PipelineImageLoader": "Image Loader (Pipeline)",
     "UmeAiRT_SourceImage_Output": "Source Image Output",
-    "UmeAiRT_WirelessImageProcess": "Image Process (Pipeline)",
-    "UmeAiRT_WirelessInpaintComposite": "Inpaint Composite (Pipeline)",
-    "UmeAiRT_WirelessImageSaver": "Image Saver (Pipeline)",
+    "UmeAiRT_PipelineImageProcess": "Image Process (Pipeline)",
+    "UmeAiRT_PipelineInpaintComposite": "Inpaint Composite (Pipeline)",
+    "UmeAiRT_PipelineImageSaver": "Image Saver (Pipeline)",
 
     # Pack/Unpack
     "UmeAiRT_Pack_Bundle": "Pack Models Bundle",

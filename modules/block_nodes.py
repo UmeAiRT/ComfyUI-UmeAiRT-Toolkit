@@ -6,9 +6,9 @@ import folder_paths
 import nodes as comfy_nodes
 import comfy.sd
 import comfy.utils
-from .common import GenerationContext, resize_tensor, log_node
+from .common import GenerationContext, resize_tensor, apply_outpaint_padding, log_node
 from .logger import logger, log_progress
-from .logic_nodes import UmeAiRT_WirelessUltimateUpscale_Base
+from .logic_nodes import UmeAiRT_UltimateUpscale_Base
 from .optimization_utils import SamplerContext
 
 
@@ -65,7 +65,7 @@ class UmeAiRT_LoraBlock_1:
     RETURN_TYPES = ("UME_LORA_STACK",)
     RETURN_NAMES = ("loras",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Blocks/LoRA"
+    CATEGORY = "UmeAiRT/Block/LoRA"
     def process(self, loras=None, **kwargs): return process_lora_stack(loras, **kwargs)
 
 class UmeAiRT_LoraBlock_3:
@@ -75,7 +75,7 @@ class UmeAiRT_LoraBlock_3:
     RETURN_TYPES = ("UME_LORA_STACK",)
     RETURN_NAMES = ("loras",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Blocks/LoRA"
+    CATEGORY = "UmeAiRT/Block/LoRA"
     def process(self, loras=None, **kwargs): return process_lora_stack(loras, **kwargs)
 
 class UmeAiRT_LoraBlock_5:
@@ -85,7 +85,7 @@ class UmeAiRT_LoraBlock_5:
     RETURN_TYPES = ("UME_LORA_STACK",)
     RETURN_NAMES = ("loras",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Blocks/LoRA"
+    CATEGORY = "UmeAiRT/Block/LoRA"
     def process(self, loras=None, **kwargs): return process_lora_stack(loras, **kwargs)
 
 class UmeAiRT_LoraBlock_10:
@@ -95,7 +95,7 @@ class UmeAiRT_LoraBlock_10:
     RETURN_TYPES = ("UME_LORA_STACK",)
     RETURN_NAMES = ("loras",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Blocks/LoRA"
+    CATEGORY = "UmeAiRT/Block/LoRA"
     def process(self, loras=None, **kwargs): return process_lora_stack(loras, **kwargs)
 
 
@@ -124,7 +124,7 @@ class UmeAiRT_ControlNetImageApply_Advanced:
     RETURN_TYPES = ("UME_IMAGE",)
     RETURN_NAMES = ("image_bundle",)
     FUNCTION = "apply_controlnet"
-    CATEGORY = "UmeAiRT/Blocks/ControlNet"
+    CATEGORY = "UmeAiRT/Block/ControlNet"
 
     def apply_controlnet(self, image_bundle, control_net_name, strength, start_percent, end_percent, optional_control_image=None):
         if not isinstance(image_bundle, dict):
@@ -194,7 +194,7 @@ class UmeAiRT_ControlNetImageProcess:
     RETURN_TYPES = ("UME_IMAGE",)
     RETURN_NAMES = ("image_bundle",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Blocks/ControlNet"
+    CATEGORY = "UmeAiRT/Block/ControlNet"
 
     def process(self, image_bundle, denoise, mode, control_net_name, strength, pipeline=None, resize=False):
         if not isinstance(image_bundle, dict): raise ValueError("ControlNet Image Process: Input is not a valid UME_IMAGE bundle.")
@@ -264,7 +264,7 @@ class UmeAiRT_GenerationSettings:
     RETURN_TYPES = ("UME_SETTINGS",)
     RETURN_NAMES = ("settings",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Blocks/Generation"
+    CATEGORY = "UmeAiRT/Block/Settings"
 
     def process(self, width, height, steps, cfg, sampler_name, scheduler, seed):
         return ({"width": width, "height": height, "steps": steps, "cfg": cfg, "sampler_name": sampler_name, "scheduler": scheduler, "seed": seed},)
@@ -285,7 +285,7 @@ class UmeAiRT_FilesSettings_Checkpoint:
     RETURN_TYPES = ("UME_BUNDLE",)
     RETURN_NAMES = ("model_bundle",)
     FUNCTION = "load"
-    CATEGORY = "UmeAiRT/Blocks/Loaders"
+    CATEGORY = "UmeAiRT/Block/Loaders"
     
     def load(self, ckpt_name):
         model, clip, vae = comfy_nodes.CheckpointLoaderSimple().load_checkpoint(ckpt_name)
@@ -313,7 +313,7 @@ class UmeAiRT_FilesSettings_Checkpoint_Advanced:
     RETURN_TYPES = ("UME_BUNDLE",)
     RETURN_NAMES = ("model_bundle",)
     FUNCTION = "load_files"
-    CATEGORY = "UmeAiRT/Blocks"
+    CATEGORY = "UmeAiRT/Block/Loaders"
 
     def load_files(self, ckpt_name, vae_name="Baked", clip_skip=-1):
         """Loads a checkpoint with optional VAE override and CLIP skip.
@@ -369,7 +369,7 @@ class UmeAiRT_FilesSettings_FLUX:
     RETURN_TYPES = ("UME_BUNDLE",)
     RETURN_NAMES = ("model_bundle",)
     FUNCTION = "load_files"
-    CATEGORY = "UmeAiRT/Blocks/Models"
+    CATEGORY = "UmeAiRT/Block/Loaders"
 
     def load_files(self, unet_name, weight_dtype, clip_name1, clip_name2, vae_name):
         unet_path = folder_paths.get_full_path("unet", unet_name)
@@ -436,7 +436,7 @@ class UmeAiRT_FilesSettings_Fragmented:
     RETURN_TYPES = ("UME_BUNDLE",)
     RETURN_NAMES = ("model_bundle",)
     FUNCTION = "load_files"
-    CATEGORY = "UmeAiRT/Blocks/Models"
+    CATEGORY = "UmeAiRT/Block/Loaders"
 
     def load_files(self, model_name, clip_name, vae_name, weight_dtype="default", clip_type="stable_diffusion", clip_skip=-1, device="default"):
         """Loads components from multiple distinct folders with explicit typing."""
@@ -460,7 +460,8 @@ class UmeAiRT_FilesSettings_Fragmented:
         clip_path = folder_paths.get_full_path("clip", clip_name)
         if clip_path is None:
             try: clip_path = folder_paths.get_full_path("text_encoders", clip_name)
-            except Exception: pass
+            except Exception as e:
+                log_node(f"Fragmented Loader: text_encoders lookup failed: {e}", color="YELLOW")
         if clip_path is None:
             raise ValueError(f"Fragmented Loader: Could not find CLIP file '{clip_name}'.")
         clip_type_enum = getattr(comfy.sd.CLIPType, clip_type.upper(), comfy.sd.CLIPType.STABLE_DIFFUSION)
@@ -531,7 +532,7 @@ class UmeAiRT_FilesSettings_ZIMG:
     RETURN_TYPES = ("UME_BUNDLE",)
     RETURN_NAMES = ("model_bundle",)
     FUNCTION = "load_files"
-    CATEGORY = "UmeAiRT/Blocks/Loaders"
+    CATEGORY = "UmeAiRT/Block/Loaders"
 
     def load_files(self, model_name, clip_name, vae_name):
         """Loads models tailored for the Z-IMG format."""
@@ -554,7 +555,8 @@ class UmeAiRT_FilesSettings_ZIMG:
             clip_path = folder_paths.get_full_path("clip", clip_name)
             if clip_path is None:
                 try: clip_path = folder_paths.get_full_path("text_encoders", clip_name)
-                except Exception: pass
+                except Exception as e:
+                    log_node(f"Z-IMG Loader: text_encoders lookup failed: {e}", color="YELLOW")
             if clip_path is None:
                 raise ValueError(f"Z-IMG Loader: CLIP '{clip_name}' not found.")
             clip = comfy.sd.load_clip(ckpt_paths=[clip_path], embedding_directory=folder_paths.get_folder_paths("embeddings"), clip_type=comfy.sd.CLIPType.LUMINA2)
@@ -586,7 +588,7 @@ class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
     RETURN_TYPES = ("UME_IMAGE",)
     RETURN_NAMES = ("image_bundle",)
     FUNCTION = "load_block_image"
-    CATEGORY = "UmeAiRT/Blocks/Images"
+    CATEGORY = "UmeAiRT/Block/Image"
 
     def load_block_image(self, image):
         """Loads the specified image file and wraps it in a dictionary.
@@ -642,7 +644,7 @@ class UmeAiRT_BlockImageProcess:
     RETURN_TYPES = ("UME_IMAGE",)
     RETURN_NAMES = ("image_bundle",)
     FUNCTION = "process_image"
-    CATEGORY = "UmeAiRT/Blocks/Images"
+    CATEGORY = "UmeAiRT/Block/Image"
 
     def process_image(self, image_bundle, denoise=0.75, mode="img2img", auto_resize=False, mask_blur=0, 
                       padding_left=0, padding_top=0, padding_right=0, padding_bottom=0):
@@ -663,42 +665,9 @@ class UmeAiRT_BlockImageProcess:
 
         if mode == "outpaint":
              pad_l, pad_t, pad_r, pad_b = padding_left, padding_top, padding_right, padding_bottom
-             if pad_l > 0 or pad_t > 0 or pad_r > 0 or pad_b > 0:
-                 img_p = final_image.permute(0, 3, 1, 2)
-                 # Use 'replicate' to stretch edge pixels outward instead of 'constant' black bars
-                 img_padded = torch.nn.functional.pad(img_p, (pad_l, pad_r, pad_t, pad_b), mode='replicate')
-                 final_image = img_padded.permute(0, 2, 3, 1)
-                 
-                 new_h = H + pad_t + pad_b
-                 new_w = W + pad_l + pad_r
-                 new_mask = torch.zeros((B, new_h, new_w), dtype=torch.float32, device=final_image.device)
-                 
-                 if final_mask is not None:
-                     if len(final_mask.shape) == 2: m_in = final_mask.unsqueeze(0)
-                     else: m_in = final_mask
-                     m_padded = torch.nn.functional.pad(m_in, (pad_l, pad_r, pad_t, pad_b), mode='constant', value=0)
-                     if len(final_mask.shape) == 2: new_mask = m_padded.squeeze(0)
-                     else: new_mask = m_padded
-
-                 overlap = 8
-                 if pad_t > 0: new_mask[:, :pad_t + overlap, :] = 1.0
-                 if pad_b > 0: new_mask[:, -(pad_b + overlap):, :] = 1.0
-                 if pad_l > 0: new_mask[:, :, :pad_l + overlap] = 1.0
-                 if pad_r > 0: new_mask[:, :, -(pad_r + overlap):] = 1.0
-                 
-                 feathering = 40
-                 if feathering > 0:
-                      import torchvision.transforms.functional as TF
-                      k = feathering
-                      if k % 2 == 0: k += 1
-                      sig = float(k) / 3.0
-                      if len(new_mask.shape) == 2: m_b = new_mask.unsqueeze(0).unsqueeze(0)
-                      else: m_b = new_mask.unsqueeze(1)
-                      m_b = TF.gaussian_blur(m_b, kernel_size=k, sigma=sig)
-                      if len(new_mask.shape) == 2: new_mask = m_b.squeeze(0).squeeze(0)
-                      else: new_mask = m_b.squeeze(1)
-                 
-                 final_mask = new_mask
+             final_image, final_mask = apply_outpaint_padding(
+                 final_image, final_mask, pad_l, pad_t, pad_r, pad_b, overlap=8, feathering=40
+             )
 
         if (mode == "inpaint" or mode == "outpaint") and final_mask is not None and mask_blur > 0:
              import torchvision.transforms.functional as TF
@@ -739,7 +708,7 @@ class UmeAiRT_BlockSampler:
     RETURN_TYPES = ("UME_PIPELINE",)
     RETURN_NAMES = ("generation",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Blocks/Samplers"
+    CATEGORY = "UmeAiRT/Block/Sampler"
 
     def __init__(self):
         self.lora_loader = comfy_nodes.LoraLoader()
@@ -914,7 +883,7 @@ class UmeAiRT_BlockSampler:
         ctx.latent = result_latent
         return (ctx,)
 
-class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
+class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_UltimateUpscale_Base):
     """Rigidly integrated node for UltimateSDUpscale explicitly mapping piped inputs."""
     def __init__(self): self.lora_loader = comfy_nodes.LoraLoader()
     @classmethod
@@ -938,7 +907,7 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
     RETURN_TYPES = ("UME_PIPELINE",)
     RETURN_NAMES = ("generation",)
     FUNCTION = "upscale"
-    CATEGORY = "UmeAiRT/Blocks/Post-Processing"
+    CATEGORY = "UmeAiRT/Block/Post-Processing"
 
     def upscale(self, pipeline, model, upscale_by, loras=None, prompts=None, denoise=0.35, clean_prompt=True, mode_type="Linear", tile_padding=32):
         """Splices Block inputs with the embedded UltimateSDUpscale math."""
@@ -952,7 +921,8 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
                 name, str_model, str_clip = lora_def
                 if name != "None":
                      try: sd_model, clip = self.lora_loader.load_lora(sd_model, clip, name, str_model, str_clip)
-                     except Exception: pass
+                     except Exception as e:
+                         log_node(f"Block Upscale LoRA Error ({name}): {e}", color="RED")
 
         if not sd_model or not vae or not clip: raise ValueError("Block Upscale: Missing Model/VAE/CLIP")
 
@@ -986,7 +956,7 @@ class UmeAiRT_BlockUltimateSDUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         ctx.image = res[0]
         return (ctx,)
 
-class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
+class UmeAiRT_BlockFaceDetailer(UmeAiRT_UltimateUpscale_Base):
     """Integrated FaceDetailer processing blocks delegating bounds calculations via YOLO logic."""
     def __init__(self): self.lora_loader = comfy_nodes.LoraLoader()
     @classmethod
@@ -1007,7 +977,7 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
     RETURN_TYPES = ("UME_PIPELINE",)
     RETURN_NAMES = ("generation",)
     FUNCTION = "face_detail"
-    CATEGORY = "UmeAiRT/Blocks/Post-Processing"
+    CATEGORY = "UmeAiRT/Block/Post-Processing"
 
     def face_detail(self, pipeline, model, denoise, loras=None, prompts=None, guide_size=512, max_size=1024):
         """Performs face detection, cropping, processing and recompositing."""
@@ -1021,7 +991,8 @@ class UmeAiRT_BlockFaceDetailer(UmeAiRT_WirelessUltimateUpscale_Base):
                 name, str_model, str_clip = lora_def
                 if name != "None":
                      try: sd_model, clip = self.lora_loader.load_lora(sd_model, clip, name, str_model, str_clip)
-                     except Exception: pass
+                     except Exception as e:
+                         log_node(f"Block FaceDetailer LoRA Error ({name}): {e}", color="RED")
 
         if not sd_model or not vae or not clip: raise ValueError("Block FaceDetailer: Missing Model/VAE/CLIP")
 
@@ -1408,6 +1379,35 @@ def _load_bundles_json():
     return {}
 
 
+def _get_hf_token():
+    """Retrieve HuggingFace token from environment or cache file.
+
+    Checks in order:
+    1. HF_TOKEN environment variable
+    2. ~/.cache/huggingface/token file
+
+    Returns:
+        str: The token string, or empty string if not found.
+    """
+    # 1. Environment variable
+    token = os.environ.get("HF_TOKEN", "").strip()
+    if token:
+        return token
+
+    # 2. HuggingFace cache file
+    hf_token_path = os.path.join(os.path.expanduser("~"), ".cache", "huggingface", "token")
+    if os.path.isfile(hf_token_path):
+        try:
+            with open(hf_token_path, 'r', encoding='utf-8') as f:
+                token = f.read().strip()
+            if token:
+                return token
+        except Exception:
+            pass
+
+    return ""
+
+
 class UmeAiRT_BundleLoader:
     """Bundle Auto-Loader: select a model + version, auto-download missing files, and load them.
 
@@ -1438,20 +1438,20 @@ class UmeAiRT_BundleLoader:
             "required": {
                 "category": (categories, {"tooltip": "Select model family (e.g. FLUX, Z-IMAGE_TURBO)."}),
                 "version": (versions_list, {"tooltip": "Select quantization/precision version (e.g. fp16, GGUF_Q4)."}),
-            },
-            "optional": {
-                "hf_token": ("STRING", {"default": "", "tooltip": "Optional HuggingFace token to avoid rate-limiting. Get yours at huggingface.co/settings/tokens"}),
             }
         }
 
     RETURN_TYPES = ("UME_BUNDLE",)
     RETURN_NAMES = ("model_bundle",)
     FUNCTION = "load_bundle"
-    CATEGORY = "UmeAiRT/Blocks/Loaders"
+    CATEGORY = "UmeAiRT/Block/Loaders"
     OUTPUT_NODE = True
 
-    def load_bundle(self, category, version, hf_token=""):
+    def load_bundle(self, category, version):
         """Download missing files and load the selected model bundle."""
+        hf_token = _get_hf_token()
+        if not hf_token:
+            log_node("💡 No HF token found. To speed up downloads, create a token at https://huggingface.co/settings/tokens and set HF_TOKEN in your environment variables.", color="YELLOW")
         data = _load_bundles_json()
         if category not in data:
             raise ValueError(f"Bundle Loader: Category '{category}' not found.")
@@ -1542,7 +1542,7 @@ class UmeAiRT_Positive_Input:
     RETURN_TYPES = ("POSITIVE",)
     RETURN_NAMES = ("positive",)
     FUNCTION = "pass_through"
-    CATEGORY = "UmeAiRT/Prompts"
+    CATEGORY = "UmeAiRT/Block/Prompts"
 
     def pass_through(self, positive):
         return (positive,)
@@ -1561,7 +1561,7 @@ class UmeAiRT_Negative_Input:
     RETURN_TYPES = ("NEGATIVE",)
     RETURN_NAMES = ("negative",)
     FUNCTION = "pass_through"
-    CATEGORY = "UmeAiRT/Prompts"
+    CATEGORY = "UmeAiRT/Block/Prompts"
 
     def pass_through(self, negative):
         return (negative,)

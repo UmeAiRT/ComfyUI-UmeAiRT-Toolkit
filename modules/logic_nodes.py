@@ -13,7 +13,7 @@ import comfy.sd
 import nodes as comfy_nodes
 import comfy.samplers
 import comfy.sample
-from .common import log_node
+from .common import log_node, encode_prompts
 from .logger import logger
 
 # Try import internals
@@ -78,17 +78,10 @@ def _ensure_vram_for_seedvr2():
 
 # --- Base Classes (used by block_nodes.py) ---
 
-class UmeAiRT_WirelessUltimateUpscale_Base:
+class UmeAiRT_UltimateUpscale_Base:
     """Base class providing prompt encoding utilities for Ultimate Upscaler nodes."""
     def encode_prompts(self, clip, pos_text, neg_text):
-        tokens = clip.tokenize(pos_text)
-        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-        positive = [[cond, {"pooled_output": pooled}]]
-
-        tokens = clip.tokenize(neg_text)
-        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-        negative = [[cond, {"pooled_output": pooled}]]
-        return positive, negative
+        return encode_prompts(clip, pos_text, neg_text)
 
     def get_usdu_node(self):
         import sys
@@ -128,7 +121,7 @@ class UmeAiRT_BboxDetectorLoader:
 
 # --- Pipeline-Aware UltimateUpscale ---
 
-class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
+class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
     """Simple Ultimate SD Upscale — reads image and models from pipeline."""
     @classmethod
     def INPUT_TYPES(s):
@@ -144,7 +137,7 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
     RETURN_TYPES = ("UME_PIPELINE",)
     RETURN_NAMES = ("generation",)
     FUNCTION = "upscale"
-    CATEGORY = "UmeAiRT/Post-Processing"
+    CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
     def upscale(self, pipeline, enabled, model, upscale_by):
         image = pipeline.image
@@ -205,7 +198,7 @@ class UmeAiRT_WirelessUltimateUpscale(UmeAiRT_WirelessUltimateUpscale_Base):
         return (ctx,)
 
 
-class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_Base):
+class UmeAiRT_PipelineUltimateUpscale_Advanced(UmeAiRT_UltimateUpscale_Base):
     """Advanced Ultimate SD Upscale — reads models/settings from pipeline."""
     @classmethod
     def INPUT_TYPES(s):
@@ -237,7 +230,7 @@ class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_B
     RETURN_TYPES = ("UME_PIPELINE",)
     RETURN_NAMES = ("generation",)
     FUNCTION = "upscale"
-    CATEGORY = "UmeAiRT/Post-Processing"
+    CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
     def upscale(self, pipeline, model, upscale_by, denoise, clean_prompt=True, mode_type="Linear",
                 tile_width=512, tile_height=512, mask_blur=8, tile_padding=32,
@@ -294,7 +287,7 @@ class UmeAiRT_WirelessUltimateUpscale_Advanced(UmeAiRT_WirelessUltimateUpscale_B
 
 # --- Pipeline-Aware SeedVR2 Upscale ---
 
-class UmeAiRT_WirelessSeedVR2Upscale:
+class UmeAiRT_PipelineSeedVR2Upscale:
     """SeedVR2 upscaler — reads seed from pipeline."""
     @classmethod
     def INPUT_TYPES(s):
@@ -329,7 +322,7 @@ class UmeAiRT_WirelessSeedVR2Upscale:
     RETURN_TYPES = ("UME_PIPELINE",)
     RETURN_NAMES = ("generation",)
     FUNCTION = "upscale"
-    CATEGORY = "UmeAiRT/Post-Processing"
+    CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
     @staticmethod
     def _build_configs(model_name: str):
@@ -430,7 +423,7 @@ class UmeAiRT_WirelessSeedVR2Upscale:
         return (ctx,)
 
 
-class UmeAiRT_WirelessSeedVR2Upscale_Advanced:
+class UmeAiRT_PipelineSeedVR2Upscale_Advanced:
     """Advanced SeedVR2 upscaler with full control — reads seed from pipeline."""
     @classmethod
     def INPUT_TYPES(s):
@@ -473,7 +466,7 @@ class UmeAiRT_WirelessSeedVR2Upscale_Advanced:
     RETURN_TYPES = ("UME_PIPELINE",)
     RETURN_NAMES = ("generation",)
     FUNCTION = "upscale"
-    CATEGORY = "UmeAiRT/Post-Processing"
+    CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
     def upscale(self, pipeline, enabled, model, upscale_by,
                 tile_width, tile_height, mask_blur, tile_padding,
@@ -494,7 +487,7 @@ class UmeAiRT_WirelessSeedVR2Upscale_Advanced:
              raise ImportError("SeedVR2 Core modules not found. Verify installation.")
 
         seed = int(pipeline.seed or 100) % (2**32)
-        dit_config, vae_config = UmeAiRT_WirelessSeedVR2Upscale._build_configs(model)
+        dit_config, vae_config = UmeAiRT_PipelineSeedVR2Upscale._build_configs(model)
 
         log_node(f"SeedVR2 Upscale: Processing | Ratio: x{upscale_by} | Model: {model} | Seed: {seed}")
         _ensure_vram_for_seedvr2()
@@ -527,7 +520,7 @@ class UmeAiRT_WirelessSeedVR2Upscale_Advanced:
 
 # --- Pipeline-Aware Face Detailers ---
 
-class UmeAiRT_WirelessFaceDetailer_Advanced:
+class UmeAiRT_PipelineFaceDetailer_Advanced:
     """Face detailer — reads image and models from pipeline."""
     @classmethod
     def INPUT_TYPES(s):
@@ -545,7 +538,7 @@ class UmeAiRT_WirelessFaceDetailer_Advanced:
     RETURN_TYPES = ("UME_PIPELINE",)
     RETURN_NAMES = ("generation",)
     FUNCTION = "face_detail"
-    CATEGORY = "UmeAiRT/Post-Processing"
+    CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
     def face_detail(self, pipeline, bbox_detector, enabled, guide_size, max_size, denoise):
         image = pipeline.image
@@ -569,13 +562,7 @@ class UmeAiRT_WirelessFaceDetailer_Advanced:
         if not model or not vae or not clip:
             return (pipeline,)
 
-        tokens = clip.tokenize(pos_text)
-        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-        positive = [[cond, {"pooled_output": pooled}]]
-
-        tokens = clip.tokenize(neg_text)
-        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-        negative = [[cond, {"pooled_output": pooled}]]
+        positive, negative = encode_prompts(clip, pos_text, neg_text)
 
         segs = bbox_detector.detect(image, 0.5, 10, 3.0, 10)
 
@@ -591,7 +578,7 @@ class UmeAiRT_WirelessFaceDetailer_Advanced:
         return (ctx,)
 
 
-class UmeAiRT_WirelessFaceDetailer_Simple(UmeAiRT_WirelessFaceDetailer_Advanced):
+class UmeAiRT_PipelineFaceDetailer(UmeAiRT_PipelineFaceDetailer_Advanced):
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -702,7 +689,7 @@ class UmeAiRT_Detailer_Daemon_Simple:
     RETURN_TYPES = ("UME_PIPELINE",)
     RETURN_NAMES = ("generation",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Post-Processing"
+    CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
     def process(self, pipeline, enabled, detail_amount):
         if not enabled:
@@ -732,13 +719,7 @@ class UmeAiRT_Detailer_Daemon_Simple:
             return (torch.zeros((1, 512, 512, 3)),)
 
         # Encode prompts
-        tokens = clip.tokenize(pos_text)
-        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-        positive = [[cond, {"pooled_output": pooled}]]
-
-        tokens = clip.tokenize(neg_text)
-        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-        negative = [[cond, {"pooled_output": pooled}]]
+        positive, negative = encode_prompts(clip, pos_text, neg_text)
 
         t = vae.encode(start_image[:,:,:,:3])
         latent_image = {"samples": t}

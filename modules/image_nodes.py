@@ -11,12 +11,12 @@ import re
 import folder_paths
 import comfy.utils
 import nodes as comfy_nodes
-from .common import resize_tensor, log_node
+from .common import resize_tensor, apply_outpaint_padding, log_node
 from .logger import logger
 from .image_saver_core.logic import ImageSaverLogic
 
 
-class UmeAiRT_WirelessImageLoader(comfy_nodes.LoadImage):
+class UmeAiRT_PipelineImageLoader(comfy_nodes.LoadImage):
     """Image Loader with optional resize from pipeline dimensions."""
     @classmethod
     def INPUT_TYPES(s):
@@ -37,7 +37,7 @@ class UmeAiRT_WirelessImageLoader(comfy_nodes.LoadImage):
     RETURN_TYPES = ("IMAGE", "MASK")
     RETURN_NAMES = ("image", "mask")
     FUNCTION = "load_image_wireless"
-    CATEGORY = "UmeAiRT/Image"
+    CATEGORY = "UmeAiRT/Pipeline/Image"
 
     def load_image_wireless(self, image, resize, mode, pipeline=None):
         out = super().load_image(image)
@@ -73,7 +73,7 @@ class UmeAiRT_SourceImage_Output:
     RETURN_TYPES = ("IMAGE", "MASK")
     RETURN_NAMES = ("source_image", "source_mask")
     FUNCTION = "get_source"
-    CATEGORY = "UmeAiRT/Image"
+    CATEGORY = "UmeAiRT/Pipeline/Image"
 
     def get_source(self, source_image, source_mask=None):
         if source_mask is None:
@@ -81,7 +81,7 @@ class UmeAiRT_SourceImage_Output:
         return (source_image, source_mask)
 
 
-class UmeAiRT_WirelessImageProcess:
+class UmeAiRT_PipelineImageProcess:
     """Image pre-processing node (resize, pad, blur mask) — reads dimensions from pipeline."""
     @classmethod
     def INPUT_TYPES(s):
@@ -106,7 +106,7 @@ class UmeAiRT_WirelessImageProcess:
     RETURN_TYPES = ("IMAGE", "MASK")
     RETURN_NAMES = ("image", "mask")
     FUNCTION = "process_image"
-    CATEGORY = "UmeAiRT/Image"
+    CATEGORY = "UmeAiRT/Pipeline/Image"
 
     def process_image(self, denoise=1.0, mode="img2img", pipeline=None, image=None, mask=None, resize=False, mask_blur=0,
                       padding_left=0, padding_top=0, padding_right=0, padding_bottom=0):
@@ -137,43 +137,9 @@ class UmeAiRT_WirelessImageProcess:
         # OUTPAINT
         if mode == "outpaint":
              pad_l, pad_t, pad_r, pad_b = padding_left, padding_top, padding_right, padding_bottom
-
-             if pad_l > 0 or pad_t > 0 or pad_r > 0 or pad_b > 0:
-                 img_p = final_image.permute(0, 3, 1, 2)
-                 img_padded = torch.nn.functional.pad(img_p, (pad_l, pad_r, pad_t, pad_b), mode='replicate')
-                 final_image = img_padded.permute(0, 2, 3, 1)
-
-                 new_h = H + pad_t + pad_b
-                 new_w = W + pad_l + pad_r
-
-                 new_mask = torch.zeros((B, new_h, new_w), dtype=torch.float32, device=final_image.device)
-
-                 if final_mask is not None:
-                     if len(final_mask.shape) == 2: m_in = final_mask.unsqueeze(0)
-                     else: m_in = final_mask
-                     m_padded = torch.nn.functional.pad(m_in, (pad_l, pad_r, pad_t, pad_b), mode='constant', value=0)
-                     if len(final_mask.shape) == 2: new_mask = m_padded.squeeze(0)
-                     else: new_mask = m_padded
-
-                 overlap = 8
-                 if pad_t > 0: new_mask[:, :pad_t + overlap, :] = 1.0
-                 if pad_b > 0: new_mask[:, -(pad_b + overlap):, :] = 1.0
-                 if pad_l > 0: new_mask[:, :, :pad_l + overlap] = 1.0
-                 if pad_r > 0: new_mask[:, :, -(pad_r + overlap):] = 1.0
-
-                 feathering = 40
-                 if feathering > 0:
-                      import torchvision.transforms.functional as TF
-                      k = feathering
-                      if k % 2 == 0: k += 1
-                      sig = float(k) / 3.0
-                      if len(new_mask.shape) == 2: m_b = new_mask.unsqueeze(0).unsqueeze(0)
-                      else: m_b = new_mask.unsqueeze(1)
-                      m_b = TF.gaussian_blur(m_b, kernel_size=k, sigma=sig)
-                      if len(new_mask.shape) == 2: new_mask = m_b.squeeze(0).squeeze(0)
-                      else: new_mask = m_b.squeeze(1)
-
-                 final_mask = new_mask
+             final_image, final_mask = apply_outpaint_padding(
+                 final_image, final_mask, pad_l, pad_t, pad_r, pad_b, overlap=8, feathering=40
+             )
 
         # INPAINT BLUR
         if mask_blur > 0 and final_mask is not None:
@@ -196,7 +162,7 @@ class UmeAiRT_WirelessImageProcess:
         return (final_image, final_mask)
 
 
-class UmeAiRT_WirelessInpaintComposite:
+class UmeAiRT_PipelineInpaintComposite:
     """Composites generated image back onto source using mask."""
     @classmethod
     def INPUT_TYPES(s):
@@ -213,7 +179,7 @@ class UmeAiRT_WirelessInpaintComposite:
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("composite_image",)
     FUNCTION = "composite"
-    CATEGORY = "UmeAiRT/Image"
+    CATEGORY = "UmeAiRT/Pipeline/Image"
 
     def composite(self, generated_image, source_image, source_mask=None):
         if source_mask is None:
@@ -254,7 +220,7 @@ class UmeAiRT_WirelessInpaintComposite:
         return (composite,)
 
 
-class UmeAiRT_WirelessImageSaver:
+class UmeAiRT_PipelineImageSaver:
     """Image saver with metadata from pipeline context."""
     @classmethod
     def INPUT_TYPES(s):
@@ -272,7 +238,7 @@ class UmeAiRT_WirelessImageSaver:
     RETURN_TYPES = ()
     OUTPUT_NODE = True
     FUNCTION = "save_images"
-    CATEGORY = "UmeAiRT/IO"
+    CATEGORY = "UmeAiRT/Pipeline/IO"
 
     def save_images(self, pipeline, filename, prompt=None, extra_pnginfo=None):
         images = pipeline.image

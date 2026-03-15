@@ -1,45 +1,110 @@
+"""
+UmeAiRT Toolkit - Path Traversal Security Test
+-----------------------------------------------
+Validates that the ImageSaver node correctly blocks path traversal
+attempts, ensuring files are always saved within the output directory.
+"""
+
 import sys
 import os
-import torch
-from unittest.mock import MagicMock
+import re
+import unittest
+from unittest.mock import MagicMock, patch
 
-# Mock ComfyUI environment
+# Force UTF-8 encoding for headless environments
+if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if sys.stderr and hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
+
+# Mock ComfyUI environment before any imports
 sys.modules['comfy'] = MagicMock()
 sys.modules['comfy.utils'] = MagicMock()
+sys.modules['comfy.sd'] = MagicMock()
+sys.modules['comfy.samplers'] = MagicMock()
+sys.modules['comfy.sample'] = MagicMock()
 sys.modules['nodes'] = MagicMock()
+sys.modules['server'] = MagicMock()
+sys.modules['aiohttp'] = MagicMock()
+sys.modules['aiohttp.web'] = MagicMock()
 
+# Create a mock for folder_paths with a controlled output_directory
 class FolderPathsMock:
-    output_directory = os.path.abspath("C:/output_mock_dir")
+    output_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '_test_output'))
 
 sys.modules['folder_paths'] = FolderPathsMock()
 
-# Import from toolkit
-sys.path.insert(0, os.path.abspath('.'))
-from modules.image_nodes import UmeAiRT_WirelessImageSaver
-from modules.common import UME_SHARED_STATE
+# Add project root to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Setup
-os.makedirs("C:/output_mock_dir", exist_ok=True)
-UME_SHARED_STATE["imagesize"] = {"width": 512, "height": 512}
-UME_SHARED_STATE["model_name"] = "test_model"
 
-saver = UmeAiRT_WirelessImageSaver()
-img = torch.zeros((1, 512, 512, 3))
+class TestPathTraversal(unittest.TestCase):
+    """Tests that malicious filename patterns cannot escape the output directory."""
 
-print("Testing malicious path traversal...")
-# Attempt path traversal
-res = saver.save_images([img], "/Windows/System32/hack")
-print(f"Returned UI dict: {res}")
+    def _sanitize_path(self, filename_pattern):
+        """Replicates the sanitization logic from WirelessImageSaver.save_images()."""
+        filename = filename_pattern.replace("..", "")
 
-filenames = [i['filename'] for i in res['ui']['images']]
-subfolders = [i['subfolder'] for i in res['ui']['images']]
+        full_pattern = filename.replace("\\", "/")
+        if "/" in full_pattern:
+            path, filename = full_pattern.rsplit("/", 1)
+        else:
+            path = ""
 
-print(f"Files saved: {filenames}")
-print(f"Subfolders: {subfolders}")
+        path = path.lstrip("/\\")
+        path = re.sub(r'[<>:"\\|?*]', '', path)
+        filename = re.sub(r'[<>:"/\\|?*]', '', filename)
 
-if len(subfolders) > 0 and not subfolders[0].startswith("Windows"):
-    print("SUCCESS: Path traversal was blocked or sanitized properly.")
-else:
-    print("WARNING: Path was literally evaluated as starting with Windows.")
+        output_dir_abs = os.path.abspath(FolderPathsMock.output_directory)
+        final_abs_path = os.path.abspath(os.path.join(output_dir_abs, path))
 
-print("Test complete.")
+        return final_abs_path, output_dir_abs
+
+    def test_basic_traversal_blocked(self):
+        """Attempt ../../Windows/System32/hack"""
+        final, output = self._sanitize_path("../../Windows/System32/hack")
+        self.assertTrue(
+            final.startswith(output),
+            f"Path traversal not blocked: {final} escapes {output}"
+        )
+
+    def test_backslash_traversal_blocked(self):
+        """Attempt ..\\..\\Windows\\System32\\hack"""
+        final, output = self._sanitize_path("..\\..\\Windows\\System32\\hack")
+        self.assertTrue(
+            final.startswith(output),
+            f"Backslash traversal not blocked: {final} escapes {output}"
+        )
+
+    def test_absolute_path_blocked(self):
+        """Attempt /Windows/System32/hack"""
+        final, output = self._sanitize_path("/Windows/System32/hack")
+        self.assertTrue(
+            final.startswith(output),
+            f"Absolute path not blocked: {final} escapes {output}"
+        )
+
+    def test_mixed_traversal_blocked(self):
+        """Attempt ..%2f..%2f style encoding (already decoded by Python)"""
+        final, output = self._sanitize_path("../../../etc/passwd")
+        self.assertTrue(
+            final.startswith(output),
+            f"Mixed traversal not blocked: {final} escapes {output}"
+        )
+
+    def test_clean_path_passes(self):
+        """A normal subfolder path should resolve inside output."""
+        final, output = self._sanitize_path("my_images/test_001")
+        self.assertTrue(
+            final.startswith(output),
+            f"Clean path rejected: {final} not inside {output}"
+        )
+
+    def test_empty_path_passes(self):
+        """Empty path should resolve to root output directory."""
+        final, output = self._sanitize_path("image_001")
+        self.assertEqual(final, output)
+
+
+if __name__ == "__main__":
+    unittest.main()

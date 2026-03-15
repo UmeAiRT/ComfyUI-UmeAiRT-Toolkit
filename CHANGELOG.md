@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Removed `hf_token` STRING input from `BundleLoader` to prevent token exposure in workflow JSON files. Token is now read automatically from `HF_TOKEN` env var or `~/.cache/huggingface/token`.
+- Logs a helpful message with HuggingFace link when no token is found.
+
+### Changed
+
+- **Wireless → Pipeline Rename**: Renamed all 11 `Wireless*` classes and `NODE_CLASS_MAPPINGS` keys to `Pipeline*` (e.g., `UmeAiRT_WirelessImageSaver` → `UmeAiRT_PipelineImageSaver`).
+- **Category Normalization**: Standardized all node categories to `UmeAiRT/Block/*`, `UmeAiRT/Pipeline/*`, `UmeAiRT/Utils/*` hierarchy.
+- **DRY: Outpaint code**: Extracted ~40 lines of duplicated outpaint padding logic into `apply_outpaint_padding()` in `common.py`.
+- **DRY: Prompt encoding**: Centralized inline CLIP prompt encoding into `encode_prompts()` in `common.py`.
+
+### Added
+
+- `TypedDict` type definitions: `UmeBundle`, `UmeSettings`, `UmeImage` in `common.py`.
+- `encode_prompts()` and `apply_outpaint_padding()` utility functions in `common.py`.
+- `_get_hf_token()` helper for secure HuggingFace token retrieval.
+- `tests/test_common.py`: 13 unit tests for core common.py components.
+
+### Fixed
+
+- Fixed `test_traversal.py` broken by removed `UME_SHARED_STATE`. Rewritten with 6 security test cases.
+- Fixed 4 silent `except Exception: pass` — now log errors via `log_node()`.
+- Cleaned `umeairt_colors.js`: removed ~30 phantom entries, fixed duplicate `UME_BUNDLE` slot color.
+- Updated `AGENTS.md`: removed outdated references, added `extra_samplers.py`, updated docs.
+
 ### Changed (Architecture Refactoring)
 
 - **Hub-and-Spoke Pipeline**: The `BlockSampler` is now the central hub that creates the `GenerationContext` (`UME_PIPELINE`). Loaders and settings nodes feed into it as side-inputs.

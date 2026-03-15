@@ -9,7 +9,7 @@
 
 ComfyUI Custom Nodes toolkit with two node families:
 1. **Block Nodes** (primary): Hub-and-spoke architecture using typed objects (`UME_BUNDLE`, `UME_SETTINGS`, `UME_PIPELINE`).
-2. **Wireless Nodes** (legacy): Shared global state (`UME_SHARED_STATE`) for simple setter/getter decoupling.
+2. **Pipeline Nodes**: Post-processing and I/O nodes that operate on `GenerationContext` (UME_PIPELINE).
 
 ## Ecosystem (Sibling Projects on `Y:\`)
 
@@ -56,12 +56,7 @@ Source Image ───┘                          │
 - Never create `GenerationContext` outside the `BlockSampler`.
 - The `auto_resize` flag in `UME_IMAGE` is acted upon by the `BlockSampler` using `UME_SETTINGS` dimensions.
 
-### Wireless Architecture (Legacy — Global State)
 
-For legacy Wireless nodes only. Use `UME_SHARED_STATE` dictionary in `modules/common.py`.
-
-- **Input Nodes**: Write to `UME_SHARED_STATE`.
-- **Output/Process Nodes**: Read from `UME_SHARED_STATE`.
 
 ### Coding Standards
 
@@ -79,15 +74,15 @@ For legacy Wireless nodes only. Use `UME_SHARED_STATE` dictionary in `modules/co
 
 ### File Structure
 
-- `modules/common.py`: `GenerationContext` class, shared constants, and core utilities.
+- `modules/common.py`: `GenerationContext` class, `TypedDict` bundle types (`UmeBundle`, `UmeSettings`, `UmeImage`), shared helpers (`resize_tensor`, `encode_prompts`, `apply_outpaint_padding`).
 - `modules/logger.py`: Standard logging utility.
 - `modules/optimization_utils.py`: Environment and optimization checks.
-- `modules/block_nodes.py`: Block Loaders (→ `UME_BUNDLE`), GenerationSettings (→ `UME_SETTINGS`), BlockSampler (→ `UME_PIPELINE`), and Block post-processors.
+- `modules/extra_samplers.py`: Custom KSampler algorithms (SA-Solver, RES Multistep).
+- `modules/block_nodes.py`: Block Loaders (→ `UME_BUNDLE`), GenerationSettings (→ `UME_SETTINGS`), BlockSampler (→ `UME_PIPELINE`), Block post-processors, and BundleAutoLoader.
 - `modules/logic_nodes.py`: Pipeline-aware Upscalers, Detailers, and Detail Daemon.
 - `modules/image_nodes.py`: Image loading, processing, saving (pipeline-aware).
-- `modules/settings_nodes.py`: Wireless Variable Setters/Getters.
-- `modules/model_nodes.py`: Wireless and Block-based Model/LoRA loaders.
-- `modules/utils_nodes.py`: Labels, debuggers, Pack/Unpack interoperability nodes.
+- `modules/model_nodes.py`: Multi-LoRA Loader.
+- `modules/utils_nodes.py`: Labels, debuggers, Pack/Unpack interoperability nodes, Bundle Downloader.
 - `__init__.py`: Registration and exposing nodes to ComfyUI.
 - `web/`: Javascript extensions (UI tweaks, colors, Nodes 2.0 enforcements).
 - `*/core/`: Integrated libraries (e.g., `usdu_core`, `seedvr2_core`).
@@ -101,7 +96,7 @@ Nodes are color-coded by category in `web/umeairt_colors.js`:
 |----------|--------------|-------------|----------|
 | **Settings / Controls**   | Amber / Bronze | `#4A290B` / `#935116` | Generation Settings, Image Process, ControlNet |
 | **Model / Files**         | Deep Blue      | `#0A2130` / `#154360` | Checkpoint Loader, VAE, CLIP |
-| **Prompts**               | Dark Green     | `#0A2D19` / `#145A32` | Wireless Prompts |
+| **Prompts**               | Dark Green     | `#0A2D19` / `#145A32` | Positive/Negative Prompt Input |
 | **LoRA**                  | Violet         | `#25122D` / `#4A235A` | LoRA Stacks |
 | **Samplers (Processors)** | Slate Gray     | `#1A252F` / `#2C3E50` | Block Sampler |
 | **Post-Processing**       | Pale Blue / Teal | `#123851` / `#2471A3` | Ultimate Upscale, Face Detailer, Inpaint Composite |
@@ -130,7 +125,7 @@ To avoid regressions and maintain a stable, production-ready codebase, adhere st
 
 | File | Notes |
 |------|-------|
-| `modules/common.py` | Contains `GenerationContext`, `UME_SHARED_STATE`, and shared configurations. |
+| `modules/common.py` | Contains `GenerationContext`, `TypedDict` bundle types, and shared helpers. |
 | `__init__.py` | Entry point. **Must be updated** when adding nodes via import from modules. |
 | `docs/codemaps/structure.md` | Overview of the modular organization. |
 
