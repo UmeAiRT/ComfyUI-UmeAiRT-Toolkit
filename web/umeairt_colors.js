@@ -57,15 +57,7 @@ const UME_NODE_COLORS = {
         bgcolor: "#1A252F"
     },
 
-    // Block Upscale/Detailer - Pale Blue
-    "UmeAiRT_BlockUltimateSDUpscale": {
-        color: "#2471A3",
-        bgcolor: "#123851"
-    },
-    "UmeAiRT_BlockFaceDetailer": {
-        color: "#2471A3",
-        bgcolor: "#123851"
-    },
+
 
     // === PIPELINE NODES ===
 

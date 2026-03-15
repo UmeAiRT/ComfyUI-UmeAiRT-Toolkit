@@ -48,7 +48,7 @@ from .modules.block_nodes import (
     UmeAiRT_FilesSettings_Fragmented,
     UmeAiRT_FilesSettings_ZIMG,
     UmeAiRT_BlockImageLoader, UmeAiRT_BlockImageLoader_Advanced, UmeAiRT_BlockImageProcess,
-    UmeAiRT_BlockSampler, UmeAiRT_BlockUltimateSDUpscale, UmeAiRT_BlockFaceDetailer,
+    UmeAiRT_BlockSampler,
     UmeAiRT_BundleLoader,
     UmeAiRT_Positive_Input, UmeAiRT_Negative_Input
 )
@@ -100,8 +100,6 @@ NODE_CLASS_MAPPINGS = {
 
     # Sampler & Post-Process (Pipeline)
     "UmeAiRT_BlockSampler": UmeAiRT_BlockSampler,
-    "UmeAiRT_BlockUltimateSDUpscale": UmeAiRT_BlockUltimateSDUpscale,
-    "UmeAiRT_BlockFaceDetailer": UmeAiRT_BlockFaceDetailer,
     "UmeAiRT_PipelineUltimateUpscale": UmeAiRT_PipelineUltimateUpscale,
     "UmeAiRT_PipelineUltimateUpscale_Advanced": UmeAiRT_PipelineUltimateUpscale_Advanced,
     "UmeAiRT_PipelineSeedVR2Upscale": UmeAiRT_PipelineSeedVR2Upscale,
@@ -167,8 +165,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 
     # Sampler & Post-Process
     "UmeAiRT_BlockSampler": "KSampler",
-    "UmeAiRT_BlockUltimateSDUpscale": "UltimateSD Upscale",
-    "UmeAiRT_BlockFaceDetailer": "Face Detailer",
     "UmeAiRT_PipelineUltimateUpscale": "UltimateSD Upscale",
     "UmeAiRT_PipelineUltimateUpscale_Advanced": "UltimateSD Upscale (Advanced)",
     "UmeAiRT_PipelineSeedVR2Upscale": "SeedVR2 Upscale",
