@@ -11,6 +11,19 @@ ComfyUI Custom Nodes toolkit focusing on a **"Wireless" workflow experience**.
 Key characteristic: **Shared Global State (`UME_SHARED_STATE`)**.
 Nodes act as "Setters" (Input) or "Getters" (Output/Processor), decoupling complex wiring.
 
+## Ecosystem (Sibling Projects on `Y:\`)
+
+This project is part of a 6-project ecosystem. **Direct** relationships:
+
+| Project | Relationship |
+|---------|-------------|
+| `ComfyUI-Workflows` | All 30+ workflows are built around this Toolkit's wireless nodes — **breaking a node breaks workflows** |
+| `ComfyUI-Auto_installer` | The installer auto-installs this Toolkit as a custom node via `custom_nodes.json` |
+| `ComfyUI-UmeAiRT-Sync` | The Sync node distributes workflows that depend on this Toolkit |
+| `UmeAiRT-NAS-Utils` | Orchestration hub — may run consistency checks against this project |
+
+> ⚠️ **Impact awareness**: Renaming or removing a node class will break existing workflows in `ComfyUI-Workflows`. Always check workflow compatibility before modifying `NODE_CLASS_MAPPINGS`.
+
 ## Critical Conventions
 
 ### Wireless Architecture (Global State)
