@@ -136,62 +136,50 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_Bundle_Downloader": UmeAiRT_Bundle_Downloader,
     "UmeAiRT_Log_Viewer": UmeAiRT_Log_Viewer,
     "UmeAiRT_HealthCheck": UmeAiRT_HealthCheck,
-
-    # Legacy aliases (backward compatibility for existing workflows)
-    "UmeAiRT_WirelessUltimateUpscale": UmeAiRT_PipelineUltimateUpscale,
-    "UmeAiRT_WirelessUltimateUpscale_Advanced": UmeAiRT_PipelineUltimateUpscale_Advanced,
-    "UmeAiRT_WirelessSeedVR2Upscale": UmeAiRT_PipelineSeedVR2Upscale,
-    "UmeAiRT_WirelessSeedVR2Upscale_Advanced": UmeAiRT_PipelineSeedVR2Upscale_Advanced,
-    "UmeAiRT_WirelessFaceDetailer_Advanced": UmeAiRT_PipelineFaceDetailer_Advanced,
-    "UmeAiRT_WirelessFaceDetailer_Simple": UmeAiRT_PipelineFaceDetailer,
-    "UmeAiRT_WirelessImageLoader": UmeAiRT_PipelineImageLoader,
-    "UmeAiRT_WirelessImageProcess": UmeAiRT_PipelineImageProcess,
-    "UmeAiRT_WirelessInpaintComposite": UmeAiRT_PipelineInpaintComposite,
-    "UmeAiRT_WirelessImageSaver": UmeAiRT_PipelineImageSaver,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    # Block Loaders
-    "UmeAiRT_FilesSettings_Checkpoint": "Model Loader (Block)",
-    "UmeAiRT_FilesSettings_Checkpoint_Advanced": "Model Loader - Advanced (Block)",
-    "UmeAiRT_FilesSettings_FLUX": "Model Loader - FLUX (Block)",
+    # Loaders
+    "UmeAiRT_FilesSettings_Checkpoint": "Model Loader",
+    "UmeAiRT_FilesSettings_Checkpoint_Advanced": "Model Loader (Advanced)",
+    "UmeAiRT_FilesSettings_FLUX": "Model Loader - FLUX",
     "UmeAiRT_FilesSettings_Fragmented": "Model Loader (Fragmented)",
     "UmeAiRT_FilesSettings_ZIMG": "Model Loader (Z-IMG)",
     "UmeAiRT_BundleLoader": "📦 Bundle Auto-Loader",
     "UmeAiRT_MultiLoraLoader": "Multi-LoRA Loader",
 
-    # Block Settings & Image
-    "UmeAiRT_GenerationSettings": "Generation Settings (Block)",
-    "UmeAiRT_BlockImageLoader": "Image Loader (Block)",
-    "UmeAiRT_BlockImageLoader_Advanced": "Image Loader - Advanced (Block)",
-    "UmeAiRT_BlockImageProcess": "Image Process (Block)",
-    "UmeAiRT_LoraBlock_1": "LoRA 1x (Block)",
-    "UmeAiRT_LoraBlock_3": "LoRA 3x (Block)",
-    "UmeAiRT_LoraBlock_5": "LoRA 5x (Block)",
-    "UmeAiRT_LoraBlock_10": "LoRA 10x (Block)",
-    "UmeAiRT_ControlNetImageApply_Simple": "ControlNet Apply (Simple)",
+    # Settings & Image
+    "UmeAiRT_GenerationSettings": "Generation Settings",
+    "UmeAiRT_BlockImageLoader": "Image Loader",
+    "UmeAiRT_BlockImageLoader_Advanced": "Image Loader (Advanced)",
+    "UmeAiRT_BlockImageProcess": "Image Process",
+    "UmeAiRT_LoraBlock_1": "LoRA 1x",
+    "UmeAiRT_LoraBlock_3": "LoRA 3x",
+    "UmeAiRT_LoraBlock_5": "LoRA 5x",
+    "UmeAiRT_LoraBlock_10": "LoRA 10x",
+    "UmeAiRT_ControlNetImageApply_Simple": "ControlNet Apply",
     "UmeAiRT_ControlNetImageApply_Advanced": "ControlNet Apply (Advanced)",
-    "UmeAiRT_ControlNetImageProcess": "ControlNet Process (Unified)",
+    "UmeAiRT_ControlNetImageProcess": "ControlNet Process",
 
     # Prompt Editors
     "UmeAiRT_Positive_Input": "Positive Prompt Input",
     "UmeAiRT_Negative_Input": "Negative Prompt Input",
 
     # Sampler & Post-Process
-    "UmeAiRT_BlockSampler": "Block Sampler",
-    "UmeAiRT_BlockUltimateSDUpscale": "UltimateSD Upscale (Block)",
-    "UmeAiRT_BlockFaceDetailer": "Face Detailer (Block)",
-    "UmeAiRT_PipelineUltimateUpscale": "UltimateSDUpscale (Pipeline)",
-    "UmeAiRT_PipelineUltimateUpscale_Advanced": "UltimateSDUpscale Advanced (Pipeline)",
+    "UmeAiRT_BlockSampler": "KSampler",
+    "UmeAiRT_BlockUltimateSDUpscale": "UltimateSD Upscale",
+    "UmeAiRT_BlockFaceDetailer": "Face Detailer",
+    "UmeAiRT_PipelineUltimateUpscale": "UltimateSD Upscale (Pipeline)",
+    "UmeAiRT_PipelineUltimateUpscale_Advanced": "UltimateSD Upscale (Pipeline Advanced)",
     "UmeAiRT_PipelineSeedVR2Upscale": "SeedVR2 Upscale (Pipeline)",
-    "UmeAiRT_PipelineSeedVR2Upscale_Advanced": "SeedVR2 Upscale Advanced (Pipeline)",
-    "UmeAiRT_PipelineFaceDetailer_Advanced": "FaceDetailer Advanced (Pipeline)",
+    "UmeAiRT_PipelineSeedVR2Upscale_Advanced": "SeedVR2 Upscale (Pipeline Advanced)",
+    "UmeAiRT_PipelineFaceDetailer_Advanced": "FaceDetailer (Pipeline Advanced)",
     "UmeAiRT_PipelineFaceDetailer": "FaceDetailer (Pipeline)",
-    "UmeAiRT_Detailer_Daemon_Simple": "Detailer Daemon (Simple)",
+    "UmeAiRT_Detailer_Daemon_Simple": "Detailer Daemon",
     "UmeAiRT_Detailer_Daemon_Advanced": "Detailer Daemon (Advanced)",
     "UmeAiRT_BboxDetectorLoader": "BBOX Detector Loader",
 
-    # Image
+    # Image (Pipeline)
     "UmeAiRT_PipelineImageLoader": "Image Loader (Pipeline)",
     "UmeAiRT_SourceImage_Output": "Source Image Output",
     "UmeAiRT_PipelineImageProcess": "Image Process (Pipeline)",
