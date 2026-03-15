@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Category Normalization**: Standardized all node categories to `UmeAiRT/Block/*`, `UmeAiRT/Pipeline/*`, `UmeAiRT/Utils/*` hierarchy.
 - **DRY: Outpaint code**: Extracted ~40 lines of duplicated outpaint padding logic into `apply_outpaint_padding()` in `common.py`.
 - **DRY: Prompt encoding**: Centralized inline CLIP prompt encoding into `encode_prompts()` in `common.py`.
+- **Input/Output Consistency**: Renamed `pipeline` input parameter to `generation` across all post-processing nodes for consistency with the BlockSampler output name.
+- **Display Name Cleanup**: Removed `(Block)`, `(Simple)`, and `(Pipeline)` suffixes from all node display names. Block Sampler renamed to KSampler.
+- **Modular Split**: Split monolithic `block_nodes.py` (1426 lines) into 3 focused sub-modules: `block_inputs.py` (LoRA, ControlNet, Settings, Image, Prompts), `block_loaders.py` (Model Loaders, BundleAutoLoader), `block_sampler.py` (BlockSampler). `block_nodes.py` is now a re-export shim.
+- **DRY: Bundle download helpers**: Extracted `_get_bundle_dropdowns()` and `_download_bundle_files()` shared helpers — used by both `BundleLoader` and `Bundle_Downloader`.
 
 ### Added
 
@@ -25,13 +29,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `encode_prompts()` and `apply_outpaint_padding()` utility functions in `common.py`.
 - `_get_hf_token()` helper for secure HuggingFace token retrieval.
 - `tests/test_common.py`: 13 unit tests for core common.py components.
+- **Bundle Downloader** (`UmeAiRT_Bundle_Downloader`): Standalone download utility — downloads model bundles to correct ComfyUI folders without loading into VRAM. Ideal for RunPod/cloud pre-downloading.
+
+### Removed
+
+- Deleted `UmeAiRT_BlockUltimateSDUpscale` and `UmeAiRT_BlockFaceDetailer` — duplicate of Pipeline equivalents with identical `UME_PIPELINE` interface.
+- Removed legacy "Wireless" aliases from `NODE_CLASS_MAPPINGS`.
 
 ### Fixed
 
 - Fixed `test_traversal.py` broken by removed `UME_SHARED_STATE`. Rewritten with 6 security test cases.
 - Fixed 4 silent `except Exception: pass` — now log errors via `log_node()`.
 - Cleaned `umeairt_colors.js`: removed ~30 phantom entries, fixed duplicate `UME_BUNDLE` slot color.
-- Updated `AGENTS.md`: removed outdated references, added `extra_samplers.py`, updated docs.
+- Updated `AGENTS.md` and `README.md`: removed outdated references, documented new architecture.
+- Fixed `NameError: pipeline` in `ImageSaver.save_images()` — missed reference during `pipeline` → `generation` rename.
 
 ### Changed (Architecture Refactoring)
 

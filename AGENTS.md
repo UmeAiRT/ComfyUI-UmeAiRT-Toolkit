@@ -52,7 +52,7 @@ Source Image ───┘                          │
 | `UME_IMAGE` | `{image, mask, mode, denoise, auto_resize}` | BlockImageLoader → BlockImageProcess |
 
 **Rules:**
-- Post-process nodes receive `UME_PIPELINE`, read `pipeline.image`, process, update `pipeline.image`, return `UME_PIPELINE`.
+- Post-process nodes receive `UME_PIPELINE`, read `generation.image`, process, update `generation.image`, return `UME_PIPELINE`.
 - Never create `GenerationContext` outside the `BlockSampler`.
 - The `auto_resize` flag in `UME_IMAGE` is acted upon by the `BlockSampler` using `UME_SETTINGS` dimensions.
 
@@ -63,7 +63,7 @@ Source Image ───┘                          │
 **Naming:**
 
 - Class Names: `UmeAiRT_` prefix (e.g., `UmeAiRT_BlockSampler`).
-- Display Names: Clear, user-friendly (e.g., "KSampler (Block)").
+- Display Names: Clear, user-friendly (e.g., "KSampler").
 - Output names: `model_bundle` for loaders, `generation` for sampler/post-process.
 
 **Registration:**
@@ -78,7 +78,10 @@ Source Image ───┘                          │
 - `modules/logger.py`: Standard logging utility.
 - `modules/optimization_utils.py`: Environment and optimization checks.
 - `modules/extra_samplers.py`: Custom KSampler algorithms (SA-Solver, RES Multistep).
-- `modules/block_nodes.py`: Block Loaders (→ `UME_BUNDLE`), GenerationSettings (→ `UME_SETTINGS`), BlockSampler (→ `UME_PIPELINE`), Block post-processors, and BundleAutoLoader.
+- `modules/block_nodes.py`: Re-export shim for backward compatibility — imports from sub-modules.
+- `modules/block_inputs.py`: LoRA blocks, ControlNet, GenerationSettings (→ `UME_SETTINGS`), Image Loader/Process, Prompt Inputs.
+- `modules/block_loaders.py`: Model Loaders (→ `UME_BUNDLE`), BundleAutoLoader, shared download helpers.
+- `modules/block_sampler.py`: BlockSampler hub (→ `UME_PIPELINE`).
 - `modules/logic_nodes.py`: Pipeline-aware Upscalers, Detailers, and Detail Daemon.
 - `modules/image_nodes.py`: Image loading, processing, saving (pipeline-aware).
 - `modules/model_nodes.py`: Multi-LoRA Loader.
@@ -133,7 +136,7 @@ To avoid regressions and maintain a stable, production-ready codebase, adhere st
 
 | Don't | Do Instead |
 |-------|-----------|
-| Add separate image input/output to post-process nodes | Read/write `pipeline.image` from/to `UME_PIPELINE` |
+| Add separate image input/output to post-process nodes | Read/write `generation.image` from/to `UME_PIPELINE` |
 | Create `GenerationContext` in a loader | Only `BlockSampler` creates `GenerationContext` |
 | Return `MODEL`, `CLIP`, `VAE` separately from loaders | Return a single `UME_BUNDLE` dict |
 | Forget `__init__.py` | Double-check registration after creating a new node class |

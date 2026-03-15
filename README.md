@@ -42,28 +42,28 @@ Stop fighting with "noodle soup"! The UmeAiRT Toolkit uses a **hub-and-spoke** a
 
 | Category | Node | Description |
 |:---|:---|:---|
-| **Models** | `Model Loader (Block)` | Checkpoint loader → `UME_BUNDLE` |
-| **Models** | `Model Loader - FLUX (Block)` | UNET + Dual CLIP + VAE → `UME_BUNDLE` |
+| **Models** | `Model Loader` | Checkpoint loader → `UME_BUNDLE` |
+| **Models** | `Model Loader - FLUX` | UNET + Dual CLIP + VAE → `UME_BUNDLE` |
 | **Models** | `Model Loader (Fragmented)` | Separate UNET/CLIP/VAE files → `UME_BUNDLE` |
 | **Models** | `📦 Bundle Auto-Loader` | Select category + version, auto-download & load (aria2 accelerated) |
 | **Models** | `Multi-LoRA Loader` | Apply up to 3 LoRAs to MODEL + CLIP |
 | **Settings** | `Generation Settings` | Width, Height, Steps, CFG, Seed → `UME_SETTINGS` |
 | **Prompts** | `Positive / Negative Prompt Input` | Multiline text editors with dynamic prompts |
-| **LoRA** | `LoRA 1x/3x/5x/10x (Block)` | Stackable LoRA loaders → `UME_LORA_STACK` |
-| **Image** | `Image Loader (Block)` | Load and prepare source images → `UME_IMAGE` |
-| **Image** | `Image Process (Block)` | Configure mode, denoise, auto-resize → `UME_IMAGE` |
-| **Sampler** | `Block Sampler` | Central hub — receives all bundles → `UME_PIPELINE` |
+| **LoRA** | `LoRA 1x/3x/5x/10x` | Stackable LoRA loaders → `UME_LORA_STACK` |
+| **Image** | `Image Loader` | Load and prepare source images → `UME_IMAGE` |
+| **Image** | `Image Process` | Configure mode, denoise, auto-resize → `UME_IMAGE` |
+| **Sampler** | `KSampler` | Central hub — receives all bundles → `UME_PIPELINE` |
 
 ### Post-Processing (Pipeline-Aware)
 
 | Node | Description |
 |:---|:---|
-| `UltimateSD Upscale (Block/Pipeline)` | Tiled upscaling with pipeline context |
-| `SeedVR2 Upscale (Pipeline)` | AI upscaler (bundled) |
-| `Face Detailer (Block/Pipeline)` | Face enhancement with BBOX detection |
-| `Detailer Daemon` | Advanced detail enhancement |
-| `Inpaint Composite (Pipeline)` | Inpainting with pipeline awareness |
-| `Image Saver (Pipeline)` | Save with metadata preservation |
+| `UltimateSD Upscale` / `(Advanced)` | Tiled upscaling with pipeline context |
+| `SeedVR2 Upscale` / `(Advanced)` | AI upscaler (bundled) |
+| `FaceDetailer` / `(Advanced)` | Face enhancement with BBOX detection |
+| `Detailer Daemon` / `(Advanced)` | Advanced detail enhancement |
+| `Inpaint Composite` | Inpainting with pipeline awareness |
+| `Image Saver` | Save with metadata preservation |
 
 ### Pack/Unpack (Interoperability)
 
@@ -80,7 +80,7 @@ Stop fighting with "noodle soup"! The UmeAiRT Toolkit uses a **hub-and-spoke** a
 | Node | Description |
 |:---|:---|
 | `Label` | Visual annotation node for organizing workflows |
-| `💾 Bundle Model Downloader` | Download model bundles from HuggingFace |
+| `💾 Bundle Model Downloader` | Download model bundles from HuggingFace (aria2 accelerated, no VRAM load — ideal for RunPod/cloud) |
 | `📜 UmeAiRT Log Viewer` | View toolkit activity directly on the canvas |
 | `🩺 Health Check` | Validate dependencies and optimizations at startup |
 
