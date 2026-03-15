@@ -9,6 +9,30 @@ import torch
 from .logger import log_node
 
 
+# --- Legacy Wireless Shared State ---
+# Used by settings_nodes.py, model_nodes.py, and utils_nodes.py (Wireless family).
+# Block nodes do NOT use this — they use GenerationContext instead.
+
+UME_SHARED_STATE = {}
+
+KEY_MODEL = "ume_internal_model"
+KEY_VAE = "ume_internal_vae"
+KEY_CLIP = "ume_internal_clip"
+KEY_POSITIVE = "ume_internal_positive"
+KEY_NEGATIVE = "ume_internal_negative"
+KEY_SEED = "ume_internal_seed"
+KEY_STEPS = "ume_internal_steps"
+KEY_CFG = "ume_internal_cfg"
+KEY_SAMPLER = "ume_internal_sampler"
+KEY_SCHEDULER = "ume_internal_scheduler"
+KEY_DENOISE = "ume_internal_denoise"
+KEY_IMAGESIZE = "ume_internal_imagesize"
+KEY_FPS = "ume_internal_fps"
+KEY_MODEL_NAME = "ume_internal_model_name"
+KEY_LATENT = "ume_internal_latent"
+KEY_LORAS = "ume_internal_loras"
+
+
 class GenerationContext:
     """Encapsulates all state for a single generation pipeline.
 
