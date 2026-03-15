@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **BUG-01**: Fixed 3 `NameError` crashes where `generation.width`/`height` was referenced while parameter was named `pipeline` (`image_nodes.py`, `block_inputs.py`).
+- **BUG-02**: Fixed `NameError` in `PipelineFaceDetailer` — `super().face_detail()` received undefined `pipeline` instead of correct parameter (`logic_nodes.py`).
+- **BUG-03**: Removed duplicate `_get_hf_token()` function definition that silently shadowed the first (`block_loaders.py`).
+- **LOGIC-03**: Fixed `Detailer_Daemon_Simple` returning a raw tensor instead of `gen_pipe` on error (`logic_nodes.py`).
+- **LOGIC-05**: Fixed `HealthCheck` report showing literal `\n` instead of newlines (`utils_nodes.py`).
+- **UX-02**: `BboxDetectorLoader` now raises `RuntimeError` instead of silently returning `None` (`logic_nodes.py`).
+- **UX-03**: Fixed `Log_Viewer` trigger max value (`utils_nodes.py`).
+
+### Security
+
+- **SEC-01**: Fixed path traversal bypass via `....` → `..` by using a `while` loop sanitizer in `ImageSaver` (`image_nodes.py`).
+- **SEC-02**: Added `timeout=30/60` to all `urllib.request.urlopen` calls (`block_loaders.py`).
+
+### Changed
+
+- **Naming Unification**: Unified all `pipeline`/`generation` parameter names to `gen_pipe` across 6 files (~80 occurrences).
+- **PERF-01**: Removed thread-unsafe global `scaled_dot_product_attention` monkey-patch from `SamplerContext`. Optimizations should be activated at ComfyUI startup level (`optimization_utils.py`).
+- **PERF-02**: `warmup_vae` now uses a singleton `VAEDecode` instance instead of creating disposable objects (`optimization_utils.py`).
+- **LOGIC-02**: Added ControlNet model caching to `BlockSampler` — models are loaded once and reused across runs (`block_sampler.py`).
+- **CODE-03**: Refactored 4 identical LoRA Block classes into a single factory function (`block_inputs.py`).
+- **JS-02**: Merged double `onNodeCreated` override into a single unified handler for both colors and sizing (`umeairt_colors.js`).
+- **JS-03**: Replaced global `LGraphCanvas.prototype.drawNode` monkey-patch with per-node `onDrawForeground`/`onDrawBackground` callbacks (`umeairt_signature.js`).
+- **JS-01**: Normalized JS import paths to relative (`umeairt_log_viewer.js`).
+- **CODE-01**: Removed duplicate import lines (`block_inputs.py`, `logic_nodes.py`).
+- **CODE-02**: Removed redundant local `log_node` import (`block_loaders.py`).
+- **CODE-04**: Removed duplicate `colorama.init()` call (`__init__.py`).
+- **CODE-05**: Moved `torchvision.transforms.functional` import to module level (`block_inputs.py`, `image_nodes.py`).
+- **PERF-03**: Added module-level cache for `_load_bundles_json()` (`block_loaders.py`).
+- **UX-04**: Wrote/improved 117 tooltips across all node inputs with beginner-friendly language (6 files).
+
+### Added
+
+- **Tests**: 4 new test files — `test_optimization.py` (8 tests), `test_block_inputs.py` (9 tests), `test_tooltips.py` (1 regression test), `test_registration.py` (7 tests). Total: 42 tests across 7 suites.
+- **CI**: GitHub Actions workflow (`.github/workflows/ci.yml`) running all tests on Python 3.10-3.12 with CPU-only PyTorch.
+
+### Removed
+
+- Removed deprecated `PipelineImageLoader` and `PipelineImageProcess` nodes (broken, replaced by Block image nodes).
+- Removed unused `requests` and `matplotlib` dependencies from `requirements.txt` and `pyproject.toml`.
+
 ### Security
 
 - Removed `hf_token` STRING input from `BundleLoader` to prevent token exposure in workflow JSON files. Token is now read automatically from `HF_TOKEN` env var or `~/.cache/huggingface/token`.

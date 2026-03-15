@@ -1,5 +1,7 @@
 # 🌌 ComfyUI UmeAiRT Toolkit
 
+![CI](https://github.com/UmeAiRT/ComfyUI-UmeAiRT-Toolkit/actions/workflows/ci.yml/badge.svg)
+
 **A Block-Based, Pipeline-Driven Toolkit for ComfyUI.**
 
 Stop fighting with "noodle soup"! The UmeAiRT Toolkit uses a **hub-and-spoke** architecture where typed bundles flow through a clean pipeline — from model loading to post-processing — with full interoperability with native ComfyUI nodes.
@@ -13,7 +15,7 @@ Stop fighting with "noodle soup"! The UmeAiRT Toolkit uses a **hub-and-spoke** a
 ### 🧱 Block Architecture (Hub-and-Spoke)
 
 - **Typed Bundles**: Loaders output `UME_BUNDLE` (model+clip+vae), settings output `UME_SETTINGS`, and the sampler creates a `UME_PIPELINE` that flows through the entire post-processing chain
-- **GenerationContext**: A single object carries models, settings, prompts, and the generated image — no global state, no race conditions
+- **GenerationContext**: A single `gen_pipe` object carries models, settings, prompts, and the generated image — no global state, no race conditions
 - **Direct Prompting**: Connect `Positive/Negative` prompt editors directly to the Block Sampler
 
 ### 🔄 Full Interoperability (Pack/Unpack)
@@ -122,7 +124,36 @@ This toolkit bundles or adapts code from the following open-source projects. We 
 
 ## 🔒 Security
 
-UmeAiRT Toolkit has been audited for common vulnerabilities (Command Injection, SSRF, Deserialization). A critical Path Traversal vulnerability in the Image Saver node was identified and patched. The node now forces relative pathing and validates outputs against the root directory.
+UmeAiRT Toolkit is audited for common vulnerabilities:
+
+- **Path Traversal**: Patched in Image Saver with a `while` loop sanitizer + `os.path.abspath()` validation against the output directory
+- **HTTP Timeouts**: All `urlopen` calls enforce `timeout=30/60` to prevent hanging on unresponsive servers
+- **Token Safety**: HF tokens are read from environment/cache, never exposed in workflow JSON
+
+---
+
+## 🧪 Testing
+
+42 unit tests across 7 suites, with GitHub Actions CI on Python 3.10-3.12:
+
+```bash
+# Run all tests locally
+python tests/test_common.py -v
+python tests/test_traversal.py -v
+python tests/test_optimization.py -v
+python tests/test_block_inputs.py -v
+python tests/test_tooltips.py -v
+python tests/test_registration.py -v
+```
+
+| Suite | Tests | Validates |
+|:---|:---:|:---|
+| `test_common` | 11 | GenerationContext, resize_tensor, encode_prompts, outpaint padding |
+| `test_traversal` | 6 | Path traversal security (6 attack vectors) |
+| `test_optimization` | 8 | Lib cache, SamplerContext safety, VAEDecode singleton |
+| `test_block_inputs` | 9 | LoRA factory, stack processing, tooltip completeness |
+| `test_tooltips` | 1 | Regression: every input must have a tooltip |
+| `test_registration` | 7 | NODE_CLASS ↔ DISPLAY_NAME sync, dependency sync |
 
 ---
 

@@ -10,9 +10,7 @@ from .modules.model_nodes import (
     UmeAiRT_MultiLoraLoader
 )
 from .modules.image_nodes import (
-    UmeAiRT_PipelineImageLoader,
     UmeAiRT_SourceImage_Output,
-    UmeAiRT_PipelineImageProcess,
     UmeAiRT_PipelineInpaintComposite,
     UmeAiRT_PipelineImageSaver
 )
@@ -110,10 +108,8 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_Detailer_Daemon_Advanced": UmeAiRT_Detailer_Daemon_Advanced,
     "UmeAiRT_BboxDetectorLoader": UmeAiRT_BboxDetectorLoader,
 
-    # Image (Pipeline-aware)
-    "UmeAiRT_PipelineImageLoader": UmeAiRT_PipelineImageLoader,
+    # Image
     "UmeAiRT_SourceImage_Output": UmeAiRT_SourceImage_Output,
-    "UmeAiRT_PipelineImageProcess": UmeAiRT_PipelineImageProcess,
     "UmeAiRT_PipelineInpaintComposite": UmeAiRT_PipelineInpaintComposite,
     "UmeAiRT_PipelineImageSaver": UmeAiRT_PipelineImageSaver,
 
@@ -176,9 +172,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_BboxDetectorLoader": "BBOX Detector Loader",
 
     # Image
-    "UmeAiRT_PipelineImageLoader": "Image Loader",
     "UmeAiRT_SourceImage_Output": "Source Image Output",
-    "UmeAiRT_PipelineImageProcess": "Image Process",
     "UmeAiRT_PipelineInpaintComposite": "Inpaint Composite",
     "UmeAiRT_PipelineImageSaver": "Image Saver",
 
@@ -212,9 +206,6 @@ import colorama
 from colorama import Fore, Style
 import server
 from aiohttp import web
-
-# Initialize Colorama
-colorama.init(convert=True, autoreset=True)
 
 # Define API Route for Signature Image
 @server.PromptServer.instance.routes.get("/umeairt/signature")

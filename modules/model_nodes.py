@@ -13,8 +13,8 @@ class UmeAiRT_MultiLoraLoader:
         lora_list = ["None"] + folder_paths.get_filename_list("loras")
         return {
             "required": {
-                "model": ("MODEL", {"tooltip": "Input Model."}),
-                "clip": ("CLIP", {"tooltip": "Input CLIP."}),
+                "model": ("MODEL", {"tooltip": "The base AI model to apply LoRAs to."}),
+                "clip": ("CLIP", {"tooltip": "The text encoder model (handles your prompts)."}),
                 
                 # SLOT 1
                 "lora_1": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF", "tooltip": "Enable LoRA slot 1."}),

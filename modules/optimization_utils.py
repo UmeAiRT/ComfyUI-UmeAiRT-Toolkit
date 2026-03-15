@@ -78,6 +78,15 @@ def check_optimizations():
 
 # --- Target-Resolution VAE Warmup ---
 _WARMED_UP_SHAPES = set()
+_VAE_DECODE_NODE = None
+
+def _get_vae_decode():
+    """Returns a singleton VAEDecode node instance to avoid creating disposable objects."""
+    global _VAE_DECODE_NODE
+    if _VAE_DECODE_NODE is None:
+        import nodes
+        _VAE_DECODE_NODE = nodes.VAEDecode()
+    return _VAE_DECODE_NODE
 
 def warmup_vae(vae, latent_image):
     """Forces an initial VAE compilation pass using an empty tensor of the accurate target resolution.
@@ -108,20 +117,18 @@ def warmup_vae(vae, latent_image):
             
         log_node(f"⚡ Optimisation: VAE Target-Resolution Warmup {H*8}x{W*8} (Preventing VRAM spikes)...", color="CYAN")
         
-        import comfy_extras.nodes_custom_sampler as comfy_nodes
-        import nodes
-        
+        vae_decode = _get_vae_decode()
         target_device = latent_image["samples"].device
         
         try:
             # Attempt 1: 16 Channels (FLUX)
             empty_16 = torch.zeros([B, 16, H, W], device=target_device)
-            nodes.VAEDecode().decode(vae, {"samples": empty_16})
+            vae_decode.decode(vae, {"samples": empty_16})
         except Exception as e:
             if "channels" in str(e).lower() or "size" in str(e).lower() or "dimension" in str(e).lower():
                 # Attempt 2: 4 Channels (SD1.5 / SDXL)
                 empty_4 = torch.zeros([B, 4, H, W], device=target_device)
-                nodes.VAEDecode().decode(vae, {"samples": empty_4})
+                vae_decode.decode(vae, {"samples": empty_4})
             else:
                 raise e
         
@@ -134,30 +141,21 @@ def warmup_vae(vae, latent_image):
 # --- Sampler Context (Optimizations) ---
 
 class SamplerContext:
-    """Context manager to enable compatible optimizations (e.g., SageAttention) during sampling."""
+    """Context manager that logs active optimizations during sampling.
+    
+    Note: SageAttention activation should be handled at ComfyUI startup level
+    (e.g., via --use-sage-attention CLI flag) where it is properly managed,
+    not via per-call global monkey-patching which is thread-unsafe.
+    """
     def __init__(self):
-        self.original_sdpa = getattr(torch.nn.functional, 'scaled_dot_product_attention', None)
         self.optimization_name = "None"
         
     def __enter__(self):
         if check_library("sageattention"):
             self.optimization_name = "SageAttention"
             log_node("⚡ Optimisation Active: SageAttention", color="MAGENTA")
-            try:
-                # Many forks of SageAttention for ComfyUI use simple import hooks or patchers.
-                # Just importing the patcher often works, or we directly apply it if known.
-                # In standard usage with SD, users use `import sageattention` or similar.
-                # We'll just patch F.scaled_dot_product_attention if sageattn is available as a function
-                from sageattention import sageattn
-                torch.nn.functional.scaled_dot_product_attention = sageattn
-            except ImportError:
-                # If there's no sageattn function, it might auto-patch on import.
-                pass
-            except Exception:
-                pass
         elif check_library("triton"):
             self.optimization_name = "Triton"
-            # Triton is often handled behind the scenes by comfy backend if available, so we just log it
             log_node("⚡ Optimisation Active: Triton", color="MAGENTA")
         else:
             self.optimization_name = "Default"
@@ -165,7 +163,4 @@ class SamplerContext:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.optimization_name == "SageAttention" and self.original_sdpa is not None:
-             # Restore native SDPA to prevent breaking other nodes down the line
-             torch.nn.functional.scaled_dot_product_attention = self.original_sdpa
-
+        pass  # No globals to restore — optimizations managed at environment level

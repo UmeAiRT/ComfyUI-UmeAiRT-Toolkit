@@ -25,16 +25,16 @@ class UmeAiRT_BlockSampler:
             "required": {
                 "model_bundle": ("UME_BUNDLE", {"tooltip": "Model bundle from a Loader node."}),
                 "settings": ("UME_SETTINGS", {"tooltip": "Settings from Generation Settings node."}),
-                "positive": ("POSITIVE", {"forceInput": True}),
+                "positive": ("POSITIVE", {"forceInput": True, "tooltip": "Describe what you want in the image. Connect a Prompt Input or CLIP Text Encode node."}),
             },
             "optional": {
-                "negative": ("NEGATIVE", {"forceInput": True}),
-                "loras": ("UME_LORA_STACK",),
-                "image": ("UME_IMAGE",),
+                "negative": ("NEGATIVE", {"forceInput": True, "tooltip": "Describe what to avoid in the image. Connect a Prompt Input or CLIP Text Encode node."}),
+                "loras": ("UME_LORA_STACK", {"tooltip": "Connect a LoRA Block node to apply style/character modifications to the model."}),
+                "image": ("UME_IMAGE", {"tooltip": "Connect an Image Process node for img2img, inpaint, or outpaint workflows."}),
             }
         }
     RETURN_TYPES = ("UME_PIPELINE",)
-    RETURN_NAMES = ("generation",)
+    RETURN_NAMES = ("gen_pipe",)
     FUNCTION = "process"
     CATEGORY = "UmeAiRT/Block/Sampler"
 
@@ -49,6 +49,7 @@ class UmeAiRT_BlockSampler:
         self._cached_negative = None
         self._last_loras = None
         self._last_controlnets = None
+        self._cnet_cache = {}  # name -> loaded ControlNet model
 
     def process(self, 
                 model_bundle: Dict[str, Any], 
@@ -192,7 +193,9 @@ class UmeAiRT_BlockSampler:
                 c_name, c_image, c_str, c_start, c_end = cnet_def
                 if c_name != "None" and c_image is not None:
                     try:
-                        c_model = self.cnet_loader.load_controlnet(c_name)[0]
+                        if c_name not in self._cnet_cache:
+                            self._cnet_cache[c_name] = self.cnet_loader.load_controlnet(c_name)[0]
+                        c_model = self._cnet_cache[c_name]
                         positive_cond, negative_cond = self.cnet_apply.apply_controlnet(positive_cond, negative_cond, c_model, c_image, c_str, c_start, c_end)
                     except Exception as e: log_node(f"Block Sampler ControlNet Error: {e}", color="RED")
 

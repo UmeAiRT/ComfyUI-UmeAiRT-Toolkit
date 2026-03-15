@@ -13,10 +13,10 @@ class UmeAiRT_Label:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "title": ("STRING", {"default": "Label Title", "multiline": False}),
-                "text": ("STRING", {"default": "Description or Notes", "multiline": True}),
-                "color": (["red", "green", "blue", "yellow", "cyan", "magenta", "white", "black"], {"default": "white"}),
-                "font_size": ("INT", {"default": 20, "min": 10, "max": 100}),
+                "title": ("STRING", {"default": "Label Title", "multiline": False, "tooltip": "Title text shown at the top of the label node."}),
+                "text": ("STRING", {"default": "Description or Notes", "multiline": True, "tooltip": "Main text content of the label. Use for notes or workflow documentation."}),
+                "color": (["red", "green", "blue", "yellow", "cyan", "magenta", "white", "black"], {"default": "white", "tooltip": "Color of the label text (e.g. 'white', '#FF0000', 'cyan')."}),
+                "font_size": ("INT", {"default": 20, "min": 10, "max": 100, "tooltip": "Text size in pixels. Default 16 is readable, increase for headers."}),
             }
         }
 
@@ -114,7 +114,7 @@ class UmeAiRT_Unpack_FilesBundle:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "files_bundle": ("UME_BUNDLE", {"tooltip": "Input UME_BUNDLE to unpack."}),
+                "files_bundle": ("UME_BUNDLE", {"tooltip": "Connect a Model Loader output here to see its individual model components."}),
             }
         }
     
@@ -159,7 +159,7 @@ class UmeAiRT_Pack_Bundle:
                 "vae": ("VAE", {"tooltip": "The VAE model."}),
             },
             "optional": {
-                "model_name": ("STRING", {"default": "", "tooltip": "Optional model name for metadata."}),
+                "model_name": ("STRING", {"default": "", "tooltip": "Model name stored in the bundle metadata (useful for Image Saver)."}),
             }
         }
 
@@ -188,7 +188,7 @@ class UmeAiRT_Unpack_ImageBundle:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image_bundle": ("UME_IMAGE", {"tooltip": "Input UME_IMAGE bundle to unpack."}),
+                "image_bundle": ("UME_IMAGE", {"tooltip": "Connect an Image process output here to see its individual components."}),
             }
         }
 
@@ -226,7 +226,7 @@ class UmeAiRT_Unpack_Pipeline:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "pipeline": ("UME_PIPELINE", {"tooltip": "Pipeline context to unpack into native types."}),
+                "pipeline": ("UME_PIPELINE", {"tooltip": "Connect a generation pipeline to extract all its values as individual outputs."}),
             }
         }
 
@@ -235,7 +235,7 @@ class UmeAiRT_Unpack_Pipeline:
     FUNCTION = "unpack"
     CATEGORY = "UmeAiRT/Utils/Unpack"
 
-    def unpack(self, pipeline):
+    def unpack(self, gen_pipe):
         """Extracts all fields from the GenerationContext pipeline.
 
         Args:
@@ -245,21 +245,21 @@ class UmeAiRT_Unpack_Pipeline:
             tuple: All 15 native ComfyUI outputs.
         """
         return (
-            pipeline.image,
-            pipeline.model,
-            pipeline.clip,
-            pipeline.vae,
-            str(pipeline.model_name or ""),
-            str(pipeline.positive_prompt or ""),
-            str(pipeline.negative_prompt or ""),
-            int(pipeline.width or 1024),
-            int(pipeline.height or 1024),
-            int(pipeline.steps or 20),
-            float(pipeline.cfg or 8.0),
-            str(pipeline.sampler_name or "euler"),
-            str(pipeline.scheduler or "normal"),
-            int(pipeline.seed or 0),
-            float(pipeline.denoise or 1.0),
+            gen_pipe.image,
+            gen_pipe.model,
+            gen_pipe.clip,
+            gen_pipe.vae,
+            str(gen_pipe.model_name or ""),
+            str(gen_pipe.positive_prompt or ""),
+            str(gen_pipe.negative_prompt or ""),
+            int(gen_pipe.width or 1024),
+            int(gen_pipe.height or 1024),
+            int(gen_pipe.steps or 20),
+            float(gen_pipe.cfg or 8.0),
+            str(gen_pipe.sampler_name or "euler"),
+            str(gen_pipe.scheduler or "normal"),
+            int(gen_pipe.seed or 0),
+            float(gen_pipe.denoise or 1.0),
         )
 
 class UmeAiRT_Unpack_Prompt:
@@ -292,8 +292,8 @@ class UmeAiRT_Log_Viewer:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "refresh_trigger": ("INT", {"default": 0, "min": 0, "max": 0}), # Dummy trigger
-                "limit": ("INT", {"default": 20, "min": 1, "max": 100}),
+                "refresh_trigger": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Change this value to re-fetch logs."}),
+                "limit": ("INT", {"default": 20, "min": 1, "max": 100, "tooltip": "How many recent log entries to show (1-100)."}),
             }
         }
     RETURN_TYPES = ("STRING",)
@@ -324,7 +324,7 @@ class UmeAiRT_Faces_Unpack_Node:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "faces_bundle": ("UME_FACES", {"tooltip": "Input UME_FACES bundle to unpack."}),
+                "faces_bundle": ("UME_FACES", {"tooltip": "Connect a FaceDetailer output here to extract individual face crops."}),
             }
         }
 
@@ -350,7 +350,7 @@ class UmeAiRT_Tags_Unpack_Node:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "tags_bundle": ("UME_TAGS", {"tooltip": "Input UME_TAGS bundle to unpack."}),
+                "tags_bundle": ("UME_TAGS", {"tooltip": "Connect a tagger output here to extract the individual tag strings."}),
             }
         }
 
@@ -376,7 +376,7 @@ class UmeAiRT_Pipe_Unpack_Node:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "pipe_bundle": ("UME_PIPE", {"tooltip": "Input UME_PIPE bundle to unpack."}),
+                "pipe_bundle": ("UME_PIPE", {"tooltip": "Connect a pipeline here to extract its components."}),
             }
         }
     
@@ -452,7 +452,7 @@ class UmeAiRT_HealthCheck:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "trigger": ("BOOLEAN", {"default": True, "label_on": "Run", "label_off": "Skip"}),
+                "trigger": ("BOOLEAN", {"default": True, "label_on": "Run", "label_off": "Skip", "tooltip": "Increment this number to re-run the health check."}),
             }
         }
 
@@ -520,5 +520,5 @@ class UmeAiRT_HealthCheck:
             
         log_node("------------------------------------", color="CYAN")
         
-        return ("\\n".join(report),)
+        return ("\n".join(report),)
 

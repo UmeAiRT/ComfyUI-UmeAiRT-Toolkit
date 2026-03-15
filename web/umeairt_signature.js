@@ -46,55 +46,35 @@ app.registerExtension({
 
                 return r;
             };
-        }
-    },
-    async setup() {
-        // Hook into the main LiteGraph canvas draw function to bypass default node rendering
-        // specifically for our UmeAiRT Signature node
-        if (typeof LGraphCanvas !== 'undefined' && LGraphCanvas.prototype.drawNode) {
-            const originalDrawNode = LGraphCanvas.prototype.drawNode;
 
-            LGraphCanvas.prototype.drawNode = function (node, ctx) {
-                if (node.type === "UmeAiRT_Signature") {
+            // Per-node drawing: replaces the global LGraphCanvas.prototype.drawNode patch
+            // This avoids a per-render type check for every node on the canvas.
+            nodeType.prototype.onDrawBackground = function (ctx) {
+                // Force complete transparency — skip default background rendering
+                this.bgcolor = "transparent";
+                this.color = "transparent";
+            };
 
-                    // Force complete transparency for default rendering properties
-                    node.bgcolor = "transparent";
-                    node.color = "transparent";
-                    const originalBoxColor = node.boxcolor;
-                    node.boxcolor = "transparent";
-
-                    // Run the original drawNode to handle selections, etc (but invisible background)
-                    const result = originalDrawNode.apply(this, arguments);
-
-                    // Now manually draw our image over everything, bypassing the constraints
-                    if (node.imageLoaded && node.signatureImage) {
-                        ctx.save();
-                        ctx.beginPath();
-                        ctx.rect(0, 0, node.size[0], node.size[1]);
-                        ctx.clip(); // Ensure it doesn't bleed outside the resize box
-                        ctx.drawImage(node.signatureImage, 0, 0, node.size[0], node.size[1]);
-                        ctx.restore();
-                    } else if (!node.imageLoaded) {
-                        // Outline when empty so user knows it's there
-                        ctx.save();
-                        ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
-                        ctx.setLineDash([5, 5]);
-                        ctx.strokeRect(0, 0, node.size[0], node.size[1]);
-                        ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-                        ctx.font = "14px Arial";
-                        ctx.fillText("Replace assets/signature.png", 10, node.size[1] / 2);
-                        ctx.restore();
-                    }
-
-                    // Restore properties
-                    node.boxcolor = originalBoxColor;
-                    return result;
-
-                } else {
-                    // Normal node behavior
-                    return originalDrawNode.apply(this, arguments);
+            nodeType.prototype.onDrawForeground = function (ctx) {
+                if (this.imageLoaded && this.signatureImage) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.rect(0, 0, this.size[0], this.size[1]);
+                    ctx.clip();
+                    ctx.drawImage(this.signatureImage, 0, 0, this.size[0], this.size[1]);
+                    ctx.restore();
+                } else if (!this.imageLoaded) {
+                    // Outline when empty so user knows it's there
+                    ctx.save();
+                    ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+                    ctx.setLineDash([5, 5]);
+                    ctx.strokeRect(0, 0, this.size[0], this.size[1]);
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+                    ctx.font = "14px Arial";
+                    ctx.fillText("Replace assets/signature.png", 10, this.size[1] / 2);
+                    ctx.restore();
                 }
             };
         }
-    }
+    },
 });

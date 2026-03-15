@@ -11,6 +11,7 @@ import re
 import folder_paths
 import comfy.utils
 import nodes as comfy_nodes
+import torchvision.transforms.functional as TF
 from .common import resize_tensor, apply_outpaint_padding, log_node
 from .logger import logger
 from .image_saver_core.logic import ImageSaverLogic
@@ -26,11 +27,11 @@ class UmeAiRT_PipelineImageLoader(comfy_nodes.LoadImage):
         return {
             "required": {
                 "image": (sorted(files), {"image_upload": True}),
-                "resize": ("BOOLEAN", {"default": False, "label_on": "Resize to Pipeline", "label_off": "Keep Original"}),
-                "mode": (["Inpaint", "Img2Img"], {"default": "Inpaint", "tooltip": "Inpaint: Use Mask. Img2Img: Ignore Mask."}),
+                "resize": ("BOOLEAN", {"default": False, "label_on": "Resize to Pipeline", "label_off": "Keep Original", "tooltip": "Resize the image to match the generation pipeline dimensions."}),
+                "mode": (["Inpaint", "Img2Img"], {"default": "Inpaint", "tooltip": "Inpaint: fills the masked area. Img2Img: transforms the whole image (ignores mask)."}),
             },
             "optional": {
-                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context (optional, used for resize dimensions)."}),
+                "gen_pipe": ("UME_PIPELINE", {"tooltip": "Connect the generation pipeline to automatically use its width/height for resizing."}),
             }
         }
 
@@ -39,14 +40,14 @@ class UmeAiRT_PipelineImageLoader(comfy_nodes.LoadImage):
     FUNCTION = "load_image_wireless"
     CATEGORY = "UmeAiRT/Pipeline/Image"
 
-    def load_image_wireless(self, image, resize, mode, pipeline=None):
+    def load_image_wireless(self, image, resize, mode, gen_pipe=None):
         out = super().load_image(image)
         img = out[0]
         mask = out[1]
 
-        if resize and pipeline is not None:
-            target_w = int(generation.width or 1024)
-            target_h = int(generation.height or 1024)
+        if resize and gen_pipe is not None:
+            target_w = int(gen_pipe.width or 1024)
+            target_h = int(gen_pipe.height or 1024)
             img = resize_tensor(img, target_h, target_w, interp_mode="bilinear", is_mask=False)
             if mask is not None:
                 mask = resize_tensor(mask, target_h, target_w, interp_mode="nearest", is_mask=True)
@@ -63,10 +64,10 @@ class UmeAiRT_SourceImage_Output:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "source_image": ("IMAGE",),
+                "source_image": ("IMAGE", {"tooltip": "The original source image to pass through."}),
             },
             "optional": {
-                "source_mask": ("MASK",),
+                "source_mask": ("MASK", {"tooltip": "Optional mask for the source image (white = areas to modify)."}),
             }
         }
 
@@ -87,19 +88,19 @@ class UmeAiRT_PipelineImageProcess:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
-                "mode": (["img2img", "inpaint", "outpaint", "txt2img"], {"default": "img2img"}),
+                "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "How much the AI changes the image. 1.0 = completely new, 0.3 = subtle changes only."}),
+                "mode": (["img2img", "inpaint", "outpaint", "txt2img"], {"default": "img2img", "tooltip": "How to process the image: img2img (transform), inpaint (fill masked area), or outpaint (extend)."}),
             },
             "optional": {
-                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context (for resize dimensions)."}),
-                "image": ("IMAGE",),
-                "mask": ("MASK",),
-                "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF"}),
-                "mask_blur": ("INT", {"default": 10, "min": 0, "max": 200, "step": 1}),
-                "padding_left": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
-                "padding_top": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
-                "padding_right": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
-                "padding_bottom": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
+                "gen_pipe": ("UME_PIPELINE", {"tooltip": "Connect the generation pipeline to use its width/height for resizing."}),
+                "image": ("IMAGE", {"tooltip": "The image to process (from a loader or previous node)."}),
+                "mask": ("MASK", {"tooltip": "Optional mask for inpainting (white = areas to modify)."}),
+                "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF", "tooltip": "Resize the image to match the generation pipeline dimensions."}),
+                "mask_blur": ("INT", {"default": 10, "min": 0, "max": 200, "step": 1, "tooltip": "Softens the mask edge for natural blending. Higher values = smoother transitions."}),
+                "padding_left": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8, "tooltip": "Pixels to extend the image on the left (outpaint mode)."}),
+                "padding_top": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8, "tooltip": "Pixels to extend the image on the top (outpaint mode)."}),
+                "padding_right": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8, "tooltip": "Pixels to extend the image on the right (outpaint mode)."}),
+                "padding_bottom": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8, "tooltip": "Pixels to extend the image on the bottom (outpaint mode)."}),
             }
         }
 
@@ -108,7 +109,7 @@ class UmeAiRT_PipelineImageProcess:
     FUNCTION = "process_image"
     CATEGORY = "UmeAiRT/Pipeline/Image"
 
-    def process_image(self, denoise=1.0, mode="img2img", pipeline=None, image=None, mask=None, resize=False, mask_blur=0,
+    def process_image(self, denoise=1.0, mode="img2img", gen_pipe=None, image=None, mask=None, resize=False, mask_blur=0,
                       padding_left=0, padding_top=0, padding_right=0, padding_bottom=0):
 
         if mode == "txt2img":
@@ -121,9 +122,9 @@ class UmeAiRT_PipelineImageProcess:
         B, H, W, C = image.shape
 
         target_w, target_h = W, H
-        if resize and pipeline is not None:
-             target_w = int(generation.width or 1024)
-             target_h = int(generation.height or 1024)
+        if resize and gen_pipe is not None:
+             target_w = int(gen_pipe.width or 1024)
+             target_h = int(gen_pipe.height or 1024)
 
         final_image = image
         final_mask = mask
@@ -147,7 +148,6 @@ class UmeAiRT_PipelineImageProcess:
              elif len(final_mask.shape) == 3: m = final_mask.unsqueeze(1)
              else: m = final_mask
 
-             import torchvision.transforms.functional as TF
              k = mask_blur
              if k % 2 == 0: k += 1
              m = TF.gaussian_blur(m, kernel_size=k)
@@ -168,11 +168,11 @@ class UmeAiRT_PipelineInpaintComposite:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "generated_image": ("IMAGE",),
-                "source_image": ("IMAGE",),
+                "generated_image": ("IMAGE", {"tooltip": "The AI-generated image to composite onto the source."}),
+                "source_image": ("IMAGE", {"tooltip": "The original image to blend the generated result onto."}),
             },
             "optional": {
-                "source_mask": ("MASK",),
+                "source_mask": ("MASK", {"tooltip": "Black/white mask defining which areas to keep (black) vs replace (white)."}),
             }
         }
 
@@ -226,8 +226,8 @@ class UmeAiRT_PipelineImageSaver:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image and metadata."}),
-                "filename": ("STRING", {"default": "%date%_%time%_%model%_%seed%", "multiline": False}),
+                "gen_pipe": ("UME_PIPELINE", {"tooltip": "The generation pipeline containing the AI-generated image and all metadata."}),
+                "filename": ("STRING", {"default": "%date%_%time%_%model%_%seed%", "multiline": False, "tooltip": "Filename for saved images. Use variables: %date%, %time%, %model%, %seed%, %width%, %height%."}),
             },
             "hidden": {
                  "prompt": "PROMPT",
@@ -240,11 +240,12 @@ class UmeAiRT_PipelineImageSaver:
     FUNCTION = "save_images"
     CATEGORY = "UmeAiRT/Pipeline/IO"
 
-    def save_images(self, generation, filename, prompt=None, extra_pnginfo=None):
-        images = generation.image
+    def save_images(self, gen_pipe, filename, prompt=None, extra_pnginfo=None):
+        images = gen_pipe.image
         if images is None:
             raise ValueError("Image Saver: No image in pipeline.")
-        filename = filename.replace("..", "")
+        while ".." in filename:
+            filename = filename.replace("..", "")
 
         full_pattern = filename.replace("\\", "/")
         if "/" in full_pattern:
@@ -264,13 +265,13 @@ class UmeAiRT_PipelineImageSaver:
         embed_workflow = True
         save_workflow_as_json = False
 
-        # Read from pipeline
-        width = int(generation.width or 512)
-        height = int(generation.height or 512)
-        modelname = getattr(generation, 'model_name', 'UmeAiRT_Pipeline')
+        # Read from generation pipeline
+        width = int(gen_pipe.width or 512)
+        height = int(gen_pipe.height or 512)
+        modelname = getattr(gen_pipe, 'model_name', 'UmeAiRT_Pipeline')
 
         additional_hashes = ""
-        loras = generation.loras or []
+        loras = gen_pipe.loras or []
         if loras:
             try:
                 from .image_saver_core.utils import full_lora_path_for, get_sha256
@@ -291,16 +292,16 @@ class UmeAiRT_PipelineImageSaver:
         try:
             metadata_obj = ImageSaverLogic.make_metadata(
                 modelname=modelname,
-                positive=str(generation.positive_prompt or ""),
-                negative=str(generation.negative_prompt or ""),
+                positive=str(gen_pipe.positive_prompt or ""),
+                negative=str(gen_pipe.negative_prompt or ""),
                 width=width,
                 height=height,
-                seed_value=int(generation.seed or 0),
-                steps=int(generation.steps or 20),
-                cfg=float(generation.cfg or 8.0),
-                sampler_name=generation.sampler_name or "euler",
-                scheduler_name=generation.scheduler or "normal",
-                denoise=float(generation.denoise or 1.0),
+                seed_value=int(gen_pipe.seed or 0),
+                steps=int(gen_pipe.steps or 20),
+                cfg=float(gen_pipe.cfg or 8.0),
+                sampler_name=gen_pipe.sampler_name or "euler",
+                scheduler_name=gen_pipe.scheduler or "normal",
+                denoise=float(gen_pipe.denoise or 1.0),
                 clip_skip=0,
                 custom="UmeAiRT Pipeline",
                 additional_hashes=additional_hashes,

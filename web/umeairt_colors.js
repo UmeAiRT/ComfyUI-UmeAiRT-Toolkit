@@ -143,6 +143,7 @@ const UME_NODE_COLORS = {
         bgcolor: "#35160D"
     },
 
+
     // Block Image Loaders - Rust Red
     "UmeAiRT_BlockImageLoader": {
         color: "#6B2D1A",
@@ -271,38 +272,35 @@ app.registerExtension({
     name: "UmeAiRT.NodeColors",
 
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
-        // Apply node colors
-        if (UME_NODE_COLORS[nodeData.name]) {
-            const colors = UME_NODE_COLORS[nodeData.name];
+        const colors = UME_NODE_COLORS[nodeData.name];
+        const minSize = UME_NODE_SIZES[nodeData.name];
 
+        // Single unified onNodeCreated handler for both colors and sizing
+        if (colors || minSize) {
             const onNodeCreated = nodeType.prototype.onNodeCreated;
             nodeType.prototype.onNodeCreated = function () {
                 if (onNodeCreated) {
                     onNodeCreated.apply(this, arguments);
                 }
-                this.color = colors.color;
-                this.bgcolor = colors.bgcolor;
+                // Apply colors
+                if (colors) {
+                    this.color = colors.color;
+                    this.bgcolor = colors.bgcolor;
+                }
+                // Apply minimum size
+                if (minSize) {
+                    setTimeout(() => {
+                        this.size[0] = Math.max(this.size[0] || 0, minSize[0]);
+                        this.size[1] = Math.max(this.size[1] || 0, minSize[1]);
+                        this.setDirtyCanvas(true, true);
+                    }, 100);
+                }
             };
         }
 
-        // Apply custom minimum node sizes (Aggressive override for Nodes 2.0)
-        if (UME_NODE_SIZES[nodeData.name]) {
-            const minSize = UME_NODE_SIZES[nodeData.name];
-
-            // 1. Force size firmly on creation
-            const onNodeCreated_sizing = nodeType.prototype.onNodeCreated;
-            nodeType.prototype.onNodeCreated = function () {
-                if (onNodeCreated_sizing) {
-                    onNodeCreated_sizing.apply(this, arguments);
-                }
-                setTimeout(() => {
-                    this.size[0] = Math.max(this.size[0] || 0, minSize[0]);
-                    this.size[1] = Math.max(this.size[1] || 0, minSize[1]);
-                    this.setDirtyCanvas(true, true);
-                }, 100); // Give the DOM Vue engine a moment, then override
-            };
-
-            // 2. Override computeSize (LiteGraph standard)
+        // Size enforcement hooks (only for sized nodes)
+        if (minSize) {
+            // Override computeSize (LiteGraph standard)
             const computeSize = nodeType.prototype.computeSize;
             nodeType.prototype.computeSize = function (out) {
                 let size = [0, 0];
@@ -314,7 +312,7 @@ app.registerExtension({
                 return size;
             };
 
-            // 3. Override onResize (LiteGraph standard)
+            // Override onResize (LiteGraph standard)
             const onResize = nodeType.prototype.onResize;
             nodeType.prototype.onResize = function (size) {
                 if (onResize) {
@@ -324,7 +322,7 @@ app.registerExtension({
                 if (this.size[1] < minSize[1]) this.size[1] = minSize[1];
             };
 
-            // 4. Ultimate Defense against Vue 2.0 background-tab crushing
+            // Ultimate Defense against Vue 2.0 background-tab crushing
             const onDrawForeground = nodeType.prototype.onDrawForeground;
             nodeType.prototype.onDrawForeground = function (ctx) {
                 if (onDrawForeground) {

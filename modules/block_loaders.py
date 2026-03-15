@@ -34,9 +34,7 @@ def _get_hf_token() -> str:
             if token:
                 return token
         except Exception as e:
-            from .logger import log_node
             log_node(f"Bundle Loader: Could not read HF token from cache: {e}", color="YELLOW")
-            pass
 
     return ""
 
@@ -50,7 +48,7 @@ class UmeAiRT_FilesSettings_Checkpoint:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "ckpt_name": (folder_paths.get_filename_list("checkpoints"),),
+                "ckpt_name": (folder_paths.get_filename_list("checkpoints"), {"tooltip": "Choose the AI model file (.safetensors, .ckpt) for image generation."}),
             }
         }
     RETURN_TYPES = ("UME_BUNDLE",)
@@ -540,7 +538,7 @@ def _download_with_aria2(url, dest_path, connections=8, hf_token=""):
         if hf_token:
             headers["Authorization"] = f"Bearer {hf_token}"
         req = urllib.request.Request(url, method="HEAD", headers=headers)
-        with urllib.request.urlopen(req) as resp:
+        with urllib.request.urlopen(req, timeout=30) as resp:
             total_size = int(resp.headers.get("Content-Length", 0))
     except Exception:
         pass
@@ -627,7 +625,7 @@ def _download_with_urllib(url, dest_path, hf_token=""):
     if hf_token:
         headers["Authorization"] = f"Bearer {hf_token}"
     req = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(req) as response:
+    with urllib.request.urlopen(req, timeout=60) as response:
         total_size = int(response.headers.get("Content-Length", 0))
         downloaded = 0
         pbar = comfy.utils.ProgressBar(total_size) if total_size > 0 else None
@@ -691,42 +689,19 @@ def _download_file(url, dest_path, hf_token=""):
         raise RuntimeError(f"Bundle Loader: Failed to download '{filename}': {e}")
 
 
+_BUNDLES_JSON_CACHE = None
+
 def _load_bundles_json():
     """Load and cache the umeairt_bundles.json manifest."""
+    global _BUNDLES_JSON_CACHE
+    if _BUNDLES_JSON_CACHE is not None:
+        return _BUNDLES_JSON_CACHE
     json_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "umeairt_bundles.json")
     if os.path.exists(json_path):
         with open(json_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            _BUNDLES_JSON_CACHE = json.load(f)
+            return _BUNDLES_JSON_CACHE
     return {}
-
-
-def _get_hf_token():
-    """Retrieve HuggingFace token from environment or cache file.
-
-    Checks in order:
-    1. HF_TOKEN environment variable
-    2. ~/.cache/huggingface/token file
-
-    Returns:
-        str: The token string, or empty string if not found.
-    """
-    # 1. Environment variable
-    token = os.environ.get("HF_TOKEN", "").strip()
-    if token:
-        return token
-
-    # 2. HuggingFace cache file
-    hf_token_path = os.path.join(os.path.expanduser("~"), ".cache", "huggingface", "token")
-    if os.path.isfile(hf_token_path):
-        try:
-            with open(hf_token_path, 'r', encoding='utf-8') as f:
-                token = f.read().strip()
-            if token:
-                return token
-        except Exception:
-            pass
-
-    return ""
 
 
 def _get_bundle_dropdowns():

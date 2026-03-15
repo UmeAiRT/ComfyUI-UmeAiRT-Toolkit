@@ -106,7 +106,7 @@ class UmeAiRT_BboxDetectorLoader:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "model_name": (folder_paths.get_filename_list("bbox"),),
+                "model_name": (folder_paths.get_filename_list("bbox"), {"tooltip": "Choose the face detection model (.pt file from models/bbox/ folder)."}),
             }
         }
     RETURN_TYPES = ("BBOX_DETECTOR",)
@@ -119,7 +119,7 @@ class UmeAiRT_BboxDetectorLoader:
             return (bbox_detector,)
         except Exception as e:
             log_node(f"Error loading BBox Detector: {e}", color="RED")
-            return (None,)
+            raise RuntimeError(f"BBox Detector: Failed to load '{model_name}': {e}")
 
 
 # --- Pipeline-Aware UltimateUpscale ---
@@ -130,46 +130,46 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
     def INPUT_TYPES(s):
         return {
             "required": {
-                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
-                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
+                "gen_pipe": ("UME_PIPELINE", {"tooltip": "The generation pipeline carrying your image, model, and all settings through the workflow."}),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough", "tooltip": "Turn this effect on or off. When off, the image passes through unchanged."}),
                 "model": (folder_paths.get_filename_list("upscale_models"),),
-                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider"}),
+                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider", "tooltip": "How much to enlarge the image (e.g. 2.0 = double the resolution)."}),
             },
         }
 
     RETURN_TYPES = ("UME_PIPELINE",)
-    RETURN_NAMES = ("generation",)
+    RETURN_NAMES = ("gen_pipe",)
     FUNCTION = "upscale"
     CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
-    def upscale(self, generation, enabled, model, upscale_by):
-        image = generation.image
+    def upscale(self, gen_pipe, enabled, model, upscale_by):
+        image = gen_pipe.image
         if image is None:
             raise ValueError("UltimateUpscale: No image in pipeline.")
         log_node(f"UltimateSDUpscale (Simple): Processing | Ratio: x{upscale_by} | Model: {model}")
         if not enabled:
-            return (generation,)
+            return (gen_pipe,)
 
         denoise = 0.35
         clean_prompt = True
         mode_type = "Linear"
         tile_padding = 32
 
-        sd_model = generation.model
-        vae = generation.vae
-        clip = generation.clip
+        sd_model = gen_pipe.model
+        vae = gen_pipe.vae
+        clip = gen_pipe.clip
 
-        steps = max(5, int(generation.steps or 20) // 4)
+        steps = max(5, int(gen_pipe.steps or 20) // 4)
         cfg = 1.0
-        sampler_name = generation.sampler_name or "euler"
-        scheduler = generation.scheduler or "normal"
-        seed = int(generation.seed or 0)
+        sampler_name = gen_pipe.sampler_name or "euler"
+        scheduler = gen_pipe.scheduler or "normal"
+        seed = int(gen_pipe.seed or 0)
 
         if not sd_model or not vae or not clip:
             raise ValueError("UltimateUpscale: Missing Model/VAE/CLIP in pipeline.")
 
-        pos_text = str(generation.positive_prompt or "")
-        neg_text = str(generation.negative_prompt or "")
+        pos_text = str(gen_pipe.positive_prompt or "")
+        neg_text = str(gen_pipe.negative_prompt or "")
         target_pos_text = "" if clean_prompt else pos_text
         positive, negative = self.encode_prompts(clip, target_pos_text, neg_text)
 
@@ -181,8 +181,8 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
 
         usdu_node = self.get_usdu_node()
 
-        tile_width = int(generation.width or 1024)
-        tile_height = int(generation.height or 1024)
+        tile_width = int(gen_pipe.width or 1024)
+        tile_height = int(gen_pipe.height or 1024)
 
         res = usdu_node.upscale(
                  image=image, model=sd_model, positive=positive, negative=negative, vae=vae,
@@ -196,7 +196,7 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
                  suppress_preview=True,
              )
 
-        ctx = generation.clone()
+        ctx = gen_pipe.clone()
         ctx.image = res[0]
         return (ctx,)
 
@@ -209,57 +209,57 @@ class UmeAiRT_PipelineUltimateUpscale_Advanced(UmeAiRT_UltimateUpscale_Base):
         seam_fix_modes = ["None", "Band Pass", "Half Tile", "Half Tile + Intersections"]
         return {
              "required": {
-                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
+                "gen_pipe": ("UME_PIPELINE", {"tooltip": "The generation pipeline carrying your image, model, and all settings through the workflow."}),
                 "model": (folder_paths.get_filename_list("upscale_models"),),
-                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider"}),
-                "denoise": ("FLOAT", {"default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
+                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider", "tooltip": "How much to enlarge the image (e.g. 2.0 = double the resolution)."}),
+                "denoise": ("FLOAT", {"default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "How much the AI redraws during upscale. Lower = sharper but less detail added."}),
             },
             "optional":{
-                "clean_prompt": ("BOOLEAN", {"default": True, "label_on": "Reduces Hallucinations", "label_off": "Use Pipeline Prompt"}),
-                "mode_type": (usdu_modes, {"default": "Linear"}),
-                "tile_width": ("INT", {"default": 512, "min": 64, "max": 2048}),
-                "tile_height": ("INT", {"default": 512, "min": 64, "max": 2048}),
-                "mask_blur": ("INT", {"default": 8, "min": 0, "max": 64}),
-                "tile_padding": ("INT", {"default": 32, "min": 0, "max": 128}),
-                "seam_fix_mode": (seam_fix_modes, {"default": "None"}),
-                "seam_fix_denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "seam_fix_width": ("INT", {"default": 64, "min": 0, "max": 512}),
-                "seam_fix_mask_blur": ("INT", {"default": 8, "min": 0, "max": 64}),
-                "seam_fix_padding": ("INT", {"default": 16, "min": 0, "max": 128}),
-                "force_uniform_tiles": ("BOOLEAN", {"default": True}),
-                "tiled_decode": ("BOOLEAN", {"default": False}),
+                "clean_prompt": ("BOOLEAN", {"default": True, "label_on": "Reduces Hallucinations", "label_off": "Use Pipeline Prompt", "tooltip": "Simplify the prompt during upscaling to prevent the AI from adding unwanted new elements."}),
+                "mode_type": (usdu_modes, {"default": "Linear", "tooltip": "How tiles are arranged: Linear (rows), Chess (checkerboard for fewer seams), or None."}),
+                "tile_width": ("INT", {"default": 512, "min": 64, "max": 2048, "tooltip": "Width of each tile in pixels. Smaller = less VRAM but slower. 512-1024 recommended."}),
+                "tile_height": ("INT", {"default": 512, "min": 64, "max": 2048, "tooltip": "Height of each tile in pixels. Smaller = less VRAM but slower. 512-1024 recommended."}),
+                "mask_blur": ("INT", {"default": 8, "min": 0, "max": 64, "tooltip": "Softens tile edges for smoother blending between tiles."}),
+                "tile_padding": ("INT", {"default": 32, "min": 0, "max": 128, "tooltip": "How much tiles overlap in pixels. More overlap = smoother transitions, but slower."}),
+                "seam_fix_mode": (seam_fix_modes, {"default": "None", "tooltip": "Extra pass to remove visible lines between tiles. 'Band+Half' recommended."}),
+                "seam_fix_denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "How much to redraw along tile seams. 0.3-0.5 usually works well."}),
+                "seam_fix_width": ("INT", {"default": 64, "min": 0, "max": 512, "tooltip": "Width of the band processed along each seam in pixels."}),
+                "seam_fix_mask_blur": ("INT", {"default": 8, "min": 0, "max": 64, "tooltip": "Softens the seam fix mask for gradual blending."}),
+                "seam_fix_padding": ("INT", {"default": 16, "min": 0, "max": 128, "tooltip": "Additional context padding around each seam fix area."}),
+                "force_uniform_tiles": ("BOOLEAN", {"default": True, "tooltip": "Ensure all tiles are identical size. May crop slightly but prevents edge artifacts."}),
+                "tiled_decode": ("BOOLEAN", {"default": False, "tooltip": "Decode the image in tiles instead of all at once. Saves VRAM on large images."}),
             }
         }
     RETURN_TYPES = ("UME_PIPELINE",)
-    RETURN_NAMES = ("generation",)
+    RETURN_NAMES = ("gen_pipe",)
     FUNCTION = "upscale"
     CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
-    def upscale(self, generation, model, upscale_by, denoise, clean_prompt=True, mode_type="Linear",
+    def upscale(self, gen_pipe, model, upscale_by, denoise, clean_prompt=True, mode_type="Linear",
                 tile_width=512, tile_height=512, mask_blur=8, tile_padding=32,
                 seam_fix_mode="None", seam_fix_denoise=1.0, seam_fix_width=64,
                 seam_fix_mask_blur=8, seam_fix_padding=16, force_uniform_tiles=True, tiled_decode=False):
 
-        image = generation.image
+        image = gen_pipe.image
         if image is None:
             raise ValueError("UltimateUpscale Advanced: No image in pipeline.")
         log_node(f"UltimateSDUpscale (Advanced): Processing | Ratio: x{upscale_by} | Model: {model} | Denoise: {denoise}")
 
-        sd_model = generation.model
-        vae = generation.vae
-        clip = generation.clip
+        sd_model = gen_pipe.model
+        vae = gen_pipe.vae
+        clip = gen_pipe.clip
 
-        steps = max(5, int(generation.steps or 20) // 4)
+        steps = max(5, int(gen_pipe.steps or 20) // 4)
         cfg = 1.0
-        sampler_name = generation.sampler_name or "euler"
-        scheduler = generation.scheduler or "normal"
-        seed = int(generation.seed or 0)
+        sampler_name = gen_pipe.sampler_name or "euler"
+        scheduler = gen_pipe.scheduler or "normal"
+        seed = int(gen_pipe.seed or 0)
 
         if not sd_model or not vae or not clip:
             raise ValueError("UltimateUpscale Advanced: Missing Model/VAE/CLIP in pipeline.")
 
-        pos_text = str(generation.positive_prompt or "")
-        neg_text = str(generation.negative_prompt or "")
+        pos_text = str(gen_pipe.positive_prompt or "")
+        neg_text = str(gen_pipe.negative_prompt or "")
         target_pos_text = "" if clean_prompt else pos_text
         positive, negative = self.encode_prompts(clip, target_pos_text, neg_text)
 
@@ -283,7 +283,7 @@ class UmeAiRT_PipelineUltimateUpscale_Advanced(UmeAiRT_UltimateUpscale_Base):
                  suppress_preview=True,
              )
 
-        ctx = generation.clone()
+        ctx = gen_pipe.clone()
         ctx.image = res[0]
         return (ctx,)
 
@@ -317,15 +317,15 @@ class UmeAiRT_PipelineSeedVR2Upscale:
 
         return {
             "required": {
-                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image (seed used)."}),
-                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
-                "model": (dit_models, {"default": default_dit, "tooltip": "DiT model for SeedVR2 upscaling."}),
-                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.1, "display": "slider"}),
+                "gen_pipe": ("UME_PIPELINE", {"tooltip": "The generation pipeline carrying your image, model, and all settings through the workflow."}),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough", "tooltip": "Turn this effect on or off. When off, the image passes through unchanged."}),
+                "model": (dit_models, {"default": default_dit, "tooltip": "Choose the SeedVR2 upscale model."}),
+                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.1, "display": "slider", "tooltip": "How much to enlarge the image (e.g. 2.0 = double the resolution)."}),
             },
         }
 
     RETURN_TYPES = ("UME_PIPELINE",)
-    RETURN_NAMES = ("generation",)
+    RETURN_NAMES = ("gen_pipe",)
     FUNCTION = "upscale"
     CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
@@ -347,11 +347,11 @@ class UmeAiRT_PipelineSeedVR2Upscale:
         }
         return dit_config, vae_config
 
-    def upscale(self, generation, enabled, model, upscale_by):
+    def upscale(self, gen_pipe, enabled, model, upscale_by):
         if not enabled:
-            return (generation,)
+            return (gen_pipe,)
 
-        image = generation.image
+        image = gen_pipe.image
         if image is None:
             raise ValueError("SeedVR2 Upscale: No image in pipeline.")
 
@@ -362,7 +362,7 @@ class UmeAiRT_PipelineSeedVR2Upscale:
         except ImportError:
              raise ImportError("SeedVR2 Core modules not found in '../seedvr2_core'. Verify installation.")
 
-        seed = int(generation.seed or 100) % (2**32)
+        seed = int(gen_pipe.seed or 100) % (2**32)
         dit_config, vae_config = self._build_configs(model)
 
         log_node(f"SeedVR2 Upscale: Processing | Ratio: x{upscale_by} | Model: {model} | Seed: {seed}")
@@ -423,7 +423,7 @@ class UmeAiRT_PipelineSeedVR2Upscale:
         mm.soft_empty_cache()
         gc.collect()
 
-        ctx = generation.clone()
+        ctx = gen_pipe.clone()
         ctx.image = pil_to_tensor(output_image)
         return (ctx,)
 
@@ -454,35 +454,35 @@ class UmeAiRT_PipelineSeedVR2Upscale_Advanced:
 
         return {
             "required": {
-                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image (seed used)."}),
-                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
-                "model": (dit_models, {"default": default_dit}),
-                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.1, "display": "slider"}),
-                "tile_width": ("INT", {"default": 512, "min": 64, "max": 8192, "step": 8}),
-                "tile_height": ("INT", {"default": 512, "min": 64, "max": 8192, "step": 8}),
-                "mask_blur": ("INT", {"default": 0, "min": 0, "max": 64, "step": 1}),
-                "tile_padding": ("INT", {"default": 32, "min": 0, "max": 8192, "step": 8}),
-                "tile_upscale_resolution": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 8}),
-                "tiling_strategy": (["Chess", "Linear"], {"default": "Chess"}),
-                "anti_aliasing_strength": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.05}),
-                "blending_method": (["auto", "multiband", "bilateral", "content_aware", "linear", "simple"], {"default": "auto"}),
-                "color_correction": (["lab", "wavelet", "wavelet_adaptive", "hsv", "adain", "none"], {"default": "lab"}),
+                "gen_pipe": ("UME_PIPELINE", {"tooltip": "The generation pipeline carrying your image, model, and all settings through the workflow."}),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough", "tooltip": "Turn this effect on or off. When off, the image passes through unchanged."}),
+                "model": (dit_models, {"default": default_dit, "tooltip": "Choose the upscale model (e.g. 4x-UltraSharp, RealESRGAN)."}),
+                "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.1, "display": "slider", "tooltip": "How much to enlarge the image (e.g. 2.0 = double the resolution)."}),
+                "tile_width": ("INT", {"default": 512, "min": 64, "max": 8192, "step": 8, "tooltip": "Width of each tile in pixels. Smaller = less VRAM but slower. 512-1024 recommended."}),
+                "tile_height": ("INT", {"default": 512, "min": 64, "max": 8192, "step": 8, "tooltip": "Height of each tile in pixels. Smaller = less VRAM but slower. 512-1024 recommended."}),
+                "mask_blur": ("INT", {"default": 0, "min": 0, "max": 64, "step": 1, "tooltip": "Softens tile edges for smoother blending between tiles."}),
+                "tile_padding": ("INT", {"default": 32, "min": 0, "max": 8192, "step": 8, "tooltip": "How much tiles overlap in pixels. More overlap = smoother transitions, but slower."}),
+                "tile_upscale_resolution": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 8, "tooltip": "Resolution for each tile during upscaling processing."}),
+                "tiling_strategy": (["Chess", "Linear"], {"default": "Chess", "tooltip": "Controls how tiles are positioned and processed during upscaling."}),
+                "anti_aliasing_strength": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.05, "tooltip": "Reduces jagged edges between tiles. Higher = smoother but may reduce sharpness."}),
+                "blending_method": (["auto", "multiband", "bilateral", "content_aware", "linear", "simple"], {"default": "auto", "tooltip": "Algorithm for merging overlapping tile regions (e.g. linear, gaussian)."}),
+                "color_correction": (["lab", "wavelet", "wavelet_adaptive", "hsv", "adain", "none"], {"default": "lab", "tooltip": "Match colors between adjacent tiles to prevent visible color shifts."}),
             },
         }
 
     RETURN_TYPES = ("UME_PIPELINE",)
-    RETURN_NAMES = ("generation",)
+    RETURN_NAMES = ("gen_pipe",)
     FUNCTION = "upscale"
     CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
-    def upscale(self, generation, enabled, model, upscale_by,
+    def upscale(self, gen_pipe, enabled, model, upscale_by,
                 tile_width, tile_height, mask_blur, tile_padding,
                 tile_upscale_resolution, tiling_strategy,
                 anti_aliasing_strength, blending_method, color_correction):
         if not enabled:
-            return (generation,)
+            return (gen_pipe,)
 
-        image = generation.image
+        image = gen_pipe.image
         if image is None:
             raise ValueError("SeedVR2 Advanced: No image in pipeline.")
 
@@ -493,7 +493,7 @@ class UmeAiRT_PipelineSeedVR2Upscale_Advanced:
         except ImportError:
              raise ImportError("SeedVR2 Core modules not found. Verify installation.")
 
-        seed = int(generation.seed or 100) % (2**32)
+        seed = int(gen_pipe.seed or 100) % (2**32)
         dit_config, vae_config = UmeAiRT_PipelineSeedVR2Upscale._build_configs(model)
 
         log_node(f"SeedVR2 Upscale: Processing | Ratio: x{upscale_by} | Model: {model} | Seed: {seed}")
@@ -520,7 +520,7 @@ class UmeAiRT_PipelineSeedVR2Upscale_Advanced:
         mm.soft_empty_cache()
         gc.collect()
 
-        ctx = generation.clone()
+        ctx = gen_pipe.clone()
         ctx.image = pil_to_tensor(output_image)
         return (ctx,)
 
@@ -533,41 +533,41 @@ class UmeAiRT_PipelineFaceDetailer_Advanced:
     def INPUT_TYPES(s):
         return {
             "required": {
-                 "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
+                 "gen_pipe": ("UME_PIPELINE", {"tooltip": "The generation pipeline carrying your image, model, and all settings through the workflow."}),
                  "bbox_detector": ("BBOX_DETECTOR",),
-                 "enabled": ("BOOLEAN", {"default": True}),
-                 "guide_size": ("INT", {"default": 512, "min": 64, "max": 2048}),
-                 "max_size": ("INT", {"default": 1024, "min": 64, "max": 2048}),
-                 "denoise": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
+                 "enabled": ("BOOLEAN", {"default": True, "tooltip": "Turn this effect on or off. When off, the image passes through unchanged."}),
+                 "guide_size": ("INT", {"default": 512, "min": 64, "max": 2048, "tooltip": "Target face crop size in pixels. Larger = more detail but slower. 384-512 recommended."}),
+                 "max_size": ("INT", {"default": 1024, "min": 64, "max": 2048, "tooltip": "Maximum allowed face crop. Prevents excessive VRAM usage on very large faces."}),
+                 "denoise": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "How much the AI redraws during upscale. Lower = sharper but less detail added."}),
             }
         }
 
     RETURN_TYPES = ("UME_PIPELINE",)
-    RETURN_NAMES = ("generation",)
+    RETURN_NAMES = ("gen_pipe",)
     FUNCTION = "face_detail"
     CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
-    def face_detail(self, generation, bbox_detector, enabled, guide_size, max_size, denoise):
-        image = generation.image
+    def face_detail(self, gen_pipe, bbox_detector, enabled, guide_size, max_size, denoise):
+        image = gen_pipe.image
         if image is None:
             raise ValueError("FaceDetailer: No image in pipeline.")
-        if not enabled: return (generation,)
+        if not enabled: return (gen_pipe,)
 
-        model = generation.model
-        vae = generation.vae
-        clip = generation.clip
+        model = gen_pipe.model
+        vae = gen_pipe.vae
+        clip = gen_pipe.clip
 
-        steps = int(generation.steps or 20)
-        cfg = float(generation.cfg or 8.0)
-        sampler_name = generation.sampler_name or "euler"
-        scheduler = generation.scheduler or "normal"
-        seed = int(generation.seed or 0)
+        steps = int(gen_pipe.steps or 20)
+        cfg = float(gen_pipe.cfg or 8.0)
+        sampler_name = gen_pipe.sampler_name or "euler"
+        scheduler = gen_pipe.scheduler or "normal"
+        seed = int(gen_pipe.seed or 0)
 
-        pos_text = str(generation.positive_prompt or "")
-        neg_text = str(generation.negative_prompt or "")
+        pos_text = str(gen_pipe.positive_prompt or "")
+        neg_text = str(gen_pipe.negative_prompt or "")
 
         if not model or not vae or not clip:
-            return (generation,)
+            return (gen_pipe,)
 
         positive, negative = encode_prompts(clip, pos_text, neg_text)
 
@@ -580,7 +580,7 @@ class UmeAiRT_PipelineFaceDetailer_Advanced:
                  positive=positive, negative=negative, denoise=denoise,
                  feather=5, noise_mask=True, force_inpaint=True, drop_size=10
              )
-        ctx = generation.clone()
+        ctx = gen_pipe.clone()
         ctx.image = result[0]
         return (ctx,)
 
@@ -590,14 +590,14 @@ class UmeAiRT_PipelineFaceDetailer(UmeAiRT_PipelineFaceDetailer_Advanced):
     def INPUT_TYPES(s):
         return {
             "required": {
-                 "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
+                 "gen_pipe": ("UME_PIPELINE", {"tooltip": "The generation pipeline carrying your image, model, and all settings through the workflow."}),
                  "bbox_detector": ("BBOX_DETECTOR",),
-                 "denoise": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
+                 "denoise": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "How much the AI redraws during upscale. Lower = sharper but less detail added."}),
             }
         }
 
-    def face_detail(self, generation, bbox_detector, denoise):
-        return super().face_detail(pipeline, bbox_detector, True, 512, 1024, denoise)
+    def face_detail(self, gen_pipe, bbox_detector, denoise):
+        return super().face_detail(gen_pipe, bbox_detector, True, 512, 1024, denoise)
 
 
 # --- Detailer Daemon ---
@@ -687,43 +687,43 @@ class UmeAiRT_Detailer_Daemon_Simple:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
-                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough"}),
-                "detail_amount": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider"}),
+                "gen_pipe": ("UME_PIPELINE", {"tooltip": "The generation pipeline carrying your image, model, and all settings through the workflow."}),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough", "tooltip": "Turn this effect on or off. When off, the image passes through unchanged."}),
+                "detail_amount": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider", "tooltip": "How much extra detail to add. Positive = sharpen, negative = soften. Start with 0.1-0.5."}),
             },
         }
 
     RETURN_TYPES = ("UME_PIPELINE",)
-    RETURN_NAMES = ("generation",)
+    RETURN_NAMES = ("gen_pipe",)
     FUNCTION = "process"
     CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
-    def process(self, generation, enabled, detail_amount):
+    def process(self, gen_pipe, enabled, detail_amount):
         if not enabled:
-            return (generation,)
+            return (gen_pipe,)
 
-        start_image = generation.image
+        start_image = gen_pipe.image
         if start_image is None:
             raise ValueError("Detail Daemon: No image in pipeline.")
 
-        model = generation.model
-        vae = generation.vae
+        model = gen_pipe.model
+        vae = gen_pipe.vae
 
-        steps = int(generation.steps or 20)
-        cfg = float(generation.cfg or 8.0)
-        sampler_name = generation.sampler_name or "euler"
-        scheduler = generation.scheduler or "normal"
-        seed = int(generation.seed or 0)
+        steps = int(gen_pipe.steps or 20)
+        cfg = float(gen_pipe.cfg or 8.0)
+        sampler_name = gen_pipe.sampler_name or "euler"
+        scheduler = gen_pipe.scheduler or "normal"
+        seed = int(gen_pipe.seed or 0)
 
         denoise = 0.5
         refine_denoise = 0.05
-        clip = generation.clip
-        pos_text = str(generation.positive_prompt or "")
-        neg_text = str(generation.negative_prompt or "")
+        clip = gen_pipe.clip
+        pos_text = str(gen_pipe.positive_prompt or "")
+        neg_text = str(gen_pipe.negative_prompt or "")
 
         if any(x is None for x in [model, vae, start_image, clip]):
             log_node("Missing Pipeline Context for Detailer Daemon", color="RED")
-            return (torch.zeros((1, 512, 512, 3)),)
+            return (gen_pipe,)
 
         # Encode prompts
         positive, negative = encode_prompts(clip, pos_text, neg_text)
@@ -776,7 +776,7 @@ class UmeAiRT_Detailer_Daemon_Simple:
 
         decoded = vae.decode(samples)
         log_node("Detail Daemon: Finished", color="GREEN")
-        ctx = generation.clone()
+        ctx = gen_pipe.clone()
         ctx.image = decoded
         return (ctx,)
 
@@ -786,44 +786,44 @@ class UmeAiRT_Detailer_Daemon_Advanced(UmeAiRT_Detailer_Daemon_Simple):
     def INPUT_TYPES(s):
         return {
             "required": {
-                "generation": ("UME_PIPELINE", {"tooltip": "Pipeline context with image, models, and settings."}),
-                "detail_amount": ("FLOAT", {"default": 0.5, "min": -5.0, "max": 5.0, "step": 0.01}),
-                "start": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "end": ("FLOAT", {"default": 0.8, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "bias": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "exponent": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.05}),
-                "start_offset": ("FLOAT", {"default": 0.0, "min": -1.0, "max": 1.0, "step": 0.01}),
-                "end_offset": ("FLOAT", {"default": 0.0, "min": -1.0, "max": 1.0, "step": 0.01}),
-                "fade": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.05}),
-                "smooth": ("BOOLEAN", {"default": True}),
-                "denoise": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "refine_denoise": ("FLOAT", {"default": 0.05, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "gen_pipe": ("UME_PIPELINE", {"tooltip": "The generation pipeline carrying your image, model, and all settings through the workflow."}),
+                "detail_amount": ("FLOAT", {"default": 0.5, "min": -5.0, "max": 5.0, "step": 0.01, "tooltip": "How much extra detail to add. Positive = sharpen, negative = soften. Start with 0.1-0.5."}),
+                "start": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "When detail enhancement begins in the sampling process (0.0 = from the start)."}),
+                "end": ("FLOAT", {"default": 0.8, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "When detail enhancement ends in the sampling process (1.0 = until completion)."}),
+                "bias": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Shifts the peak of detail enhancement within the start-end range."}),
+                "exponent": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.05, "tooltip": "Controls how sharply the detail effect ramps up/down. Higher = more concentrated."}),
+                "start_offset": ("FLOAT", {"default": 0.0, "min": -1.0, "max": 1.0, "step": 0.01, "tooltip": "Fine-tune the exact starting point of the detail curve."}),
+                "end_offset": ("FLOAT", {"default": 0.0, "min": -1.0, "max": 1.0, "step": 0.01, "tooltip": "Fine-tune the exact ending point of the detail curve."}),
+                "fade": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.05, "tooltip": "Gradually reduce the effect at the edges of the schedule range."}),
+                "smooth": ("BOOLEAN", {"default": True, "tooltip": "Smooth out the detail schedule curve to avoid abrupt changes."}),
+                "denoise": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "How much the AI redraws during upscale. Lower = sharper but less detail added."}),
+                "refine_denoise": ("FLOAT", {"default": 0.05, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "How much to redraw in the refinement pass. Lower = preserves more original detail."}),
             },
             "optional": {
-                "steps": ("INT", {"default": 20}),
-                "refine_steps": ("INT", {"default": 2}),
-                "cfg": ("FLOAT", {"default": 8.0}),
+                "steps": ("INT", {"default": 20, "tooltip": "Total sampling steps. More steps = better quality but slower. 20-30 recommended."}),
+                "refine_steps": ("INT", {"default": 2, "tooltip": "Steps for the extra refinement pass. 5-10 usually sufficient."}),
+                "cfg": ("FLOAT", {"default": 8.0, "tooltip": "How closely the AI follows your prompt. Higher = more literal but may look artificial. 5-8 recommended."}),
                 "sampler_name": (comfy.samplers.KSampler.SAMPLERS, ),
                 "scheduler": (comfy.samplers.KSampler.SCHEDULERS, ),
-                "seed": ("INT", {"default": 0}),
+                "seed": ("INT", {"default": 0, "tooltip": "Seed for reproducible results. Same seed + same settings = same image."}),
             }
         }
 
     FUNCTION = "process_advanced"
 
-    def process_advanced(self, generation, detail_amount, start, end, bias, exponent, start_offset, end_offset, fade, smooth, denoise, refine_denoise, steps=20, refine_steps=2, cfg=8.0, sampler_name="euler", scheduler="normal", seed=0):
-        start_image = generation.image
+    def process_advanced(self, gen_pipe, detail_amount, start, end, bias, exponent, start_offset, end_offset, fade, smooth, denoise, refine_denoise, steps=20, refine_steps=2, cfg=8.0, sampler_name="euler", scheduler="normal", seed=0):
+        start_image = gen_pipe.image
         if start_image is None:
             raise ValueError("Detail Daemon Advanced: No image in pipeline.")
 
-        model = generation.model
-        vae = generation.vae
-        clip = generation.clip
-        pos_text = str(generation.positive_prompt or "")
-        neg_text = str(generation.negative_prompt or "")
+        model = gen_pipe.model
+        vae = gen_pipe.vae
+        clip = gen_pipe.clip
+        pos_text = str(gen_pipe.positive_prompt or "")
+        neg_text = str(gen_pipe.negative_prompt or "")
 
         if any(x is None for x in [model, vae, clip]):
-            return (generation,)
+            return (gen_pipe,)
 
         tokens = clip.tokenize(pos_text)
         cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
@@ -881,6 +881,6 @@ class UmeAiRT_Detailer_Daemon_Advanced(UmeAiRT_Detailer_Daemon_Simple):
 
         decoded = vae.decode(samples)
         log_node("Detail Daemon Advanced: Finished", color="GREEN")
-        ctx = generation.clone()
+        ctx = gen_pipe.clone()
         ctx.image = decoded
         return (ctx,)

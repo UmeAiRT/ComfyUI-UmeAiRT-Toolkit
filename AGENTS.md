@@ -38,8 +38,8 @@ Settings ──▶ UME_SETTINGS {width, height, steps, cfg, ...}
 Prompts ────────┤
 LoRAs ──────────┤──▶ BlockSampler ──▶ UME_PIPELINE (GenerationContext)
 Source Image ───┘                          │
-                                           ├──▶ Post-Process nodes (read/write pipeline.image)
-                                           └──▶ ImageSaver (reads pipeline.image)
+                                           ├──▶ Post-Process nodes (read/write gen_pipe.image)
+                                           └──▶ ImageSaver (reads gen_pipe.image)
 ```
 
 **Key types:**
@@ -52,9 +52,10 @@ Source Image ───┘                          │
 | `UME_IMAGE` | `{image, mask, mode, denoise, auto_resize}` | BlockImageLoader → BlockImageProcess |
 
 **Rules:**
-- Post-process nodes receive `UME_PIPELINE`, read `generation.image`, process, update `generation.image`, return `UME_PIPELINE`.
+- Post-process nodes receive `UME_PIPELINE`, read `gen_pipe.image`, process, update `gen_pipe.image`, return `UME_PIPELINE`.
 - Never create `GenerationContext` outside the `BlockSampler`.
 - The `auto_resize` flag in `UME_IMAGE` is acted upon by the `BlockSampler` using `UME_SETTINGS` dimensions.
+- All pipeline/generation parameters are named `gen_pipe` (not `pipeline` or `generation`).
 
 
 
@@ -64,7 +65,8 @@ Source Image ───┘                          │
 
 - Class Names: `UmeAiRT_` prefix (e.g., `UmeAiRT_BlockSampler`).
 - Display Names: Clear, user-friendly (e.g., "KSampler").
-- Output names: `model_bundle` for loaders, `generation` for sampler/post-process.
+- Output names: `model_bundle` for loaders, `gen_pipe` for sampler/post-process.
+- Pipeline parameters: Always use `gen_pipe` (not `pipeline` or `generation`).
 
 **Registration:**
 
@@ -90,6 +92,8 @@ Source Image ───┘                          │
 - `web/`: Javascript extensions (UI tweaks, colors, Nodes 2.0 enforcements).
 - `*/core/`: Integrated libraries (e.g., `usdu_core`, `seedvr2_core`).
 - `vendor/comfyui_gguf/`: Vendored implementation of `ComfyUI-GGUF` for `.gguf` weight loading.
+- `tests/`: Unit tests (run with `python tests/test_*.py -v`).
+- `.github/workflows/ci.yml`: GitHub Actions CI (Python 3.10-3.12, CPU PyTorch).
 
 ## UI & Styling (Node Colors)
 
@@ -120,9 +124,11 @@ Nodes are color-coded by category in `web/umeairt_colors.js`:
 
 To avoid regressions and maintain a stable, production-ready codebase, adhere strictly to the following rules:
 
-1. **Dependency Synchronization**: Always update `pyproject.toml` instantly when adding a new package to `requirements.txt`. They must mirror each other to guarantee seamless node installation for users.
+1. **Dependency Synchronization**: Always update `pyproject.toml` instantly when adding a new package to `requirements.txt`. They must mirror each other to guarantee seamless node installation for users. The `test_registration` suite validates this.
 2. **Proper Exception Handling**: **NEVER** use bare exceptions (`except:` or `except: pass`). Always catch specific exceptions or use `except Exception as e:` and log the error via `log_node()` so failures are visible during debugging.
 3. **Changelog Maintenance**: All notable modifications, bug fixes, or additions must be immediately documented in `CHANGELOG.md` following the *Keep a Changelog* format.
+4. **Tooltip Requirement**: Every `INPUT_TYPES` parameter **MUST** have a `"tooltip"` key with a beginner-friendly description. The `test_tooltips` suite enforces this.
+5. **Test Coverage**: Run `python tests/test_*.py -v` before submitting changes. CI runs automatically on push.
 
 ## Critical Files
 
@@ -131,16 +137,21 @@ To avoid regressions and maintain a stable, production-ready codebase, adhere st
 | `modules/common.py` | Contains `GenerationContext`, `TypedDict` bundle types, and shared helpers. |
 | `__init__.py` | Entry point. **Must be updated** when adding nodes via import from modules. |
 | `docs/codemaps/structure.md` | Overview of the modular organization. |
+| `tests/test_registration.py` | Validates NODE_CLASS_MAPPINGS ↔ NODE_DISPLAY_NAME_MAPPINGS sync, dep sync. |
+| `tests/test_tooltips.py` | Regression test: every input must have a tooltip. |
 
 ## Common Pitfalls
 
 | Don't | Do Instead |
 |-------|-----------|
-| Add separate image input/output to post-process nodes | Read/write `generation.image` from/to `UME_PIPELINE` |
+| Add separate image input/output to post-process nodes | Read/write `gen_pipe.image` from/to `UME_PIPELINE` |
 | Create `GenerationContext` in a loader | Only `BlockSampler` creates `GenerationContext` |
 | Return `MODEL`, `CLIP`, `VAE` separately from loaders | Return a single `UME_BUNDLE` dict |
 | Forget `__init__.py` | Double-check registration after creating a new node class |
 | Take native types as input without interop | Use `Pack Models Bundle` to convert native → UME, or `Unpack *` for UME → native |
+| Name pipeline param `pipeline` or `generation` | Use `gen_pipe` everywhere |
+| Add input without tooltip | Add `"tooltip": "description"` to every input dict |
+| Skip tests | Run `python tests/test_*.py -v` before committing |
 
 ## 🚨 Mandatory Verification Checklist
 
@@ -148,5 +159,7 @@ To avoid regressions and maintain a stable, production-ready codebase, adhere st
 
 1. [ ] **`__init__.py` Updated**: Did you add the new node class to `NODE_CLASS_MAPPINGS` and `NODE_DISPLAY_NAME_MAPPINGS` in `__init__.py`?
 2. [ ] **Web Directory**: If the node has frontend code, is it in `web/` and registered?
-3. [ ] **Syntax Check**: Did you do a final syntax check on the files you edited (especially big lists like mappings)?
-4. [ ] **User Notification**: Did you tell the user *exactly* where to find the new node (Category/Name)?
+3. [ ] **Tooltips**: Does every input have a beginner-friendly `"tooltip"` key?
+4. [ ] **Tests Pass**: Did you run `python tests/test_*.py -v` and all tests pass?
+5. [ ] **Syntax Check**: Did you do a final syntax check on the files you edited (especially big lists like mappings)?
+6. [ ] **User Notification**: Did you tell the user *exactly* where to find the new node (Category/Name)?

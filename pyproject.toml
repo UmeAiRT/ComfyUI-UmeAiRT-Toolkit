@@ -10,12 +10,10 @@ license = { file = "LICENSE" }
 dependencies = [
     "colorama",
     "opencv-python",
-    "requests",
     "tqdm",
     "scipy",
     "psutil",
-    "safetensors",
-    "matplotlib"
+    "safetensors"
 ]
 requires-python = ">=3.10"
 keywords = ["comfyui", "stable-diffusion", "pipeline", "workflow", "ai"]

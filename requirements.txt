@@ -1,12 +1,10 @@
 # Core dependencies
 colorama
 opencv-python
-requests
 tqdm
 scipy
 psutil
 safetensors
-matplotlib
 
 # SeedVR2 upscaler (vendored)
 omegaconf>=2.3.0

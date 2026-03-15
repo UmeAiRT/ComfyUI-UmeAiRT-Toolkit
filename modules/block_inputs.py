@@ -5,7 +5,7 @@ import nodes as comfy_nodes
 import comfy.sd
 import comfy.utils
 from .common import GenerationContext, resize_tensor, apply_outpaint_padding, log_node
-from .common import GenerationContext, resize_tensor, apply_outpaint_padding, log_node
+import torchvision.transforms.functional as TF
 from .logger import logger
 from typing import Tuple, Dict, Any, Optional, List
 
@@ -48,45 +48,25 @@ def process_lora_stack(loras, **kwargs):
             
     return (current_stack,)
 
-class UmeAiRT_LoraBlock_1:
-    """A Node to select and stack 1 LoRA model with its strength."""
-    @classmethod
-    def INPUT_TYPES(s): return get_lora_inputs(1)
-    RETURN_TYPES = ("UME_LORA_STACK",)
-    RETURN_NAMES = ("loras",)
-    FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Block/LoRA"
-    def process(self, loras=None, **kwargs): return process_lora_stack(loras, **kwargs)
+def _make_lora_block_class(count):
+    """Factory to create LoRA Block node classes with a given slot count."""
+    class _LoraBlock:
+        @classmethod
+        def INPUT_TYPES(s): return get_lora_inputs(count)
+        RETURN_TYPES = ("UME_LORA_STACK",)
+        RETURN_NAMES = ("loras",)
+        FUNCTION = "process"
+        CATEGORY = "UmeAiRT/Block/LoRA"
+        def process(self, loras=None, **kwargs): return process_lora_stack(loras, **kwargs)
+    _LoraBlock.__name__ = f"UmeAiRT_LoraBlock_{count}"
+    _LoraBlock.__qualname__ = f"UmeAiRT_LoraBlock_{count}"
+    _LoraBlock.__doc__ = f"A Node to select and stack up to {count} LoRA model(s) with their strengths."
+    return _LoraBlock
 
-class UmeAiRT_LoraBlock_3:
-    """A Node to select and stack up to 3 LoRA models with their strengths."""
-    @classmethod
-    def INPUT_TYPES(s): return get_lora_inputs(3)
-    RETURN_TYPES = ("UME_LORA_STACK",)
-    RETURN_NAMES = ("loras",)
-    FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Block/LoRA"
-    def process(self, loras=None, **kwargs): return process_lora_stack(loras, **kwargs)
-
-class UmeAiRT_LoraBlock_5:
-    """A Node to select and stack up to 5 LoRA models with their strengths."""
-    @classmethod
-    def INPUT_TYPES(s): return get_lora_inputs(5)
-    RETURN_TYPES = ("UME_LORA_STACK",)
-    RETURN_NAMES = ("loras",)
-    FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Block/LoRA"
-    def process(self, loras=None, **kwargs): return process_lora_stack(loras, **kwargs)
-
-class UmeAiRT_LoraBlock_10:
-    """A Node to select and stack up to 10 LoRA models with their strengths."""
-    @classmethod
-    def INPUT_TYPES(s): return get_lora_inputs(10)
-    RETURN_TYPES = ("UME_LORA_STACK",)
-    RETURN_NAMES = ("loras",)
-    FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Block/LoRA"
-    def process(self, loras=None, **kwargs): return process_lora_stack(loras, **kwargs)
+UmeAiRT_LoraBlock_1  = _make_lora_block_class(1)
+UmeAiRT_LoraBlock_3  = _make_lora_block_class(3)
+UmeAiRT_LoraBlock_5  = _make_lora_block_class(5)
+UmeAiRT_LoraBlock_10 = _make_lora_block_class(10)
 
 
 # --- ControlNet Blocks ---
@@ -102,9 +82,9 @@ class UmeAiRT_ControlNetImageApply_Advanced:
             "required": {
                 "image_bundle": ("UME_IMAGE", {"tooltip": "Input Image Bundle."}),
                 "control_net_name": (folder_paths.get_filename_list("controlnet"), {"tooltip": "Select ControlNet model."}),
-                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.01}),
-                "start_percent": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001}),
-                "end_percent": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.001}),
+                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.01, "tooltip": "How strongly the ControlNet guides the image. Start with 1.0 and lower if the effect is too strong."}),
+                "start_percent": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001, "tooltip": "When the ControlNet starts influencing (0.0 = from the beginning). Raise to let the AI establish composition first."}),
+                "end_percent": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.001, "tooltip": "When the ControlNet stops influencing (1.0 = until the very end). Lower to let the AI refine details freely."}),
             },
             "optional": {
                 "optional_control_image": ("IMAGE", {"tooltip": "Optional: Override control image."}), 
@@ -145,7 +125,7 @@ class UmeAiRT_ControlNetImageApply_Simple(UmeAiRT_ControlNetImageApply_Advanced)
             "required": {
                 "image_bundle": ("UME_IMAGE",),
                 "control_net_name": (folder_paths.get_filename_list("controlnet"),),
-                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05, "display": "slider"}),
+                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05, "display": "slider", "tooltip": "How strongly the ControlNet guides the image. Start with 1.0 and lower if the effect is too strong."}),
             }
         }
     def apply_controlnet(self, image_bundle: Dict[str, Any], control_net_name: str, strength: float) -> Tuple[Dict[str, Any]]:
@@ -171,14 +151,14 @@ class UmeAiRT_ControlNetImageProcess:
         return {
             "required": {
                 "image_bundle": ("UME_IMAGE",),
-                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "mode": (["img2img", "txt2img"], {"default": "img2img"}),
+                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "How much the AI changes the image. 1.0 = completely new image, 0.5 = keeps half the original detail."}),
+                "mode": (["img2img", "txt2img"], {"default": "img2img", "tooltip": "How to process the image: img2img (transform), inpaint (fill masked area), or outpaint (extend edges)."}),
                 "control_net_name": (folder_paths.get_filename_list("controlnet"),),
-                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05}),
+                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05, "tooltip": "How strongly the ControlNet guides the image. Start with 1.0 and lower if the effect is too strong."}),
             },
             "optional": {
-                "generation": ("UME_PIPELINE", {"tooltip": "Optional pipeline for resize dimensions."}),
-                "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF"}),
+                "gen_pipe": ("UME_PIPELINE", {"tooltip": "Generation pipeline (optional, for resize dimensions)."}),
+                "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF", "tooltip": "Automatically resize the image to match your generation width/height settings."}),
             }
         }
     RETURN_TYPES = ("UME_IMAGE",)
@@ -186,7 +166,7 @@ class UmeAiRT_ControlNetImageProcess:
     FUNCTION = "process"
     CATEGORY = "UmeAiRT/Block/ControlNet"
 
-    def process(self, image_bundle: Dict[str, Any], denoise: float, mode: str, control_net_name: str, strength: float, pipeline: Optional[GenerationContext] = None, resize: bool = False) -> Tuple[Dict[str, Any]]:
+    def process(self, image_bundle: Dict[str, Any], denoise: float, mode: str, control_net_name: str, strength: float, gen_pipe: Optional[GenerationContext] = None, resize: bool = False) -> Tuple[Dict[str, Any]]:
         if not isinstance(image_bundle, dict): raise ValueError("ControlNet Image Process: Input is not a valid UME_IMAGE bundle.")
         
         image = image_bundle.get("image")
@@ -203,8 +183,8 @@ class UmeAiRT_ControlNetImageProcess:
         final_mask = mask
         
         if resize:
-             target_w = generation.width if pipeline else 1024
-             target_h = generation.height if pipeline else 1024
+             target_w = gen_pipe.width if gen_pipe else 1024
+             target_h = gen_pipe.height if gen_pipe else 1024
              final_image = resize_tensor(final_image, target_h, target_w, interp_mode="bilinear")
              if final_mask is not None:
                  final_mask = resize_tensor(final_mask, target_h, target_w, interp_mode="nearest", is_mask=True)
@@ -275,7 +255,7 @@ class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
         files.sort()
         return {
             "required": {
-                "image": (sorted(files), {"image_upload": True}),
+                "image": (sorted(files), {"image_upload": True, "tooltip": "Select an image file to load from disk."}),
             },
         }
     RETURN_TYPES = ("UME_IMAGE",)
@@ -324,14 +304,14 @@ class UmeAiRT_BlockImageProcess:
         return {
             "required": {
                 "image_bundle": ("UME_IMAGE",),
-                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider"}),
-                "mode": (["img2img", "inpaint", "outpaint", "txt2img"], {"default": "img2img"}),
+                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "How much the AI changes the image. 1.0 = completely new image, 0.5 = keeps half the original detail."}),
+                "mode": (["img2img", "inpaint", "outpaint", "txt2img"], {"default": "img2img", "tooltip": "How to process the image: img2img (transform), inpaint (fill masked area), or outpaint (extend edges)."}),
             },
             "optional": {
-                "auto_resize": ("BOOLEAN", {"default": False, "label_on": "Resize to Settings", "label_off": "Keep Original"}),
-                "mask_blur": ("INT", {"default": 10}),
-                "padding_left": ("INT", {"default": 0}), "padding_top": ("INT", {"default": 0}),
-                "padding_right": ("INT", {"default": 0}), "padding_bottom": ("INT", {"default": 0}),
+                "auto_resize": ("BOOLEAN", {"default": False, "label_on": "Resize to Settings", "label_off": "Keep Original", "tooltip": "Automatically resize the source image to match the width/height from Generation Settings."}),
+                "mask_blur": ("INT", {"default": 10, "tooltip": "Softens the edge of the inpaint mask for smoother blending. Higher = softer transitions."}),
+                "padding_left": ("INT", {"default": 0, "tooltip": "Pixels to add on the left side when using outpaint mode."}), "padding_top": ("INT", {"default": 0}),
+                "padding_right": ("INT", {"default": 0, "tooltip": "Pixels to add on the right side when using outpaint mode."}), "padding_bottom": ("INT", {"default": 0}),
             }
         }
     RETURN_TYPES = ("UME_IMAGE",)
@@ -363,7 +343,6 @@ class UmeAiRT_BlockImageProcess:
              )
 
         if (mode == "inpaint" or mode == "outpaint") and final_mask is not None and mask_blur > 0:
-             import torchvision.transforms.functional as TF
              if len(final_mask.shape) == 2: m = final_mask.unsqueeze(0).unsqueeze(0)
              else: m = final_mask
              k = mask_blur
