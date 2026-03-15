@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **PERF-04**: Fixed a VRAM memory leak in `BlockSampler` by removing `self._cnet_cache` and using `weakref` for `self._last_clip` allowing ComfyUI's VRAM manager to clear unused models correctly (`block_sampler.py`).
+- **CORE-01**: Fixed Python global namespace pollution caused by `UltimateUpscale_Base` by ensuring `usdu_core` path is safely removed from `sys.path` via `finally` block (`logic_nodes.py`).
+- **TEST-01**: Hardened the `test_smoke.py` mock strategy for `folder_paths` so the test suite passes consistently in isolated CI environments without failing on unexpected UI-specific attribute lookups.
+
+### Fixed (Previous)
+
 - **BUG-01**: Fixed 3 `NameError` crashes where `generation.width`/`height` was referenced while parameter was named `pipeline` (`image_nodes.py`, `block_inputs.py`).
 - **BUG-02**: Fixed `NameError` in `PipelineFaceDetailer` — `super().face_detail()` received undefined `pipeline` instead of correct parameter (`logic_nodes.py`).
 - **BUG-03**: Removed duplicate `_get_hf_token()` function definition that silently shadowed the first (`block_loaders.py`).

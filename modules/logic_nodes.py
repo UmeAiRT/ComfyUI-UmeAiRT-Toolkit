@@ -90,13 +90,18 @@ class UmeAiRT_UltimateUpscale_Base:
         import sys
         import os
         usdu_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "usdu_core")
+        added_to_path = False
         if usdu_path not in sys.path:
-            sys.path.append(usdu_path)
+            sys.path.insert(0, usdu_path)
+            added_to_path = True
         try:
             import usdu_main
             return usdu_main.UltimateSDUpscale()
         except ImportError as e:
             raise ImportError(f"UmeAiRT: Could not load bundled UltimateSDUpscale node from usdu_core. Error: {e}")
+        finally:
+            if added_to_path and usdu_path in sys.path:
+                sys.path.remove(usdu_path)
 
 
 # --- Standalone Utility Nodes ---

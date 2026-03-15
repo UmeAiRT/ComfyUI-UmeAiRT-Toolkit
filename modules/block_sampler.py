@@ -44,12 +44,11 @@ class UmeAiRT_BlockSampler:
         self.cnet_apply = comfy_nodes.ControlNetApplyAdvanced()
         self._last_pos_text = None
         self._last_neg_text = None
-        self._last_clip = None
+        self._last_clip_ref = None
         self._cached_positive = None
         self._cached_negative = None
         self._last_loras = None
         self._last_controlnets = None
-        self._cnet_cache = {}  # name -> loaded ControlNet model
 
     def process(self, 
                 model_bundle: Dict[str, Any], 
@@ -158,10 +157,11 @@ class UmeAiRT_BlockSampler:
         # Cache Strategy: If the prompt text matches, the CLIP object matches, and the exact same 
         # Modifiers (LoRAs/ControlNets configurations) are active, it is safe to use the cache.
         
+        last_clip = self._last_clip_ref() if self._last_clip_ref is not None else None
         can_use_cache = (
             self._last_pos_text == pos_text and 
             self._last_neg_text == neg_text and 
-            self._last_clip is clip and
+            last_clip is clip and
             self._last_loras == loras and
             self._last_controlnets == controlnets
         )
@@ -182,7 +182,8 @@ class UmeAiRT_BlockSampler:
 
              self._last_pos_text = pos_text
              self._last_neg_text = neg_text
-             self._last_clip = clip
+             import weakref
+             self._last_clip_ref = weakref.ref(clip)
              self._last_loras = loras
              self._last_controlnets = controlnets
              self._cached_positive = positive_cond
@@ -193,9 +194,7 @@ class UmeAiRT_BlockSampler:
                 c_name, c_image, c_str, c_start, c_end = cnet_def
                 if c_name != "None" and c_image is not None:
                     try:
-                        if c_name not in self._cnet_cache:
-                            self._cnet_cache[c_name] = self.cnet_loader.load_controlnet(c_name)[0]
-                        c_model = self._cnet_cache[c_name]
+                        c_model = self.cnet_loader.load_controlnet(c_name)[0]
                         positive_cond, negative_cond = self.cnet_apply.apply_controlnet(positive_cond, negative_cond, c_model, c_image, c_str, c_start, c_end)
                     except Exception as e: log_node(f"Block Sampler ControlNet Error: {e}", color="RED")
 
