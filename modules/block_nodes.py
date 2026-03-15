@@ -1539,7 +1539,7 @@ class UmeAiRT_Positive_Input:
             }
         }
 
-    RETURN_TYPES = ("STRING",)
+    RETURN_TYPES = ("POSITIVE",)
     RETURN_NAMES = ("positive",)
     FUNCTION = "pass_through"
     CATEGORY = "UmeAiRT/Prompts"
@@ -1558,7 +1558,7 @@ class UmeAiRT_Negative_Input:
             }
         }
 
-    RETURN_TYPES = ("STRING",)
+    RETURN_TYPES = ("NEGATIVE",)
     RETURN_NAMES = ("negative",)
     FUNCTION = "pass_through"
     CATEGORY = "UmeAiRT/Prompts"
