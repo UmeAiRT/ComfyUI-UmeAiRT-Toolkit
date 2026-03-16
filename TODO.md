@@ -13,10 +13,11 @@
 
 ## Medium Priority
 
-- [ ] **Coverage reporting in CI** — Add `coverage run` + `coverage report` to `ci.yml`
+- [x] **Coverage reporting in CI** — Added `coverage` job to `ci.yml` (Python 3.12, fail-under=30%)
 - [ ] **Document download timeouts** — Add `timeout` parameter to `_download_with_urllib()` with tooltip
 
 ## Low Priority / Future
 
 - [ ] **Consider `dataclass` for bundles** — Replace `TypedDict` with `@dataclass` for `UmeBundle`/`UmeSettings` (adds default values, `__post_init__` validation)
 - [ ] **Centralize `process_and_stitch` import** — Currently imported inline in SeedVR2 nodes; move to top when stable
+- [ ] **Integration tests** — Test full pipeline: Loader → Sampler → PostProcess → Saver with mocked ComfyUI nodes
