@@ -226,4 +226,4 @@ except Exception as e:
     log_node(f"Optimization check failed: {e}", color="RED")
 
 # 3. Final Summary
-log_node(f"✅ Initialization Complete.", color="GREEN")
+log_node("✅ Initialization Complete.", color="GREEN")

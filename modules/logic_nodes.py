@@ -76,7 +76,6 @@ class UmeAiRT_UltimateUpscale_Base:
 
     def get_usdu_node(self):
         import sys
-        import os
         usdu_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "usdu_core")
         added_to_path = False
         if usdu_path not in sys.path:

@@ -1,0 +1,20 @@
+# Ruff linter configuration for UmeAiRT Toolkit
+# See: https://docs.astral.sh/ruff/configuration/
+
+[lint]
+# F = Pyflakes (real bugs: undefined names, redefined, etc.)
+# E9 = Runtime/syntax errors
+select = ["F", "E9"]
+
+# F401 = unused-import: too many false positives in ComfyUI custom nodes
+#   (imports used in INPUT_TYPES class methods, __init__.py re-exports, etc.)
+ignore = ["F401"]
+
+# Vendored code — we don't control these
+exclude = [
+    "vendor/",
+    "usdu_core/",
+    "facedetailer_core/",
+    "seedvr2_core/",
+    "image_saver_core/",
+]

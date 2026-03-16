@@ -14,28 +14,67 @@ on:
     branches: [main]
 
 jobs:
+  # ── Lint & Security (fast, single Python version) ──────────────
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install tools
+        run: pip install ruff bandit
+
+      - name: Ruff (lint)
+        run: ruff check modules/ __init__.py --config ruff.toml
+
+      - name: Bandit (security)
+        run: bandit -r modules/ __init__.py -c pyproject.toml -ll
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install pip-audit
+          pip install -r requirements.txt
+
+      - name: pip-audit (CVE scan)
+        run: pip-audit --strict --desc
+
+  # ── Unit Tests (matrix across Python versions) ─────────────────
   test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      
+
       - name: Install core dependencies
         run: |
           python -m pip install --upgrade pip
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
           pip install opencv-python-headless Pillow
           pip install -r requirements.txt
-      
+
       - name: test_common
         run: python tests/test_common.py -v
 

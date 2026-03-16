@@ -381,9 +381,7 @@ def _find_file_in_folders(filename, folder_types):
                     return None
                 return path
         except Exception as e:
-            from .logger import log_node
             log_node(f"Bundle Loader: Error searching in '{folder_type}': {e}", color="YELLOW")
-            pass
         # Also try GGUF-specific folders
         if folder_type == "unet":
             try:
@@ -573,7 +571,6 @@ def _download_with_aria2(url, dest_path, connections=8, hf_token=""):
 
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         pbar = comfy.utils.ProgressBar(100)
-        last_pct = 0
 
         # Read aria2c output line by line in real-time
         for raw_line in iter(process.stdout.readline, b''):
@@ -584,7 +581,6 @@ def _download_with_aria2(url, dest_path, connections=8, hf_token=""):
             match = pct_re.search(line)
             if match:
                 pct = int(match.group(1))
-                last_pct = pct
                 pbar.update_absolute(pct)
                 log_progress(filename, pct)
 
@@ -667,7 +663,7 @@ def _download_file(url, dest_path, hf_token=""):
         if _ARIA2_PATH is None:
             _ARIA2_PATH = _find_aria2c() or False
             if _ARIA2_PATH:
-                log_node(f"Bundle Loader: aria2c detected — using accelerated downloads.", color="GREEN")
+                log_node("Bundle Loader: aria2c detected — using accelerated downloads.", color="GREEN")
             else:
                 hint = "Run: apt install aria2 (Linux) or bundled in vendor/aria2/ (Windows)" if os.name != "nt" else "bundled binary not found in vendor/aria2/"
                 log_node(f"Bundle Loader: aria2c not found — using urllib. {hint}", color="YELLOW")

@@ -210,7 +210,6 @@ class UmeAiRT_BlockSampler:
 
         log_node(f"Block Sampler: {mode_str} | {width}x{height} | Steps: {steps} | CFG: {cfg}")
 
-        from .optimization_utils import warmup_vae
         warmup_vae(vae, latent_image)
 
         # 7. Sample

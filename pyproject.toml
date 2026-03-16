@@ -46,3 +46,9 @@ Repository = "https://github.com/UmeAiRT/ComfyUI-UmeAiRT-Toolkit.git"
 PublisherId = "UmeAiRT"
 DisplayName = "UmeAiRT Toolkit"
 Icon = ""
+
+[tool.bandit]
+# B101 = assert usage (fine in non-production code)
+# B310 = urlopen audit (legitimate — we download models)
+skips = ["B101", "B310"]
+exclude_dirs = ["vendor", "usdu_core", "facedetailer_core", "seedvr2_core", "tests"]

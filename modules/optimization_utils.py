@@ -63,7 +63,7 @@ def check_optimizations():
     log_node(f"⚡ Optimisation check: SageAttention {sage_status} | Flash Attention {flash_status} | Triton {triton_status}")
     
     if not check_library("flash_attn"):
-        log_node(f"💡 Optional: pip install flash-attn", color="YELLOW")
+        log_node("💡 Optional: pip install flash-attn", color="YELLOW")
 
     # 3. CUDA Memory
     mem_str = get_cuda_memory()
