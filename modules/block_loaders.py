@@ -272,8 +272,8 @@ class UmeAiRT_FilesSettings_ZIMG:
         try:
             unet_gguf = folder_paths.get_filename_list("unet_gguf")
             if unet_gguf: diff_models = diff_models + unet_gguf
-        except Exception:
-            pass
+        except Exception as e:
+            log_node(f"Bundle Loader: unet_gguf folder not available: {e}", color="YELLOW")
         diff_models = sorted(list(set(diff_models)))
         
         # 2. Get CLIPs (Standard + Text Encoders + GGUF)
@@ -282,13 +282,13 @@ class UmeAiRT_FilesSettings_ZIMG:
         try:
             tes = folder_paths.get_filename_list("text_encoders")
             if tes: clips = clips + tes
-        except Exception:
-            pass
+        except Exception as e:
+            log_node(f"Bundle Loader: text_encoders folder not available: {e}", color="YELLOW")
         try:
             gguf_clips = folder_paths.get_filename_list("clip_gguf")
             if gguf_clips: clips = clips + gguf_clips
-        except Exception:
-            pass
+        except Exception as e:
+            log_node(f"Bundle Loader: clip_gguf folder not available: {e}", color="YELLOW")
         clips = sorted(list(set(clips)))
             
         # 3. Get VAEs
@@ -422,8 +422,8 @@ def _get_download_dest(filename, folder_type):
             dest_dir = paths[0]
             os.makedirs(dest_dir, exist_ok=True)
             return os.path.join(dest_dir, filename)
-    except Exception:
-        pass
+    except Exception as e:
+        log_node(f"Bundle Loader: Could not resolve folder path for '{folder_type}': {e}", color="YELLOW")
     # Fallback: models/<folder_type>/
     fallback = os.path.join(folder_paths.models_dir, folder_type)
     os.makedirs(fallback, exist_ok=True)
@@ -450,8 +450,8 @@ def _find_aria2c():
             result = subprocess.run([vendor_exe, "--version"], capture_output=True, timeout=5)
             if result.returncode == 0:
                 return vendor_exe
-        except Exception:
-            pass
+        except Exception as e:
+            log_node(f"Bundle Loader: Vendored aria2c check failed: {e}", color="YELLOW")
 
     # 1. Try shutil.which (works if aria2c is on the current PATH)
     path = shutil.which("aria2c")
@@ -491,16 +491,16 @@ def _find_aria2c():
                     result = subprocess.run([candidate, "--version"], capture_output=True, timeout=5)
                     if result.returncode == 0:
                         return candidate
-                except Exception:
-                    pass
+                except Exception as e:
+                    log_node(f"Bundle Loader: aria2c candidate '{candidate}' failed: {e}", color="YELLOW")
 
     # 3. Last resort: just try running it (maybe it's on a PATH we missed)
     try:
         result = subprocess.run(["aria2c", "--version"], capture_output=True, timeout=5)
         if result.returncode == 0:
             return "aria2c"
-    except Exception:
-        pass
+    except Exception as e:
+        log_node(f"Bundle Loader: aria2c not found on PATH: {e}", color="YELLOW")
 
     return None
 
@@ -538,8 +538,8 @@ def _download_with_aria2(url, dest_path, connections=8, hf_token=""):
         req = urllib.request.Request(url, method="HEAD", headers=headers)
         with urllib.request.urlopen(req, timeout=30) as resp:
             total_size = int(resp.headers.get("Content-Length", 0))
-    except Exception:
-        pass
+    except Exception as e:
+        log_node(f"Bundle Loader: HEAD request for file size failed: {e}", color="YELLOW")
 
     size_mb = f" ({total_size / 1024 / 1024:.0f} MB)" if total_size else ""
     log_node(f"Bundle Loader: Downloading '{filename}'{size_mb} via aria2c ({connections} connections)...")
@@ -681,8 +681,8 @@ def _download_file(url, dest_path, hf_token=""):
             if os.path.exists(cleanup):
                 try:
                     os.remove(cleanup)
-                except Exception:
-                    pass
+                except Exception as e:
+                    log_node(f"Bundle Loader: Cleanup of '{cleanup}' failed: {e}", color="YELLOW")
         raise RuntimeError(f"Bundle Loader: Failed to download '{filename}': {e}")
 
 

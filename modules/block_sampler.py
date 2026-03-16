@@ -153,8 +153,8 @@ class UmeAiRT_BlockSampler:
              latent_channels = 4
              try:
                  latent_channels = model.model.latent_format.latent_channels
-             except Exception:
-                 pass
+             except Exception as e:
+                 log_node(f"Block Sampler: Could not detect latent channels, defaulting to 4: {e}", color="YELLOW")
              l = torch.zeros([1, latent_channels, height // 8, width // 8], device="cpu")
              latent_image = {"samples": l}
              denoise = 1.0
