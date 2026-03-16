@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **⬡ Display Names**: All 47 nodes prefixed with `⬡` for instant visual identification. Loader names clarified (e.g., `Model Loader` → `⬡ Checkpoint Loader`, `⬡ FLUX Loader`, `⬡ Z-IMG Loader`, `⬡ Fragmented Loader`).
+- **Category Harmonization**: `UmeAiRT/Loaders` → `UmeAiRT/Block/Loaders`, `UmeAiRT/Pipeline/IO` → `UmeAiRT/Pipeline/Output`.
+- **DRY: Pipeline Helpers**: Extracted `extract_pipeline_params()`, `validate_bundle()`, `PipelineParams` namedtuple, and `KNOWN_DIT_MODELS` constant into `common.py` — eliminated ~80 lines of duplicated code across 8 methods in `logic_nodes.py`.
+- **Node Instance Caching**: `BlockSampler` now caches `VAEEncode`, `KSampler`, `VAEDecode` instances in `__init__()` instead of creating new objects per execution.
+- **ControlNet Caching**: Added `_controlnet_cache` to `BlockSampler` for ControlNet model reuse across runs.
+- **Bundle Validation**: `BlockSampler.process()` now validates model_bundle input via `validate_bundle()` before unpacking.
+- **Latent Channel Detection**: Improved fallback with a YELLOW warning log instead of silent `pass` when `latent_format.latent_channels` is unavailable.
+
+### Fixed
+
+- **Import Hygiene**: Removed duplicate `import nodes as comfy_nodes` and dead seedvr2 top-level imports (`logic_nodes.py`). Moved inline imports (`weakref`, `warmup_vae`, `random`, `string`, `torchvision`) to module-level.
+- **Silent Exception**: `bbox` folder registration in `__init__.py` now logs a message instead of silently passing.
+- **Smoke Test Mocks**: Added missing `comfy.sd`, `comfy.utils`, `comfy.samplers`, `comfy_extras` mocks to `test_smoke.py`.
+
+### Security
+
+- **aria2c Header Fix**: Separated `--header` flag from its value in `_download_with_aria2()` (`block_loaders.py`) to prevent argument injection.
+
+### Removed
+
+- **Dead Classes**: Deleted `UmeAiRT_PipelineImageLoader` and `UmeAiRT_PipelineImageProcess` from `image_nodes.py` (never registered, leftover from refactoring).
+
+### Added
+
+- `TODO.md` for tracking remaining technical backlog items.
+- `test_smoke.py` added to CI pipeline (`.github/workflows/ci.yml`).
+- `*.bak` added to `.gitignore`.
+
+
 ### Fixed
 
 - **PERF-04**: Fixed a VRAM memory leak in `BlockSampler` by removing `self._cnet_cache` and using `weakref` for `self._last_clip` allowing ComfyUI's VRAM manager to clear unused models correctly (`block_sampler.py`).

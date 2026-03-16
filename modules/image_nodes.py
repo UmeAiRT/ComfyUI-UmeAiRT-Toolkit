@@ -8,6 +8,8 @@ import torch
 import numpy as np
 import os
 import re
+import random
+import string
 import folder_paths
 import comfy.utils
 import nodes as comfy_nodes
@@ -15,47 +17,6 @@ import torchvision.transforms.functional as TF
 from .common import resize_tensor, apply_outpaint_padding, log_node
 from .logger import logger
 from .image_saver_core.logic import ImageSaverLogic
-
-
-class UmeAiRT_PipelineImageLoader(comfy_nodes.LoadImage):
-    """Image Loader with optional resize from pipeline dimensions."""
-    @classmethod
-    def INPUT_TYPES(s):
-        input_dir = folder_paths.get_input_directory()
-        files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
-        files.sort()
-        return {
-            "required": {
-                "image": (sorted(files), {"image_upload": True}),
-                "resize": ("BOOLEAN", {"default": False, "label_on": "Resize to Pipeline", "label_off": "Keep Original", "tooltip": "Resize the image to match the generation pipeline dimensions."}),
-                "mode": (["Inpaint", "Img2Img"], {"default": "Inpaint", "tooltip": "Inpaint: fills the masked area. Img2Img: transforms the whole image (ignores mask)."}),
-            },
-            "optional": {
-                "gen_pipe": ("UME_PIPELINE", {"tooltip": "Connect the generation pipeline to automatically use its width/height for resizing."}),
-            }
-        }
-
-    RETURN_TYPES = ("IMAGE", "MASK")
-    RETURN_NAMES = ("image", "mask")
-    FUNCTION = "load_image_wireless"
-    CATEGORY = "UmeAiRT/Pipeline/Image"
-
-    def load_image_wireless(self, image, resize, mode, gen_pipe=None):
-        out = super().load_image(image)
-        img = out[0]
-        mask = out[1]
-
-        if resize and gen_pipe is not None:
-            target_w = int(gen_pipe.width or 1024)
-            target_h = int(gen_pipe.height or 1024)
-            img = resize_tensor(img, target_h, target_w, interp_mode="bilinear", is_mask=False)
-            if mask is not None:
-                mask = resize_tensor(mask, target_h, target_w, interp_mode="nearest", is_mask=True)
-
-        if mode == "Img2Img":
-            mask = None
-
-        return (img, mask)
 
 
 class UmeAiRT_SourceImage_Output:
@@ -81,85 +42,6 @@ class UmeAiRT_SourceImage_Output:
              source_mask = torch.zeros((1, source_image.shape[1], source_image.shape[2]), dtype=torch.float32, device="cpu")
         return (source_image, source_mask)
 
-
-class UmeAiRT_PipelineImageProcess:
-    """Image pre-processing node (resize, pad, blur mask) — reads dimensions from pipeline."""
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-            "required": {
-                "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "How much the AI changes the image. 1.0 = completely new, 0.3 = subtle changes only."}),
-                "mode": (["img2img", "inpaint", "outpaint", "txt2img"], {"default": "img2img", "tooltip": "How to process the image: img2img (transform), inpaint (fill masked area), or outpaint (extend)."}),
-            },
-            "optional": {
-                "gen_pipe": ("UME_PIPELINE", {"tooltip": "Connect the generation pipeline to use its width/height for resizing."}),
-                "image": ("IMAGE", {"tooltip": "The image to process (from a loader or previous node)."}),
-                "mask": ("MASK", {"tooltip": "Optional mask for inpainting (white = areas to modify)."}),
-                "resize": ("BOOLEAN", {"default": False, "label_on": "ON", "label_off": "OFF", "tooltip": "Resize the image to match the generation pipeline dimensions."}),
-                "mask_blur": ("INT", {"default": 10, "min": 0, "max": 200, "step": 1, "tooltip": "Softens the mask edge for natural blending. Higher values = smoother transitions."}),
-                "padding_left": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8, "tooltip": "Pixels to extend the image on the left (outpaint mode)."}),
-                "padding_top": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8, "tooltip": "Pixels to extend the image on the top (outpaint mode)."}),
-                "padding_right": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8, "tooltip": "Pixels to extend the image on the right (outpaint mode)."}),
-                "padding_bottom": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8, "tooltip": "Pixels to extend the image on the bottom (outpaint mode)."}),
-            }
-        }
-
-    RETURN_TYPES = ("IMAGE", "MASK")
-    RETURN_NAMES = ("image", "mask")
-    FUNCTION = "process_image"
-    CATEGORY = "UmeAiRT/Pipeline/Image"
-
-    def process_image(self, denoise=1.0, mode="img2img", gen_pipe=None, image=None, mask=None, resize=False, mask_blur=0,
-                      padding_left=0, padding_top=0, padding_right=0, padding_bottom=0):
-
-        if mode == "txt2img":
-             log_node("ImageProcess: Txt2Img Mode (Forcing Denoise=1.0, Ignoring Mask).", color="YELLOW")
-             return (image, None)
-
-        if image is None:
-            return (None, None)
-
-        B, H, W, C = image.shape
-
-        target_w, target_h = W, H
-        if resize and gen_pipe is not None:
-             target_w = int(gen_pipe.width or 1024)
-             target_h = int(gen_pipe.height or 1024)
-
-        final_image = image
-        final_mask = mask
-
-        if resize:
-             final_image = resize_tensor(final_image, target_h, target_w, interp_mode="bilinear", is_mask=False)
-             if final_mask is not None:
-                 final_mask = resize_tensor(final_mask, target_h, target_w, interp_mode="nearest", is_mask=True)
-             B, H, W, C = final_image.shape
-
-        # OUTPAINT
-        if mode == "outpaint":
-             pad_l, pad_t, pad_r, pad_b = padding_left, padding_top, padding_right, padding_bottom
-             final_image, final_mask = apply_outpaint_padding(
-                 final_image, final_mask, pad_l, pad_t, pad_r, pad_b, overlap=8, feathering=40
-             )
-
-        # INPAINT BLUR
-        if mask_blur > 0 and final_mask is not None:
-             if len(final_mask.shape) == 2: m = final_mask.unsqueeze(0).unsqueeze(0)
-             elif len(final_mask.shape) == 3: m = final_mask.unsqueeze(1)
-             else: m = final_mask
-
-             k = mask_blur
-             if k % 2 == 0: k += 1
-             m = TF.gaussian_blur(m, kernel_size=k)
-
-             if len(final_mask.shape) == 2: final_mask = m.squeeze(0).squeeze(0)
-             elif len(final_mask.shape) == 3: final_mask = m.squeeze(1)
-
-        if mode == "img2img":
-            final_mask = None
-            log_node("ImageProcess: Img2Img Mode (Mask Hidden).", color="YELLOW")
-
-        return (final_image, final_mask)
 
 
 class UmeAiRT_PipelineInpaintComposite:
@@ -238,7 +120,7 @@ class UmeAiRT_PipelineImageSaver:
     RETURN_TYPES = ()
     OUTPUT_NODE = True
     FUNCTION = "save_images"
-    CATEGORY = "UmeAiRT/Pipeline/IO"
+    CATEGORY = "UmeAiRT/Pipeline/Output"
 
     def save_images(self, gen_pipe, filename, prompt=None, extra_pnginfo=None):
         images = gen_pipe.image
@@ -314,8 +196,6 @@ class UmeAiRT_PipelineImageSaver:
 
         time_format = "%Y-%m-%d-%H%M%S"
 
-        import random
-        import string
         rand_suffix = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(5))
         filename = f"{filename}_{rand_suffix}"
 

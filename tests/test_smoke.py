@@ -46,8 +46,14 @@ class TestSmoke(unittest.TestCase):
             'aiohttp': MagicMock(),
             'aiohttp.web': MagicMock(),
             'comfy': MagicMock(),
+            'comfy.sd': MagicMock(),
             'comfy.sd1_clip': MagicMock(),
+            'comfy.utils': MagicMock(),
             'comfy.model_management': MagicMock(),
+            'comfy.samplers': MagicMock(),
+            'comfy.sample': MagicMock(),
+            'comfy_extras': MagicMock(),
+            'comfy_extras.nodes_upscale_model': MagicMock(),
             'nodes': MagicMock(),
             'folder_paths': SimpleFolderPaths()
         }

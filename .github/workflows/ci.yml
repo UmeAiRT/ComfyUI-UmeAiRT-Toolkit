@@ -47,3 +47,5 @@ jobs:
           python tests/test_tooltips.py -v
           echo "=== test_registration ==="
           python tests/test_registration.py -v
+          echo "=== test_smoke ==="
+          python tests/test_smoke.py -v

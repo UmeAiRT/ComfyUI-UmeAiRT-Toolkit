@@ -1,0 +1,22 @@
+# TODO — UmeAiRT Toolkit
+
+> Technical backlog. Items from the [critical analysis](docs/codemaps/structure.md).
+> Convention: use `# TODO(UmeAiRT):` inline for code-level markers.
+
+## High Priority
+
+- [ ] **SHA256 hash verification for downloads**
+  - Add `_verify_file_hash(path, expected_sha256)` helper to `block_loaders.py`
+  - Add `sha256` fields to `umeairt_bundles.json` manifest
+  - Verify after both aria2c and urllib downloads
+  - 📍 Inline marker: `block_loaders.py` L599
+
+## Medium Priority
+
+- [ ] **Coverage reporting in CI** — Add `coverage run` + `coverage report` to `ci.yml`
+- [ ] **Document download timeouts** — Add `timeout` parameter to `_download_with_urllib()` with tooltip
+
+## Low Priority / Future
+
+- [ ] **Consider `dataclass` for bundles** — Replace `TypedDict` with `@dataclass` for `UmeBundle`/`UmeSettings` (adds default values, `__post_init__` validation)
+- [ ] **Centralize `process_and_stitch` import** — Currently imported inline in SeedVR2 nodes; move to top when stable

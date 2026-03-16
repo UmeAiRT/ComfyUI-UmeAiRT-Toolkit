@@ -8,3 +8,4 @@ dist/
 build/
 
 error_dump.txt
+*.bak

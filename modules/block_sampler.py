@@ -1,11 +1,12 @@
 import torch
+import weakref
 import folder_paths
 import nodes as comfy_nodes
 import comfy.sd
 import comfy.utils
-from .common import GenerationContext, resize_tensor, apply_outpaint_padding, log_node
+from .common import GenerationContext, resize_tensor, apply_outpaint_padding, log_node, validate_bundle
 from .logger import logger
-from .optimization_utils import SamplerContext
+from .optimization_utils import SamplerContext, warmup_vae
 from typing import Tuple, Dict, Any, Optional, List
 
 try:
@@ -42,6 +43,10 @@ class UmeAiRT_BlockSampler:
         self.lora_loader = comfy_nodes.LoraLoader()
         self.cnet_loader = comfy_nodes.ControlNetLoader()
         self.cnet_apply = comfy_nodes.ControlNetApplyAdvanced()
+        self._vae_encode = comfy_nodes.VAEEncode()
+        self._ksampler = comfy_nodes.KSampler()
+        self._vae_decode = comfy_nodes.VAEDecode()
+        self._controlnet_cache = {}
         self._last_pos_text = None
         self._last_neg_text = None
         self._last_clip_ref = None
@@ -57,7 +62,8 @@ class UmeAiRT_BlockSampler:
                 negative: Optional[str] = None, 
                 loras: Optional[List[Tuple[str, float, float]]] = None, 
                 image: Optional[Dict[str, Any]] = None) -> Tuple[GenerationContext]:
-        # 1. Unpack model_bundle and create GenerationContext
+        # 1. Validate and unpack model_bundle
+        validate_bundle(model_bundle, ["model", "clip", "vae"], context="Block Sampler")
         model = model_bundle["model"]
         clip = model_bundle["clip"]
         vae = model_bundle["vae"]
@@ -134,10 +140,10 @@ class UmeAiRT_BlockSampler:
              ctx.source_mask = source_mask
 
              if mode_str in ["inpaint", "outpaint"] and source_mask is not None:
-                 latent_image = comfy_nodes.VAEEncode().encode(vae, raw_image)[0]
+                 latent_image = self._vae_encode.encode(vae, raw_image)[0]
                  latent_image["noise_mask"] = source_mask
              elif denoise < 1.0:
-                 latent_image = comfy_nodes.VAEEncode().encode(vae, raw_image)[0]
+                 latent_image = self._vae_encode.encode(vae, raw_image)[0]
 
         if latent_image is None and ctx.latent is not None:
              latent_image = ctx.latent
@@ -194,7 +200,11 @@ class UmeAiRT_BlockSampler:
                 c_name, c_image, c_str, c_start, c_end = cnet_def
                 if c_name != "None" and c_image is not None:
                     try:
-                        c_model = self.cnet_loader.load_controlnet(c_name)[0]
+                        if c_name in self._controlnet_cache:
+                            c_model = self._controlnet_cache[c_name]
+                        else:
+                            c_model = self.cnet_loader.load_controlnet(c_name)[0]
+                            self._controlnet_cache[c_name] = c_model
                         positive_cond, negative_cond = self.cnet_apply.apply_controlnet(positive_cond, negative_cond, c_model, c_image, c_str, c_start, c_end)
                     except Exception as e: log_node(f"Block Sampler ControlNet Error: {e}", color="RED")
 
@@ -206,13 +216,13 @@ class UmeAiRT_BlockSampler:
         # 7. Sample
         try:
              with SamplerContext():
-                 result_latent = comfy_nodes.KSampler().sample(model, seed, steps, cfg, sampler_name, scheduler, positive_cond, negative_cond, latent_image, denoise)[0]
+                 result_latent = self._ksampler.sample(model, seed, steps, cfg, sampler_name, scheduler, positive_cond, negative_cond, latent_image, denoise)[0]
         except Exception as e:
              raise RuntimeError(f"Sampling Failed: {e}")
 
         # 8. Decode & store image in pipeline
         log_node("Block Sampler: Decoding VAE")
-        image_out = comfy_nodes.VAEDecode().decode(vae, result_latent)[0]
+        image_out = self._vae_decode.decode(vae, result_latent)[0]
 
         if mode_str == "inpaint" and raw_image is not None and source_mask is not None:
              try:

@@ -20,8 +20,8 @@ import folder_paths
 import os
 try:
     folder_paths.add_model_folder_path("bbox", os.path.join(folder_paths.models_dir, "bbox"))
-except Exception:
-    pass
+except Exception as e:
+    print(f"[UmeAiRT-Toolkit] bbox folder registration note: {e}")
 if "bbox" not in folder_paths.folder_names_and_paths:
     folder_paths.folder_names_and_paths["bbox"] = ([os.path.join(folder_paths.models_dir, "bbox")], folder_paths.supported_pt_extensions)
 
@@ -134,65 +134,65 @@ NODE_CLASS_MAPPINGS = {
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     # Loaders
-    "UmeAiRT_FilesSettings_Checkpoint": "Model Loader",
-    "UmeAiRT_FilesSettings_Checkpoint_Advanced": "Model Loader (Advanced)",
-    "UmeAiRT_FilesSettings_FLUX": "Model Loader - FLUX",
-    "UmeAiRT_FilesSettings_Fragmented": "Model Loader (Fragmented)",
-    "UmeAiRT_FilesSettings_ZIMG": "Model Loader (Z-IMG)",
-    "UmeAiRT_BundleLoader": "📦 Bundle Auto-Loader",
-    "UmeAiRT_MultiLoraLoader": "Multi-LoRA Loader",
+    "UmeAiRT_FilesSettings_Checkpoint": "⬡ Checkpoint Loader",
+    "UmeAiRT_FilesSettings_Checkpoint_Advanced": "⬡ Checkpoint Loader (Advanced)",
+    "UmeAiRT_FilesSettings_FLUX": "⬡ FLUX Loader",
+    "UmeAiRT_FilesSettings_Fragmented": "⬡ Fragmented Loader",
+    "UmeAiRT_FilesSettings_ZIMG": "⬡ Z-IMG Loader",
+    "UmeAiRT_BundleLoader": "⬡ 📦 Bundle Auto-Loader",
+    "UmeAiRT_MultiLoraLoader": "⬡ Multi-LoRA Loader",
 
     # Settings & Image
-    "UmeAiRT_GenerationSettings": "Generation Settings",
-    "UmeAiRT_BlockImageLoader": "Image Loader",
-    "UmeAiRT_BlockImageLoader_Advanced": "Image Loader (Advanced)",
-    "UmeAiRT_BlockImageProcess": "Image Process",
-    "UmeAiRT_LoraBlock_1": "LoRA 1x",
-    "UmeAiRT_LoraBlock_3": "LoRA 3x",
-    "UmeAiRT_LoraBlock_5": "LoRA 5x",
-    "UmeAiRT_LoraBlock_10": "LoRA 10x",
-    "UmeAiRT_ControlNetImageApply_Simple": "ControlNet Apply",
-    "UmeAiRT_ControlNetImageApply_Advanced": "ControlNet Apply (Advanced)",
-    "UmeAiRT_ControlNetImageProcess": "ControlNet Process",
+    "UmeAiRT_GenerationSettings": "⬡ Generation Settings",
+    "UmeAiRT_BlockImageLoader": "⬡ Image Loader",
+    "UmeAiRT_BlockImageLoader_Advanced": "⬡ Image Loader (Advanced)",
+    "UmeAiRT_BlockImageProcess": "⬡ Image Process",
+    "UmeAiRT_LoraBlock_1": "⬡ LoRA 1x",
+    "UmeAiRT_LoraBlock_3": "⬡ LoRA 3x",
+    "UmeAiRT_LoraBlock_5": "⬡ LoRA 5x",
+    "UmeAiRT_LoraBlock_10": "⬡ LoRA 10x",
+    "UmeAiRT_ControlNetImageApply_Simple": "⬡ ControlNet Apply",
+    "UmeAiRT_ControlNetImageApply_Advanced": "⬡ ControlNet Apply (Advanced)",
+    "UmeAiRT_ControlNetImageProcess": "⬡ ControlNet Process",
 
     # Prompt Editors
-    "UmeAiRT_Positive_Input": "Positive Prompt Input",
-    "UmeAiRT_Negative_Input": "Negative Prompt Input",
+    "UmeAiRT_Positive_Input": "⬡ Positive Prompt Input",
+    "UmeAiRT_Negative_Input": "⬡ Negative Prompt Input",
 
     # Sampler & Post-Process
-    "UmeAiRT_BlockSampler": "KSampler",
-    "UmeAiRT_PipelineUltimateUpscale": "UltimateSD Upscale",
-    "UmeAiRT_PipelineUltimateUpscale_Advanced": "UltimateSD Upscale (Advanced)",
-    "UmeAiRT_PipelineSeedVR2Upscale": "SeedVR2 Upscale",
-    "UmeAiRT_PipelineSeedVR2Upscale_Advanced": "SeedVR2 Upscale (Advanced)",
-    "UmeAiRT_PipelineFaceDetailer_Advanced": "FaceDetailer (Advanced)",
-    "UmeAiRT_PipelineFaceDetailer": "FaceDetailer",
-    "UmeAiRT_Detailer_Daemon_Simple": "Detailer Daemon",
-    "UmeAiRT_Detailer_Daemon_Advanced": "Detailer Daemon (Advanced)",
-    "UmeAiRT_BboxDetectorLoader": "BBOX Detector Loader",
+    "UmeAiRT_BlockSampler": "⬡ KSampler",
+    "UmeAiRT_PipelineUltimateUpscale": "⬡ UltimateSD Upscale",
+    "UmeAiRT_PipelineUltimateUpscale_Advanced": "⬡ UltimateSD Upscale (Advanced)",
+    "UmeAiRT_PipelineSeedVR2Upscale": "⬡ SeedVR2 Upscale",
+    "UmeAiRT_PipelineSeedVR2Upscale_Advanced": "⬡ SeedVR2 Upscale (Advanced)",
+    "UmeAiRT_PipelineFaceDetailer_Advanced": "⬡ FaceDetailer (Advanced)",
+    "UmeAiRT_PipelineFaceDetailer": "⬡ FaceDetailer",
+    "UmeAiRT_Detailer_Daemon_Simple": "⬡ Detailer Daemon",
+    "UmeAiRT_Detailer_Daemon_Advanced": "⬡ Detailer Daemon (Advanced)",
+    "UmeAiRT_BboxDetectorLoader": "⬡ BBOX Detector Loader",
 
     # Image
-    "UmeAiRT_SourceImage_Output": "Source Image Output",
-    "UmeAiRT_PipelineInpaintComposite": "Inpaint Composite",
-    "UmeAiRT_PipelineImageSaver": "Image Saver",
+    "UmeAiRT_SourceImage_Output": "⬡ Source Image Output",
+    "UmeAiRT_PipelineInpaintComposite": "⬡ Inpaint Composite",
+    "UmeAiRT_PipelineImageSaver": "⬡ Image Saver",
 
     # Pack/Unpack
-    "UmeAiRT_Pack_Bundle": "Pack Models Bundle",
-    "UmeAiRT_Unpack_Pipeline": "Unpack Pipeline",
-    "UmeAiRT_Unpack_FilesBundle": "Unpack Models Bundle",
-    "UmeAiRT_Unpack_ImageBundle": "Unpack Image Bundle",
-    "UmeAiRT_Unpack_SettingsBundle": "Unpack Settings Bundle",
-    "UmeAiRT_Unpack_PromptsBundle": "Unpack Prompts Bundle",
-    "UmeAiRT_Faces_Unpack_Node": "Unpack Faces",
-    "UmeAiRT_Tags_Unpack_Node": "Unpack Tags",
-    "UmeAiRT_Pipe_Unpack_Node": "Unpack Pipe",
+    "UmeAiRT_Pack_Bundle": "⬡ Pack Models Bundle",
+    "UmeAiRT_Unpack_Pipeline": "⬡ Unpack Pipeline",
+    "UmeAiRT_Unpack_FilesBundle": "⬡ Unpack Models Bundle",
+    "UmeAiRT_Unpack_ImageBundle": "⬡ Unpack Image Bundle",
+    "UmeAiRT_Unpack_SettingsBundle": "⬡ Unpack Settings Bundle",
+    "UmeAiRT_Unpack_PromptsBundle": "⬡ Unpack Prompts Bundle",
+    "UmeAiRT_Faces_Unpack_Node": "⬡ Unpack Faces",
+    "UmeAiRT_Tags_Unpack_Node": "⬡ Unpack Tags",
+    "UmeAiRT_Pipe_Unpack_Node": "⬡ Unpack Pipe",
 
     # Utils
-    "UmeAiRT_Label": "Label",
-    "UmeAiRT_Signature": "UmeAiRT Signature",
-    "UmeAiRT_Bundle_Downloader": "💾 Bundle Model Downloader",
-    "UmeAiRT_Log_Viewer": "📜 UmeAiRT Log Viewer",
-    "UmeAiRT_HealthCheck": "🩺 UmeAiRT Health Check",
+    "UmeAiRT_Label": "⬡ Label",
+    "UmeAiRT_Signature": "⬡ UmeAiRT Signature",
+    "UmeAiRT_Bundle_Downloader": "⬡ 💾 Bundle Model Downloader",
+    "UmeAiRT_Log_Viewer": "⬡ 📜 UmeAiRT Log Viewer",
+    "UmeAiRT_HealthCheck": "⬡ 🩺 UmeAiRT Health Check",
 }
 
 WEB_DIRECTORY = "./web"

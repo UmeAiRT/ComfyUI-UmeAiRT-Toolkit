@@ -6,8 +6,83 @@ Core utilities, typed bundle definitions, and the GenerationContext pipeline obj
 
 import copy
 import torch
+import torchvision.transforms.functional as TF
+from collections import namedtuple
 from typing import TypedDict, Any, Optional, List, Tuple
 from .logger import log_node
+
+
+# --- Pipeline Parameter Extraction ---
+
+PipelineParams = namedtuple("PipelineParams", [
+    "model", "vae", "clip", "steps", "cfg",
+    "sampler_name", "scheduler", "seed", "pos_text", "neg_text"
+])
+
+
+def extract_pipeline_params(gen_pipe):
+    """Extracts common parameters from a GenerationContext into a PipelineParams tuple.
+
+    Centralizes the repetitive pattern of reading model/vae/clip/steps/cfg/sampler/scheduler/seed/prompts
+    from a GenerationContext, used by every pipeline-aware post-processing node.
+
+    Args:
+        gen_pipe (GenerationContext): The generation pipeline object.
+
+    Returns:
+        PipelineParams: A named tuple with all extracted values.
+
+    Raises:
+        ValueError: If model, vae, or clip are missing from the pipeline.
+    """
+    model = gen_pipe.model
+    vae = gen_pipe.vae
+    clip = gen_pipe.clip
+
+    if not model or not vae or not clip:
+        raise ValueError("Pipeline is missing Model, VAE, or CLIP.")
+
+    return PipelineParams(
+        model=model,
+        vae=vae,
+        clip=clip,
+        steps=int(gen_pipe.steps or 20),
+        cfg=float(gen_pipe.cfg or 8.0),
+        sampler_name=gen_pipe.sampler_name or "euler",
+        scheduler=gen_pipe.scheduler or "normal",
+        seed=int(gen_pipe.seed or 0),
+        pos_text=str(gen_pipe.positive_prompt or ""),
+        neg_text=str(gen_pipe.negative_prompt or ""),
+    )
+
+
+def validate_bundle(bundle, required_keys, context=""):
+    """Validates that a dict bundle contains all required keys.
+
+    Args:
+        bundle: The object to validate (must be a dict).
+        required_keys (list[str]): Keys that must be present.
+        context (str): Name of the calling node for error messages.
+
+    Raises:
+        ValueError: If the bundle is not a dict or is missing required keys.
+    """
+    if not isinstance(bundle, dict):
+        raise ValueError(f"{context}: Expected a dict bundle, got {type(bundle).__name__}.")
+    missing = [k for k in required_keys if k not in bundle]
+    if missing:
+        raise ValueError(f"{context}: Bundle is missing required keys: {', '.join(missing)}.")
+
+
+# --- SeedVR2 Known Models ---
+
+KNOWN_DIT_MODELS = [
+    "seedvr2_ema_3b-Q4_K_M.gguf", "seedvr2_ema_3b-Q8_0.gguf",
+    "seedvr2_ema_3b_fp8_e4m3fn.safetensors", "seedvr2_ema_3b_fp16.safetensors",
+    "seedvr2_ema_7b-Q4_K_M.gguf", "seedvr2_ema_7b_fp8_e4m3fn_mixed_block35_fp16.safetensors",
+    "seedvr2_ema_7b_fp16.safetensors", "seedvr2_ema_7b_sharp-Q4_K_M.gguf",
+    "seedvr2_ema_7b_sharp_fp8_e4m3fn_mixed_block35_fp16.safetensors", "seedvr2_ema_7b_sharp_fp16.safetensors",
+]
 
 
 # --- Typed Bundle Definitions ---
@@ -205,7 +280,6 @@ def apply_outpaint_padding(image, mask, pad_l, pad_t, pad_r, pad_b, overlap=8, f
 
     # Feathering (Gaussian blur)
     if feathering > 0:
-        import torchvision.transforms.functional as TF
         k = feathering
         if k % 2 == 0: k += 1
         sig = float(k) / 3.0

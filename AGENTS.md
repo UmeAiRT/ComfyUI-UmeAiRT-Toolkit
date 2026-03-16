@@ -64,7 +64,7 @@ Source Image ───┘                          │
 **Naming:**
 
 - Class Names: `UmeAiRT_` prefix (e.g., `UmeAiRT_BlockSampler`).
-- Display Names: Clear, user-friendly (e.g., "KSampler").
+- Display Names: Prefixed with `⬡` for visual identification (e.g., `⬡ KSampler`, `⬡ Checkpoint Loader`).
 - Output names: `model_bundle` for loaders, `gen_pipe` for sampler/post-process.
 - Pipeline parameters: Always use `gen_pipe` (not `pipeline` or `generation`).
 
@@ -76,7 +76,7 @@ Source Image ───┘                          │
 
 ### File Structure
 
-- `modules/common.py`: `GenerationContext` class, `TypedDict` bundle types (`UmeBundle`, `UmeSettings`, `UmeImage`), shared helpers (`resize_tensor`, `encode_prompts`, `apply_outpaint_padding`).
+- `modules/common.py`: `GenerationContext` class, `TypedDict` bundle types (`UmeBundle`, `UmeSettings`, `UmeImage`), pipeline helpers (`extract_pipeline_params`, `validate_bundle`, `PipelineParams`), shared helpers (`resize_tensor`, `encode_prompts`, `apply_outpaint_padding`), `KNOWN_DIT_MODELS` constant.
 - `modules/logger.py`: Standard logging utility.
 - `modules/optimization_utils.py`: Environment and optimization checks.
 - `modules/extra_samplers.py`: Custom KSampler algorithms (SA-Solver, RES Multistep).
@@ -134,9 +134,10 @@ To avoid regressions and maintain a stable, production-ready codebase, adhere st
 
 | File | Notes |
 |------|-------|
-| `modules/common.py` | Contains `GenerationContext`, `TypedDict` bundle types, and shared helpers. |
+| `modules/common.py` | Contains `GenerationContext`, `TypedDict` bundle types, pipeline helpers, and shared utilities. |
 | `__init__.py` | Entry point. **Must be updated** when adding nodes via import from modules. |
 | `docs/codemaps/structure.md` | Overview of the modular organization. |
+| `TODO.md` | Technical backlog (remaining items from critical analysis). |
 | `tests/test_registration.py` | Validates NODE_CLASS_MAPPINGS ↔ NODE_DISPLAY_NAME_MAPPINGS sync, dep sync. |
 | `tests/test_tooltips.py` | Regression test: every input must have a tooltip. |
 
@@ -152,6 +153,8 @@ To avoid regressions and maintain a stable, production-ready codebase, adhere st
 | Name pipeline param `pipeline` or `generation` | Use `gen_pipe` everywhere |
 | Add input without tooltip | Add `"tooltip": "description"` to every input dict |
 | Skip tests | Run `python tests/test_*.py -v` before committing |
+| Duplicate pipeline extraction | Use `extract_pipeline_params()` from `common.py` |
+| Duplicate KNOWN_DIT_MODELS | Import from `common.py` |
 
 ## 🚨 Mandatory Verification Checklist
 

@@ -564,7 +564,7 @@ def _download_with_aria2(url, dest_path, connections=8, hf_token=""):
             "--human-readable=true",
         ]
         if hf_token:
-            cmd.extend(["--header=Authorization: Bearer " + hf_token])
+            cmd.extend(["--header", "Authorization: Bearer " + hf_token])
         cmd.append(url)
 
         import re
@@ -596,6 +596,7 @@ def _download_with_aria2(url, dest_path, connections=8, hf_token=""):
         pbar.update_absolute(100)
 
         if returncode == 0 and os.path.exists(dest_path):
+            # TODO(UmeAiRT): Add SHA256 hash verification here once umeairt_bundles.json has sha256 fields
             log_node(f"Bundle Loader: '{filename}' downloaded via aria2c.", color="GREEN")
             return True
         else:

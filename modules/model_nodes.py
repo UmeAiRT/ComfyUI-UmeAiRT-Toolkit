@@ -35,7 +35,7 @@ class UmeAiRT_MultiLoraLoader:
 
     RETURN_TYPES = ("MODEL", "CLIP")
     FUNCTION = "load_loras"
-    CATEGORY = "UmeAiRT/Loaders"
+    CATEGORY = "UmeAiRT/Block/Loaders"
 
     def load_loras(self, model, clip, 
                    lora_1, lora_1_name, lora_1_strength,

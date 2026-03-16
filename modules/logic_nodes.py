@@ -11,26 +11,14 @@ import folder_paths
 import comfy.utils
 import comfy.sd
 import nodes as comfy_nodes
-import nodes as comfy_nodes
-from .common import log_node, encode_prompts
+from .common import log_node, encode_prompts, extract_pipeline_params, KNOWN_DIT_MODELS
 from .logger import logger
-
-# Try import internals
-try:
-    from .seedvr2_adapter import execute_seedvr2
-    from .stitching import process_and_stitch
-except ImportError as e:
-    from .logger import log_node
-    log_node(f"Logic Nodes: Could not import SeedVR2 internals: {e}", color="YELLOW")
-    pass
 
 try:
     from .facedetailer_core import logic as fd_logic
     from .facedetailer_core import detector
 except ImportError as e:
-    from .logger import log_node
     log_node(f"Logic Nodes: Could not import FaceDetailer internals: {e}", color="YELLOW")
-    pass
 
 
 # --- Helpers ---
@@ -116,7 +104,7 @@ class UmeAiRT_BboxDetectorLoader:
         }
     RETURN_TYPES = ("BBOX_DETECTOR",)
     FUNCTION = "load_bbox"
-    CATEGORY = "UmeAiRT/Loaders"
+    CATEGORY = "UmeAiRT/Block/Loaders"
 
     def load_bbox(self, model_name):
         try:
@@ -146,7 +134,6 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
     RETURN_NAMES = ("gen_pipe",)
     FUNCTION = "upscale"
     CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
-
     def upscale(self, gen_pipe, enabled, model, upscale_by):
         image = gen_pipe.image
         if image is None:
@@ -155,32 +142,17 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
         if not enabled:
             return (gen_pipe,)
 
+        pp = extract_pipeline_params(gen_pipe)
+
         denoise = 0.35
-        clean_prompt = True
-        mode_type = "Linear"
-        tile_padding = 32
-
-        sd_model = gen_pipe.model
-        vae = gen_pipe.vae
-        clip = gen_pipe.clip
-
-        steps = max(5, int(gen_pipe.steps or 20) // 4)
+        steps = max(5, pp.steps // 4)
         cfg = 1.0
-        sampler_name = gen_pipe.sampler_name or "euler"
-        scheduler = gen_pipe.scheduler or "normal"
-        seed = int(gen_pipe.seed or 0)
 
-        if not sd_model or not vae or not clip:
-            raise ValueError("UltimateUpscale: Missing Model/VAE/CLIP in pipeline.")
-
-        pos_text = str(gen_pipe.positive_prompt or "")
-        neg_text = str(gen_pipe.negative_prompt or "")
-        target_pos_text = "" if clean_prompt else pos_text
-        positive, negative = self.encode_prompts(clip, target_pos_text, neg_text)
+        positive, negative = self.encode_prompts(pp.clip, "", pp.neg_text)
 
         try:
-             from comfy_extras.nodes_upscale_model import UpscaleModelLoader
-             upscale_model = UpscaleModelLoader().load_model(model)[0]
+              from comfy_extras.nodes_upscale_model import UpscaleModelLoader
+              upscale_model = UpscaleModelLoader().load_model(model)[0]
         except ImportError:
             raise ImportError("UmeAiRT: Could not import UpscaleModelLoader.")
 
@@ -190,11 +162,11 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
         tile_height = int(gen_pipe.height or 1024)
 
         res = usdu_node.upscale(
-                 image=image, model=sd_model, positive=positive, negative=negative, vae=vae,
-                 upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
-                 sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
-                 upscale_model=upscale_model, mode_type=mode_type,
-                 tile_width=tile_width, tile_height=tile_height, mask_blur=16, tile_padding=tile_padding,
+                 image=image, model=pp.model, positive=positive, negative=negative, vae=pp.vae,
+                 upscale_by=upscale_by, seed=pp.seed, steps=steps, cfg=cfg,
+                 sampler_name=pp.sampler_name, scheduler=pp.scheduler, denoise=denoise,
+                 upscale_model=upscale_model, mode_type="Linear",
+                 tile_width=tile_width, tile_height=tile_height, mask_blur=16, tile_padding=32,
                  seam_fix_mode="None", seam_fix_denoise=1.0,
                  seam_fix_mask_blur=8, seam_fix_width=64, seam_fix_padding=16,
                  force_uniform_tiles=True, tiled_decode=False,
@@ -250,36 +222,25 @@ class UmeAiRT_PipelineUltimateUpscale_Advanced(UmeAiRT_UltimateUpscale_Base):
             raise ValueError("UltimateUpscale Advanced: No image in pipeline.")
         log_node(f"UltimateSDUpscale (Advanced): Processing | Ratio: x{upscale_by} | Model: {model} | Denoise: {denoise}")
 
-        sd_model = gen_pipe.model
-        vae = gen_pipe.vae
-        clip = gen_pipe.clip
-
-        steps = max(5, int(gen_pipe.steps or 20) // 4)
+        pp = extract_pipeline_params(gen_pipe)
+        steps = max(5, pp.steps // 4)
         cfg = 1.0
-        sampler_name = gen_pipe.sampler_name or "euler"
-        scheduler = gen_pipe.scheduler or "normal"
-        seed = int(gen_pipe.seed or 0)
 
-        if not sd_model or not vae or not clip:
-            raise ValueError("UltimateUpscale Advanced: Missing Model/VAE/CLIP in pipeline.")
-
-        pos_text = str(gen_pipe.positive_prompt or "")
-        neg_text = str(gen_pipe.negative_prompt or "")
-        target_pos_text = "" if clean_prompt else pos_text
-        positive, negative = self.encode_prompts(clip, target_pos_text, neg_text)
+        target_pos_text = "" if clean_prompt else pp.pos_text
+        positive, negative = self.encode_prompts(pp.clip, target_pos_text, pp.neg_text)
 
         try:
-             from comfy_extras.nodes_upscale_model import UpscaleModelLoader
-             upscale_model = UpscaleModelLoader().load_model(model)[0]
+              from comfy_extras.nodes_upscale_model import UpscaleModelLoader
+              upscale_model = UpscaleModelLoader().load_model(model)[0]
         except ImportError:
             raise ImportError("UmeAiRT: Could not import UpscaleModelLoader.")
 
         usdu_node = self.get_usdu_node()
 
         res = usdu_node.upscale(
-                 image=image, model=sd_model, positive=positive, negative=negative, vae=vae,
-                 upscale_by=upscale_by, seed=seed, steps=steps, cfg=cfg,
-                 sampler_name=sampler_name, scheduler=scheduler, denoise=denoise,
+                 image=image, model=pp.model, positive=positive, negative=negative, vae=pp.vae,
+                 upscale_by=upscale_by, seed=pp.seed, steps=steps, cfg=cfg,
+                 sampler_name=pp.sampler_name, scheduler=pp.scheduler, denoise=denoise,
                  upscale_model=upscale_model, mode_type=mode_type,
                  tile_width=tile_width, tile_height=tile_height, mask_blur=mask_blur, tile_padding=tile_padding,
                  seam_fix_mode=seam_fix_mode, seam_fix_denoise=seam_fix_denoise,
@@ -299,13 +260,6 @@ class UmeAiRT_PipelineSeedVR2Upscale:
     """SeedVR2 upscaler — reads seed from pipeline."""
     @classmethod
     def INPUT_TYPES(s):
-        KNOWN_DIT_MODELS = [
-            "seedvr2_ema_3b-Q4_K_M.gguf", "seedvr2_ema_3b-Q8_0.gguf",
-            "seedvr2_ema_3b_fp8_e4m3fn.safetensors", "seedvr2_ema_3b_fp16.safetensors",
-            "seedvr2_ema_7b-Q4_K_M.gguf", "seedvr2_ema_7b_fp8_e4m3fn_mixed_block35_fp16.safetensors",
-            "seedvr2_ema_7b_fp16.safetensors", "seedvr2_ema_7b_sharp-Q4_K_M.gguf",
-            "seedvr2_ema_7b_sharp_fp8_e4m3fn_mixed_block35_fp16.safetensors", "seedvr2_ema_7b_sharp_fp16.safetensors",
-        ]
         default_dit = "seedvr2_ema_3b_fp8_e4m3fn.safetensors"
 
         try:
@@ -437,13 +391,6 @@ class UmeAiRT_PipelineSeedVR2Upscale_Advanced:
     """Advanced SeedVR2 upscaler with full control — reads seed from pipeline."""
     @classmethod
     def INPUT_TYPES(s):
-        KNOWN_DIT_MODELS = [
-            "seedvr2_ema_3b-Q4_K_M.gguf", "seedvr2_ema_3b-Q8_0.gguf",
-            "seedvr2_ema_3b_fp8_e4m3fn.safetensors", "seedvr2_ema_3b_fp16.safetensors",
-            "seedvr2_ema_7b-Q4_K_M.gguf", "seedvr2_ema_7b_fp8_e4m3fn_mixed_block35_fp16.safetensors",
-            "seedvr2_ema_7b_fp16.safetensors", "seedvr2_ema_7b_sharp-Q4_K_M.gguf",
-            "seedvr2_ema_7b_sharp_fp8_e4m3fn_mixed_block35_fp16.safetensors", "seedvr2_ema_7b_sharp_fp16.safetensors",
-        ]
         default_dit = "seedvr2_ema_3b_fp8_e4m3fn.safetensors"
         try:
              from ..seedvr2_core.seedvr2_adapter import _ensure_seedvr2_path
@@ -558,30 +505,15 @@ class UmeAiRT_PipelineFaceDetailer_Advanced:
             raise ValueError("FaceDetailer: No image in pipeline.")
         if not enabled: return (gen_pipe,)
 
-        model = gen_pipe.model
-        vae = gen_pipe.vae
-        clip = gen_pipe.clip
-
-        steps = int(gen_pipe.steps or 20)
-        cfg = float(gen_pipe.cfg or 8.0)
-        sampler_name = gen_pipe.sampler_name or "euler"
-        scheduler = gen_pipe.scheduler or "normal"
-        seed = int(gen_pipe.seed or 0)
-
-        pos_text = str(gen_pipe.positive_prompt or "")
-        neg_text = str(gen_pipe.negative_prompt or "")
-
-        if not model or not vae or not clip:
-            return (gen_pipe,)
-
-        positive, negative = encode_prompts(clip, pos_text, neg_text)
+        pp = extract_pipeline_params(gen_pipe)
+        positive, negative = encode_prompts(pp.clip, pp.pos_text, pp.neg_text)
 
         segs = bbox_detector.detect(image, 0.5, 10, 3.0, 10)
 
         result = fd_logic.do_detail(
-                 image=image, segs=segs, model=model, clip=clip, vae=vae,
+                 image=image, segs=segs, model=pp.model, clip=pp.clip, vae=pp.vae,
                  guide_size=guide_size, guide_size_for_bbox=True, max_size=max_size,
-                 seed=seed, steps=steps, cfg=cfg, sampler_name=sampler_name, scheduler=scheduler,
+                 seed=pp.seed, steps=pp.steps, cfg=pp.cfg, sampler_name=pp.sampler_name, scheduler=pp.scheduler,
                  positive=positive, negative=negative, denoise=denoise,
                  feather=5, noise_mask=True, force_inpaint=True, drop_size=10
              )
@@ -711,27 +643,15 @@ class UmeAiRT_Detailer_Daemon_Simple:
         if start_image is None:
             raise ValueError("Detail Daemon: No image in pipeline.")
 
-        model = gen_pipe.model
-        vae = gen_pipe.vae
-
-        steps = int(gen_pipe.steps or 20)
-        cfg = float(gen_pipe.cfg or 8.0)
-        sampler_name = gen_pipe.sampler_name or "euler"
-        scheduler = gen_pipe.scheduler or "normal"
-        seed = int(gen_pipe.seed or 0)
+        pp = extract_pipeline_params(gen_pipe)
+        steps, cfg, sampler_name, scheduler, seed = pp.steps, pp.cfg, pp.sampler_name, pp.scheduler, pp.seed
+        model, vae, clip = pp.model, pp.vae, pp.clip
 
         denoise = 0.5
         refine_denoise = 0.05
-        clip = gen_pipe.clip
-        pos_text = str(gen_pipe.positive_prompt or "")
-        neg_text = str(gen_pipe.negative_prompt or "")
-
-        if any(x is None for x in [model, vae, start_image, clip]):
-            log_node("Missing Pipeline Context for Detailer Daemon", color="RED")
-            return (gen_pipe,)
 
         # Encode prompts
-        positive, negative = encode_prompts(clip, pos_text, neg_text)
+        positive, negative = encode_prompts(clip, pp.pos_text, pp.neg_text)
 
         t = vae.encode(start_image[:,:,:,:3])
         latent_image = {"samples": t}
@@ -821,22 +741,10 @@ class UmeAiRT_Detailer_Daemon_Advanced(UmeAiRT_Detailer_Daemon_Simple):
         if start_image is None:
             raise ValueError("Detail Daemon Advanced: No image in pipeline.")
 
-        model = gen_pipe.model
-        vae = gen_pipe.vae
-        clip = gen_pipe.clip
-        pos_text = str(gen_pipe.positive_prompt or "")
-        neg_text = str(gen_pipe.negative_prompt or "")
+        pp = extract_pipeline_params(gen_pipe)
+        model, vae, clip = pp.model, pp.vae, pp.clip
 
-        if any(x is None for x in [model, vae, clip]):
-            return (gen_pipe,)
-
-        tokens = clip.tokenize(pos_text)
-        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-        positive = [[cond, {"pooled_output": pooled}]]
-
-        tokens = clip.tokenize(neg_text)
-        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-        negative = [[cond, {"pooled_output": pooled}]]
+        positive, negative = encode_prompts(clip, pp.pos_text, pp.neg_text)
 
         t = vae.encode(start_image[:,:,:,:3])
         latent_image = {"samples": t}

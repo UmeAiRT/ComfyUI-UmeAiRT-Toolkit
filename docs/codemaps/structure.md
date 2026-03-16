@@ -42,15 +42,17 @@ Pack and Unpack nodes enable bidirectional compatibility with native/community C
 
 ## Sub-Modules (`modules/`)
 
-- `common.py`: `GenerationContext` class, shared constants, and core utilities.
+- `common.py`: `GenerationContext` class, `PipelineParams`, `extract_pipeline_params()`, `validate_bundle()`, shared constants (`KNOWN_DIT_MODELS`), and core utilities.
 - `logger.py`: Standardized colorized logging utility.
 - `optimization_utils.py`: Environment checks (SageAttention, Triton, etc.).
-- `settings_nodes.py`: Wireless Variable Setters/Getters (Steps, CFG, Prompts).
-- `model_nodes.py`: Wireless and Block-based Model/LoRA loaders.
+- `model_nodes.py`: Multi-LoRA Loader.
 - `logic_nodes.py`: Pipeline-aware Upscalers, Detailers, and Detail Daemon nodes.
-- `block_nodes.py`: Block Loaders (→ `UME_BUNDLE`), GenerationSettings (→ `UME_SETTINGS`), BlockSampler (→ `UME_PIPELINE`), and Block post-processors.
-- `image_nodes.py`: Image loading, processing, and saving (pipeline-aware).
-- `utils_nodes.py`: Labels, state debuggers, Pack/Unpack nodes.
+- `block_nodes.py`: Re-export shim for backward compatibility — imports from sub-modules.
+- `block_inputs.py`: LoRA blocks, ControlNet, GenerationSettings (→ `UME_SETTINGS`), Image Loader/Process, Prompt Inputs.
+- `block_loaders.py`: Model Loaders (→ `UME_BUNDLE`), BundleAutoLoader, shared download helpers.
+- `block_sampler.py`: BlockSampler hub (→ `UME_PIPELINE`).
+- `image_nodes.py`: Image saving and pipeline-aware compositing.
+- `utils_nodes.py`: Labels, state debuggers, Pack/Unpack nodes, Bundle Downloader.
 
 ## Core Directories (Vendored/Integrated)
 
