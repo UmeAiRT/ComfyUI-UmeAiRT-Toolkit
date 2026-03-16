@@ -391,8 +391,8 @@ def _find_file_in_folders(filename, folder_types):
                         log_node(f"  ⚠️ '{filename}' has incomplete download — will resume.", color="YELLOW")
                         return None
                     return path
-            except Exception:
-                pass
+            except Exception as e:
+                log_node(f"Bundle Loader: unet_gguf lookup failed for '{filename}': {e}", color="YELLOW")
         if folder_type == "clip":
             try:
                 path = folder_paths.get_full_path("clip_gguf", filename)
@@ -401,8 +401,8 @@ def _find_file_in_folders(filename, folder_types):
                         log_node(f"  ⚠️ '{filename}' has incomplete download — will resume.", color="YELLOW")
                         return None
                     return path
-            except Exception:
-                pass
+            except Exception as e:
+                log_node(f"Bundle Loader: clip_gguf lookup failed for '{filename}': {e}", color="YELLOW")
     return None
 
 
