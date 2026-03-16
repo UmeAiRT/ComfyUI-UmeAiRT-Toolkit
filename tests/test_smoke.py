@@ -38,6 +38,7 @@ class TestSmoke(unittest.TestCase):
         modules.logger.log_node = lambda *args, **kwargs: None
 
         # Build comprehensive mapping for ComfyUI's internal modules
+        # All comfy.* submodules found via: grep -r "import comfy" modules/
         mocks = {
             'server': MagicMock(),
             'app': MagicMock(),
@@ -52,10 +53,17 @@ class TestSmoke(unittest.TestCase):
             'comfy.model_management': MagicMock(),
             'comfy.samplers': MagicMock(),
             'comfy.sample': MagicMock(),
+            'comfy.model_patcher': MagicMock(),
+            'comfy.model_sampling': MagicMock(),
+            'comfy.k_diffusion': MagicMock(),
+            'comfy.k_diffusion.sampling': MagicMock(),
+            'comfy.k_diffusion.utils': MagicMock(),
             'comfy_extras': MagicMock(),
             'comfy_extras.nodes_upscale_model': MagicMock(),
+            'comfy_extras.nodes_custom_sampler': MagicMock(),
+            'comfy_extras.nodes_post_processing': MagicMock(),
             'nodes': MagicMock(),
-            'folder_paths': SimpleFolderPaths()
+            'folder_paths': SimpleFolderPaths(),
         }
 
         with patch.dict('sys.modules', mocks):
@@ -72,8 +80,8 @@ class TestSmoke(unittest.TestCase):
                 spec.loader.exec_module(umeairt_init)
             except Exception as e:
                 import traceback
-                with open("error_dump.txt", "w", encoding="utf-8") as f:
-                    traceback.print_exc(file=f)
+                traceback.print_exc()  # Prints to stderr (visible in CI logs)
+                print(f"::error::Smoke test failed: {e}")  # GitHub Actions annotation
                 self.fail(f"Smoke test failed during import: {e}")
                 
             self.assertTrue(hasattr(umeairt_init, 'NODE_CLASS_MAPPINGS'), "NODE_CLASS_MAPPINGS must be defined")
