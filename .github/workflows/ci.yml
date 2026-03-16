@@ -95,3 +95,26 @@ jobs:
 
       - name: test_smoke
         run: python tests/test_smoke.py -v
+
+  # ── Coverage (single version, after tests) ─────────────────────
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install opencv-python-headless Pillow coverage
+          pip install -r requirements.txt
+
+      - name: Run tests with coverage
+        run: |
+          coverage run --source=modules --omit="modules/facedetailer_core/*,modules/image_saver_core/*" -m unittest discover -s tests -p "test_*.py" -v
+          coverage report -m --skip-covered --fail-under=30
