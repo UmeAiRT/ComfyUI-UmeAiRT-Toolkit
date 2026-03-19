@@ -5,6 +5,10 @@
 
 ## High Priority
 
+- [ ] **Refactor monolithic files (`block_loaders.py`)**
+  - Separate ComfyUI node definitions from backend/network logic (e.g., move download systems to `network_utils.py` or a dedicated service module).
+- [ ] **Rethink aggressive VRAM management**
+  - Replace manual cache clearing (`gc.collect()`, `mm.free_memory()`) in `logic_nodes.py` (e.g. SeedVR2 nodes) with ComfyUI's native VRAM allocation hooks to prevent interfering with the ecosystem's cache manager.
 - [ ] **SHA256 hash verification for downloads**
   - Add `_verify_file_hash(path, expected_sha256)` helper to `block_loaders.py`
   - Add `sha256` fields to `umeairt_bundles.json` manifest
