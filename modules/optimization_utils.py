@@ -46,24 +46,15 @@ def get_cuda_memory():
 def check_optimizations():
     """Checks for optimization libraries and system status during startup.
 
-    Logs the presence of crucial performance libraries like SageAttention, Flash Attention, 
+    Logs the presence of crucial performance libraries like SageAttention
     and Triton. It also prints out the initial CUDA memory state to inform the user.
     """
     
     # 1. Library Checks
     sage_status = f"{GREEN}✅{RESET}" if check_library("sageattention") else f"{RED}❌{RESET}"
-    flash_status = f"{GREEN}✅{RESET}" if check_library("flash_attn") else f"{RED}❌{RESET}"
     triton_status = f"{GREEN}✅{RESET}" if check_library("triton") else f"{RED}❌{RESET}"
-    
-    # Using print directly for specific formatting needs or log_node if we want the prefix
-    # The user request showed specific icon prefixes. usage of log_node adds [UmeAiRT-Toolkit] prefix.
-    # We will use print for the custom lines to match the requested look exactly, 
-    # but maybe keep consistent with the project style which uses print in __init__.py too.
-    
-    log_node(f"⚡ Optimisation check: SageAttention {sage_status} | Flash Attention {flash_status} | Triton {triton_status}")
-    
-    if not check_library("flash_attn"):
-        log_node("💡 Optional: pip install flash-attn", color="YELLOW")
+
+    log_node(f"⚡ Optimisation check: SageAttention {sage_status} | Triton {triton_status}")
 
     # 3. CUDA Memory
     mem_str = get_cuda_memory()
@@ -71,9 +62,8 @@ def check_optimizations():
 
     # Return summary for HealthCheck usage
     sage = "✅" if check_library("sageattention") else "❌"
-    flash = "✅" if check_library("flash_attn") else "❌"
     triton = "✅" if check_library("triton") else "❌"
-    return f"SageAttn={sage} | Flash={flash} | Triton={triton}"
+    return f"SageAttn={sage} | Triton={triton}"
 
 
 # --- Target-Resolution VAE Warmup ---
