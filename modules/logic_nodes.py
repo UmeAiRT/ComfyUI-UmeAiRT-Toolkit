@@ -67,6 +67,28 @@ def _ensure_vram_for_seedvr2():
     log_node(f"SeedVR2 VRAM Check: Cleanup done -> freed {freed_mb:.0f} MB -> now {free_after / (1024**3):.2f} GB free")
 
 
+# --- Lazy SeedVR2 Imports ---
+
+_seedvr2_imports = {}
+
+def _get_seedvr2_modules():
+    """Lazy-load SeedVR2 core modules (import only once, fail loudly if missing)."""
+    if not _seedvr2_imports:
+        try:
+            from ..seedvr2_core.image_utils import tensor_to_pil, pil_to_tensor
+            from ..seedvr2_core.tiling import generate_tiles
+            from ..seedvr2_core.stitching import process_and_stitch
+            _seedvr2_imports.update({
+                "tensor_to_pil": tensor_to_pil,
+                "pil_to_tensor": pil_to_tensor,
+                "generate_tiles": generate_tiles,
+                "process_and_stitch": process_and_stitch,
+            })
+        except ImportError:
+            raise ImportError("SeedVR2 Core modules not found in '../seedvr2_core'. Verify installation.")
+    return _seedvr2_imports
+
+
 # --- Base Classes (used by block_nodes.py) ---
 
 class UmeAiRT_UltimateUpscale_Base:
@@ -313,12 +335,7 @@ class UmeAiRT_PipelineSeedVR2Upscale:
         if image is None:
             raise ValueError("SeedVR2 Upscale: No image in pipeline.")
 
-        try:
-            from ..seedvr2_core.image_utils import tensor_to_pil, pil_to_tensor
-            from ..seedvr2_core.tiling import generate_tiles
-            from ..seedvr2_core.stitching import process_and_stitch
-        except ImportError:
-             raise ImportError("SeedVR2 Core modules not found in '../seedvr2_core'. Verify installation.")
+        sv2 = _get_seedvr2_modules()
 
         seed = int(gen_pipe.seed or 100) % (2**32)
         dit_config, vae_config = self._build_configs(model)
@@ -360,13 +377,13 @@ class UmeAiRT_PipelineSeedVR2Upscale:
         blending_method = "auto"
         color_correction = "lab"
 
-        pil_image = tensor_to_pil(image)
+        pil_image = sv2["tensor_to_pil"](image)
         output_width = int(pil_image.width * upscale_by)
         output_height = int(pil_image.height * upscale_by)
 
-        main_tiles = generate_tiles(pil_image, tile_width, tile_height, tile_padding, tiling_strategy)
+        main_tiles = sv2["generate_tiles"](pil_image, tile_width, tile_height, tile_padding, tiling_strategy)
 
-        output_image = process_and_stitch(
+        output_image = sv2["process_and_stitch"](
             tiles=main_tiles, width=output_width, height=output_height,
             dit_config=dit_config, vae_config=vae_config, seed=seed,
             tile_upscale_resolution=tile_upscale_resolution, upscale_factor=upscale_by,
@@ -382,7 +399,7 @@ class UmeAiRT_PipelineSeedVR2Upscale:
         gc.collect()
 
         ctx = gen_pipe.clone()
-        ctx.image = pil_to_tensor(output_image)
+        ctx.image = sv2["pil_to_tensor"](output_image)
         return (ctx,)
 
 
@@ -437,12 +454,7 @@ class UmeAiRT_PipelineSeedVR2Upscale_Advanced:
         if image is None:
             raise ValueError("SeedVR2 Advanced: No image in pipeline.")
 
-        try:
-            from ..seedvr2_core.image_utils import tensor_to_pil, pil_to_tensor
-            from ..seedvr2_core.tiling import generate_tiles
-            from ..seedvr2_core.stitching import process_and_stitch
-        except ImportError:
-             raise ImportError("SeedVR2 Core modules not found. Verify installation.")
+        sv2 = _get_seedvr2_modules()
 
         seed = int(gen_pipe.seed or 100) % (2**32)
         dit_config, vae_config = UmeAiRT_PipelineSeedVR2Upscale._build_configs(model)
@@ -450,13 +462,13 @@ class UmeAiRT_PipelineSeedVR2Upscale_Advanced:
         log_node(f"SeedVR2 Upscale: Processing | Ratio: x{upscale_by} | Model: {model} | Seed: {seed}")
         _ensure_vram_for_seedvr2()
 
-        pil_image = tensor_to_pil(image)
+        pil_image = sv2["tensor_to_pil"](image)
         output_width = int(pil_image.width * upscale_by)
         output_height = int(pil_image.height * upscale_by)
 
-        main_tiles = generate_tiles(pil_image, tile_width, tile_height, tile_padding, tiling_strategy)
+        main_tiles = sv2["generate_tiles"](pil_image, tile_width, tile_height, tile_padding, tiling_strategy)
 
-        output_image = process_and_stitch(
+        output_image = sv2["process_and_stitch"](
             tiles=main_tiles, width=output_width, height=output_height,
             dit_config=dit_config, vae_config=vae_config, seed=seed,
             tile_upscale_resolution=tile_upscale_resolution, upscale_factor=upscale_by,
@@ -472,7 +484,7 @@ class UmeAiRT_PipelineSeedVR2Upscale_Advanced:
         gc.collect()
 
         ctx = gen_pipe.clone()
-        ctx.image = pil_to_tensor(output_image)
+        ctx.image = sv2["pil_to_tensor"](output_image)
         return (ctx,)
 
 

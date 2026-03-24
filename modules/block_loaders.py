@@ -1,6 +1,7 @@
 import torch
 import os
 import json
+import hashlib
 import urllib.request
 import folder_paths
 import nodes as comfy_nodes
@@ -344,14 +345,31 @@ class UmeAiRT_FilesSettings_ZIMG:
 
 # --- Bundle Auto-Loader ---
 
-# Maps path_type values from umeairt_bundles.json to ComfyUI folder names
+# Maps path_type values from model_manifest.json to ComfyUI folder names
 _PATH_TYPE_TO_FOLDERS = {
-    "flux_diff": ["diffusion_models"],
-    "flux_unet": ["unet"],
-    "zimg_diff": ["diffusion_models"],
-    "zimg_unet": ["unet"],
-    "clip":      ["clip", "text_encoders"],
-    "vae":       ["vae"],
+    # Diffusion models
+    "flux_diff":       ["diffusion_models"],
+    "flux_unet":       ["unet"],
+    "zimg_diff":       ["diffusion_models"],
+    "zimg_unet":       ["unet"],
+    "wan_diff":        ["diffusion_models"],
+    "hidream_diff":    ["diffusion_models"],
+    "qwen_diff":       ["diffusion_models"],
+    "ltxv_diff":       ["diffusion_models"],
+    "ltxv_ckpt":       ["checkpoints"],
+    "ltx2_diff":       ["diffusion_models"],
+    # Text encoders
+    "clip":            ["clip", "text_encoders"],
+    "text_encoders_t5":    ["clip", "text_encoders"],
+    "text_encoders_qwen":  ["clip", "text_encoders"],
+    "text_encoders_gemma": ["clip", "text_encoders"],
+    "text_encoders_llama": ["clip", "text_encoders"],
+    "text_encoders_ltx":   ["clip", "text_encoders"],
+    # Vision / VAE / Other
+    "clip_vision":     ["clip_vision"],
+    "vae":             ["vae"],
+    "latent_upscale":  ["upscale_models"],
+    "melband":         ["custom"],
 }
 
 
@@ -592,7 +610,6 @@ def _download_with_aria2(url, dest_path, connections=8, hf_token=""):
         pbar.update_absolute(100)
 
         if returncode == 0 and os.path.exists(dest_path):
-            # TODO(UmeAiRT): Add SHA256 hash verification here once umeairt_bundles.json has sha256 fields
             log_node(f"Bundle Loader: '{filename}' downloaded via aria2c.", color="GREEN")
             return True
         else:
@@ -606,13 +623,51 @@ def _download_with_aria2(url, dest_path, connections=8, hf_token=""):
 
 
 
-def _download_with_urllib(url, dest_path, hf_token=""):
+def _verify_file_hash(path, expected_sha256):
+    """Verify a downloaded file's SHA256 hash against an expected value.
+
+    Args:
+        path (str): Path to the file to verify.
+        expected_sha256 (str): Expected SHA256 hex digest. If empty/None, skip.
+
+    Returns:
+        bool: True if hash matches or verification was skipped, False on mismatch.
+    """
+    if not expected_sha256:
+        return True
+    filename = os.path.basename(path)
+    log_node(f"Bundle Loader: Verifying SHA256 for '{filename}'...")
+    sha256 = hashlib.sha256()
+    try:
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(8 * 1024 * 1024), b""):
+                sha256.update(chunk)
+        actual = sha256.hexdigest()
+        if actual == expected_sha256:
+            log_node(f"Bundle Loader: ✅ '{filename}' hash verified.", color="GREEN")
+            return True
+        else:
+            log_node(
+                f"Bundle Loader: ⚠️ '{filename}' hash MISMATCH!\n"
+                f"  Expected: {expected_sha256}\n"
+                f"  Actual:   {actual}",
+                color="RED"
+            )
+            return False
+    except Exception as e:
+        log_node(f"Bundle Loader: Hash verification error for '{filename}': {e}", color="YELLOW")
+        return False
+
+
+def _download_with_urllib(url, dest_path, hf_token="", timeout=300):
     """Download a file with urllib and a ComfyUI progress bar (fallback).
 
     Args:
         url (str): The full URL to download.
         dest_path (str): The local path to save to.
         hf_token (str): Optional HuggingFace token for authentication.
+        timeout (int): Socket timeout in seconds (default: 300). Increase for very
+            large files on slow connections.
     """
     filename = os.path.basename(dest_path)
     temp_path = dest_path + ".download"
@@ -622,7 +677,7 @@ def _download_with_urllib(url, dest_path, hf_token=""):
     if hf_token:
         headers["Authorization"] = f"Bearer {hf_token}"
     req = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(req, timeout=60) as response:
+    with urllib.request.urlopen(req, timeout=timeout) as response:
         total_size = int(response.headers.get("Content-Length", 0))
         downloaded = 0
         pbar = comfy.utils.ProgressBar(total_size) if total_size > 0 else None
@@ -644,13 +699,16 @@ def _download_with_urllib(url, dest_path, hf_token=""):
     log_node(f"Bundle Loader: '{filename}' downloaded successfully.", color="GREEN")
 
 
-def _download_file(url, dest_path, hf_token=""):
+def _download_file(url, dest_path, hf_token="", expected_sha256=""):
     """Download a file, preferring aria2c for speed with urllib as fallback.
+
+    After a successful download, verifies the file's SHA256 hash if provided.
 
     Args:
         url (str): The full URL to download.
         dest_path (str): The local path to save to.
         hf_token (str): Optional HuggingFace token for authentication.
+        expected_sha256 (str): Optional SHA256 hash to verify after download.
 
     Raises:
         RuntimeError: If all download methods fail.
@@ -670,10 +728,12 @@ def _download_file(url, dest_path, hf_token=""):
 
         if _ARIA2_PATH:
             if _download_with_aria2(url, dest_path, hf_token=hf_token):
+                _verify_file_hash(dest_path, expected_sha256)
                 return
 
         # Fallback to urllib
         _download_with_urllib(url, dest_path, hf_token=hf_token)
+        _verify_file_hash(dest_path, expected_sha256)
 
     except Exception as e:
         # Clean up partial downloads
@@ -686,37 +746,128 @@ def _download_file(url, dest_path, hf_token=""):
         raise RuntimeError(f"Bundle Loader: Failed to download '{filename}': {e}")
 
 
-_BUNDLES_JSON_CACHE = None
+_MANIFEST_CACHE = None
+_MANIFEST_URL = "https://huggingface.co/UmeAiRT/ComfyUI-Auto-Installer-Assets/resolve/main/models/model_manifest.json"
 
-def _load_bundles_json():
-    """Load and cache the umeairt_bundles.json manifest."""
-    global _BUNDLES_JSON_CACHE
-    if _BUNDLES_JSON_CACHE is not None:
-        return _BUNDLES_JSON_CACHE
-    json_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "umeairt_bundles.json")
-    if os.path.exists(json_path):
-        with open(json_path, 'r', encoding='utf-8') as f:
-            _BUNDLES_JSON_CACHE = json.load(f)
-            return _BUNDLES_JSON_CACHE
+def _get_manifest_cache_path():
+    """Return local cache path for the remote manifest."""
+    cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "umeairt")
+    os.makedirs(cache_dir, exist_ok=True)
+    return os.path.join(cache_dir, "model_manifest.json")
+
+
+def _load_manifest():
+    """Load the model manifest, fetching from remote if stale.
+
+    Priority:
+    1. In-memory cache (fastest)
+    2. Remote fetch from HuggingFace (if cache is missing or >24h old)
+    3. Local cache file (if remote fetch fails)
+    4. Fallback to bundled umeairt_bundles.json (legacy)
+
+    Returns:
+        dict: The parsed manifest data.
+    """
+    global _MANIFEST_CACHE
+    if _MANIFEST_CACHE is not None:
+        return _MANIFEST_CACHE
+
+    import time
+    cache_path = _get_manifest_cache_path()
+    cache_max_age = 24 * 60 * 60  # 24 hours
+
+    # Check if local cache is fresh enough
+    need_fetch = True
+    if os.path.exists(cache_path):
+        age = time.time() - os.path.getmtime(cache_path)
+        if age < cache_max_age:
+            need_fetch = False
+
+    # Try remote fetch
+    if need_fetch:
+        try:
+            hf_token = _get_hf_token()
+            headers = {"User-Agent": "ComfyUI-UmeAiRT-Toolkit"}
+            if hf_token:
+                headers["Authorization"] = f"Bearer {hf_token}"
+            req = urllib.request.Request(_MANIFEST_URL, headers=headers)
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                raw = resp.read()
+                data = json.loads(raw)
+                # Write to cache
+                with open(cache_path, 'wb') as f:
+                    f.write(raw)
+                log_node("Bundle Loader: 📡 Model manifest updated from remote.", color="GREEN")
+                _MANIFEST_CACHE = data
+                return data
+        except Exception as e:
+            log_node(f"Bundle Loader: Remote manifest fetch failed: {e}", color="YELLOW")
+
+    # Read from local cache
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, 'r', encoding='utf-8') as f:
+                _MANIFEST_CACHE = json.load(f)
+                log_node("Bundle Loader: 📦 Using cached model manifest.", color="CYAN")
+                return _MANIFEST_CACHE
+        except Exception as e:
+            log_node(f"Bundle Loader: Cache read failed: {e}", color="YELLOW")
+
+    # Final fallback: legacy bundled file
+    legacy_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "umeairt_bundles.json")
+    if os.path.exists(legacy_path):
+        log_node("Bundle Loader: ⚠️ Using legacy umeairt_bundles.json fallback.", color="YELLOW")
+        with open(legacy_path, 'r', encoding='utf-8') as f:
+            _MANIFEST_CACHE = json.load(f)
+            return _MANIFEST_CACHE
+
     return {}
 
 
 def _get_bundle_dropdowns():
-    """Return (categories, versions) lists from umeairt_bundles.json for dropdown population."""
-    data = _load_bundles_json()
-    categories = [k for k in data.keys() if not k.startswith("_")] if data else ["No Bundles Found"]
+    """Return (categories, versions) lists from model manifest for dropdown population.
+
+    Categories are FAMILY/VARIANT pairs (e.g. 'FLUX/Dev', 'Z-IMAGE/Turbo').
+    For legacy bundles (flat structure), categories are top-level keys.
+    """
+    data = _load_manifest()
+    categories = []
     all_versions = set()
-    for cat_key in categories:
-        cat_data = data.get(cat_key, {})
-        for ver_key in cat_data.keys():
-            if ver_key != "_meta":
-                all_versions.add(ver_key)
+
+    for family_key, family_data in data.items():
+        if family_key.startswith("_"):
+            continue
+        if not isinstance(family_data, dict):
+            continue
+
+        # Detect manifest v3 (has _family_meta) vs legacy (has _meta directly)
+        if "_family_meta" in family_data:
+            # Manifest v3: FAMILY → VARIANT → version
+            for variant_key, variant_data in family_data.items():
+                if variant_key.startswith("_") or not isinstance(variant_data, dict):
+                    continue
+                cat_label = f"{family_key}/{variant_key}"
+                categories.append(cat_label)
+                for ver_key in variant_data.keys():
+                    if ver_key != "_meta":
+                        all_versions.add(ver_key)
+        else:
+            # Legacy: CATEGORY → version (fallback for umeairt_bundles.json)
+            categories.append(family_key)
+            for ver_key in family_data.keys():
+                if ver_key != "_meta":
+                    all_versions.add(ver_key)
+
+    if not categories:
+        categories = ["No Bundles Found"]
     versions_list = sorted(list(all_versions)) if all_versions else ["Select Category First"]
     return categories, versions_list
 
 
 def _download_bundle_files(category, version):
     """Download all files for a bundle, skipping already-present ones.
+
+    Supports both manifest v3 ('FAMILY/VARIANT' categories) and legacy flat categories.
 
     Returns:
         tuple: (resolved_files dict, meta dict, downloaded count, skipped count, errors list)
@@ -729,16 +880,33 @@ def _download_bundle_files(category, version):
             color="YELLOW"
         )
 
-    data = _load_bundles_json()
-    if category not in data:
-        raise ValueError(f"Category '{category}' not found in bundles manifest.")
-    cat_data = data[category]
-    meta = cat_data.get("_meta", {})
-    base_url = meta.get("base_url", "")
+    data = _load_manifest()
 
-    if version not in cat_data:
+    # Resolve category to the right level in the manifest
+    if "/" in category:
+        # Manifest v3: FAMILY/VARIANT
+        family_key, variant_key = category.split("/", 1)
+        if family_key not in data:
+            raise ValueError(f"Family '{family_key}' not found in manifest.")
+        family_data = data[family_key]
+        if variant_key not in family_data:
+            raise ValueError(f"Variant '{variant_key}' not found for {family_key}.")
+        variant_data = family_data[variant_key]
+        meta = variant_data.get("_meta", {})
+        # Base URL from top-level _sources (prefer huggingface)
+        sources = data.get("_sources", {})
+        base_url = sources.get("huggingface", "")
+    else:
+        # Legacy flat structure
+        if category not in data:
+            raise ValueError(f"Category '{category}' not found in manifest.")
+        variant_data = data[category]
+        meta = variant_data.get("_meta", {})
+        base_url = meta.get("base_url", "")
+
+    if version not in variant_data:
         raise ValueError(f"Version '{version}' not found for {category}.")
-    bundle_def = cat_data[version]
+    bundle_def = variant_data[version]
     files = bundle_def.get("files", [])
     min_vram = bundle_def.get("min_vram", 0)
     log_node(f"📥 {category} / {version} ({len(files)} files, min VRAM: {min_vram}GB)")
@@ -750,8 +918,10 @@ def _download_bundle_files(category, version):
 
     for file_entry in files:
         pt = file_entry["path_type"]
-        filename = file_entry["filename"]
-        url_path = file_entry["url"]
+        # Manifest v3 uses "path", legacy uses "filename" + "url"
+        rel_path = file_entry.get("path", file_entry.get("url", ""))
+        filename = os.path.basename(rel_path) if rel_path else file_entry.get("filename", "")
+        expected_sha256 = file_entry.get("sha256", "")
         folder_types = _PATH_TYPE_TO_FOLDERS.get(pt, [pt])
         local_path = _find_file_in_folders(filename, folder_types)
         if local_path:
@@ -759,9 +929,9 @@ def _download_bundle_files(category, version):
             skipped += 1
         else:
             try:
-                full_url = base_url + url_path
+                full_url = f"{base_url}/{rel_path}" if not rel_path.startswith("http") else rel_path
                 dest = _get_download_dest(filename, folder_types[0])
-                _download_file(full_url, dest, hf_token=hf_token)
+                _download_file(full_url, dest, hf_token=hf_token, expected_sha256=expected_sha256)
                 downloaded += 1
             except Exception as e:
                 log_node(f"  ❌ Failed to download '{filename}': {e}", color="RED")
