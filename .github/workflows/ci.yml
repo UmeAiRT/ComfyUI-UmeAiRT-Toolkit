@@ -14,7 +14,7 @@ on:
     branches: [main]
 
 jobs:
-  # ── Lint & Security (fast, single Python version) ──────────────
+  # ── Lint & Security (fast, single Python version) ───────────────
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -75,26 +75,8 @@ jobs:
           pip install opencv-python-headless Pillow
           pip install -r requirements.txt
 
-      - name: test_common
-        run: python tests/test_common.py -v
-
-      - name: test_traversal
-        run: python tests/test_traversal.py -v
-
-      - name: test_optimization
-        run: python tests/test_optimization.py -v
-
-      - name: test_block_inputs
-        run: python tests/test_block_inputs.py -v
-
-      - name: test_tooltips
-        run: python tests/test_tooltips.py -v
-
-      - name: test_registration
-        run: python tests/test_registration.py -v
-
-      - name: test_smoke
-        run: python tests/test_smoke.py -v
+      - name: Run all tests via run_tests.py
+        run: python run_tests.py
 
   # ── Coverage (single version, after tests) ─────────────────────
   coverage:
@@ -116,5 +98,5 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          coverage run --source=modules --omit="modules/facedetailer_core/*,modules/image_saver_core/*" -m unittest discover -s tests -p "test_*.py" -v
+          coverage run --source=modules run_tests.py
           coverage report -m --skip-covered --fail-under=30
