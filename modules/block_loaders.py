@@ -9,7 +9,7 @@ import folder_paths
 import nodes as comfy_nodes
 import comfy.sd
 import comfy.utils
-from .common import GenerationContext, log_node
+from .common import GenerationContext, UmeBundle, log_node
 from typing import Tuple, Dict, Any
 
 # Re-export from refactored modules for backward compatibility
@@ -61,6 +61,8 @@ class UmeAiRT_FilesSettings_Checkpoint:
         return (model, clip, vae, ckpt_name)
 
 
+
+
 class UmeAiRT_FilesSettings_Checkpoint_Advanced:
     """Full-featured checkpoint loader with extensive model configuration.
 
@@ -103,7 +105,8 @@ class UmeAiRT_FilesSettings_Checkpoint_Advanced:
     def load_settings(self, ckpt_name, vae_name, clip_skip, positive, negative,
                       width, height, batch_size, steps, cfg, sampler_name,
                       scheduler, seed, denoise, lora_stack=None):
-        from .block_inputs import process_lora_stack, encode_prompts
+        from .block_inputs import process_lora_stack
+        from .common import encode_prompts
         ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
         out = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True)
         model, clip, vae_ckpt = out[:3]
@@ -116,11 +119,8 @@ class UmeAiRT_FilesSettings_Checkpoint_Advanced:
         clip_with_skip = clip.clone()
         clip_with_skip.clip_layer(clip_skip)
         positive_cond, negative_cond = encode_prompts(clip_with_skip, positive, negative)
-        return ({"model": model, "clip": clip, "vae": vae, "model_name": ckpt_name,
-                 "positive": positive_cond, "negative": negative_cond,
-                 "width": width, "height": height, "batch_size": batch_size,
-                 "steps": steps, "cfg": cfg, "sampler_name": sampler_name,
-                 "scheduler": scheduler, "seed": seed, "denoise": denoise},)
+        bundle = UmeBundle(model=model, clip=clip, vae=vae, model_name=ckpt_name)
+        return (bundle,)
 
 
 class UmeAiRT_FilesSettings_FLUX:
@@ -346,4 +346,4 @@ class UmeAiRT_BundleLoader:
             vae = comfy.sd.VAE(sd=comfy.utils.load_torch_file(vp))
 
         log_node(f"Bundle Loader: ✅ {category}/{version} ready.", color="GREEN")
-        return ({"model": model, "clip": clip, "vae": vae, "model_name": model_name},)
+        return (UmeBundle(model=model, clip=clip, vae=vae, model_name=model_name),)

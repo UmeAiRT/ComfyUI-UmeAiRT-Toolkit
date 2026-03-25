@@ -3,7 +3,7 @@ import os
 import json
 import folder_paths
 import nodes as comfy_nodes
-from .common import log_node
+from .common import UmeBundle, log_node
 from .logger import logger
 
 
@@ -90,19 +90,12 @@ class UmeAiRT_Unpack_Settings:
     FUNCTION = "unpack"
     CATEGORY = "UmeAiRT/Utils/Unpack"
     def unpack(self, settings):
-        """Unpacks the provided settings dictionary.
-
-        Args:
-            settings (dict): The UME_SETTINGS bundle containing generation variables.
-
-        Returns:
-            tuple: A sequence containing (width, height, steps, cfg, sampler, scheduler, seed).
-        """
+        """Unpacks the provided settings dataclass."""
         return (
-            settings.get("width", 1024), settings.get("height", 1024),
-            settings.get("steps", 20), settings.get("cfg", 8.0),
-            settings.get("sampler_name", "euler"), settings.get("scheduler", "normal"),
-            settings.get("seed", 0)
+            settings.width, settings.height,
+            settings.steps, settings.cfg,
+            settings.sampler_name, settings.scheduler,
+            settings.seed
         )
 
 class UmeAiRT_Unpack_FilesBundle:
@@ -124,24 +117,12 @@ class UmeAiRT_Unpack_FilesBundle:
     CATEGORY = "UmeAiRT/Utils/Unpack"
 
     def unpack(self, files_bundle):
-        """Extracts internal variables from the files dictionary.
-
-        Args:
-            files_bundle (dict): The custom dictionary holding loaded models.
-
-        Returns:
-            tuple: A tuple containing the (comfy_model, comfy_clip, comfy_vae, string_name).
-
-        Raises:
-            ValueError: If the input is not a recognized dictionary mapping.
-        """
-        if not isinstance(files_bundle, dict):
-            raise ValueError("UmeAiRT Unpack: Input is not a valid UME_BUNDLE.")
+        """Extracts model components from the UmeBundle dataclass."""
         return (
-            files_bundle.get("model"),
-            files_bundle.get("clip"),
-            files_bundle.get("vae"),
-            files_bundle.get("model_name", "")
+            files_bundle.model,
+            files_bundle.clip,
+            files_bundle.vae,
+            files_bundle.model_name,
         )
 
 
@@ -169,18 +150,8 @@ class UmeAiRT_Pack_Bundle:
     CATEGORY = "UmeAiRT/Utils/Pack"
 
     def pack(self, model, clip, vae, model_name=""):
-        """Packs native ComfyUI models into a UME_BUNDLE dict.
-
-        Args:
-            model: The diffusion model.
-            clip: The CLIP text encoder.
-            vae: The VAE model.
-            model_name (str, optional): A label for metadata. Defaults to "".
-
-        Returns:
-            tuple: A tuple containing the UME_BUNDLE dict.
-        """
-        return ({"model": model, "clip": clip, "vae": vae, "model_name": model_name},)
+        """Packs native ComfyUI models into a UmeBundle."""
+        return (UmeBundle(model=model, clip=clip, vae=vae, model_name=model_name),)
 
 class UmeAiRT_Unpack_ImageBundle:
     """Deconstructs a UME_IMAGE bundle into native ComfyUI types."""
@@ -198,22 +169,13 @@ class UmeAiRT_Unpack_ImageBundle:
     CATEGORY = "UmeAiRT/Utils/Unpack"
 
     def unpack(self, image_bundle):
-        """Extracts all fields from the image bundle.
-
-        Args:
-            image_bundle (dict): The bundled mapping.
-
-        Returns:
-            tuple: (image, mask, mode, denoise, auto_resize).
-        """
-        if not isinstance(image_bundle, dict):
-            raise ValueError("UmeAiRT Unpack: Input is not a valid UME_IMAGE bundle.")
+        """Extracts all fields from the UmeImage dataclass."""
         return (
-            image_bundle.get("image"),
-            image_bundle.get("mask"),
-            image_bundle.get("mode", "img2img"),
-            float(image_bundle.get("denoise", 1.0)),
-            bool(image_bundle.get("auto_resize", False)),
+            image_bundle.image,
+            image_bundle.mask,
+            image_bundle.mode,
+            float(image_bundle.denoise),
+            bool(image_bundle.auto_resize),
         )
 
 

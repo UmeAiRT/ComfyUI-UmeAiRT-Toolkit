@@ -32,7 +32,7 @@ sys.modules['aiohttp.web'] = MagicMock()
 class FolderPathsMock:
     output_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '_test_output'))
 
-sys.modules['folder_paths'] = FolderPathsMock()
+# sys.modules['folder_paths'] = FolderPathsMock()
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

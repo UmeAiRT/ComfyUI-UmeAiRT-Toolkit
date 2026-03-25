@@ -9,3 +9,8 @@ build/
 
 error_dump.txt
 *.bak
+
+# Coverage
+.coverage
+htmlcov/
+*.log

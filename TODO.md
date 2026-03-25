@@ -5,16 +5,19 @@
 
 ## High Priority
 
-- [ ] **Refactor monolithic files (`block_loaders.py`)**
-  - Separate ComfyUI node definitions from backend/network logic (e.g., move download systems to `network_utils.py` or a dedicated service module).
-- [ ] **Rethink aggressive VRAM management**
-  - Replace manual cache clearing (`gc.collect()`, `mm.free_memory()`) in `logic_nodes.py` (e.g. SeedVR2 nodes) with ComfyUI's native VRAM allocation hooks to prevent interfering with the ecosystem's cache manager.
+- [x] **Refactor monolithic files (`block_loaders.py`)**
+  - Download logic extracted to `download_utils.py` (aria2c, urllib, SHA256 verify)
+  - Manifest logic extracted to `manifest.py` (load, cache, bundle resolution)
+  - `block_loaders.py` reduced to ~350 lines of pure ComfyUI node definitions
+  - Re-exports and legacy aliases kept for backward compatibility
+- [x] **Rethink aggressive VRAM management**
+  - Removed manual `gc.collect()` / `mm.free_memory()` calls from `logic_nodes.py`
 - [x] **SHA256 hash verification for downloads**
-  - Added `_verify_file_hash(path, expected_sha256)` helper to `block_loaders.py`
+  - `verify_file_hash(path, expected_sha256)` in `download_utils.py`
   - Hashes sourced from `model_manifest.json` (fetched from Assets repo, cached 24h)
   - Verified after both aria2c and urllib downloads
 - [x] **Remote model manifest integration**
-  - `_load_manifest()` fetches `model_manifest.json` from HuggingFace at startup
+  - `load_manifest()` in `manifest.py` fetches from HuggingFace at startup
   - Dropdown categories now use `FAMILY/VARIANT` format (e.g. `FLUX/Dev`, `WAN_2.1/T2V`)
   - Fallback chain: remote → local cache → legacy `umeairt_bundles.json`
 
@@ -25,6 +28,6 @@
 
 ## Low Priority / Future
 
-- [ ] **Consider `dataclass` for bundles** — Replace `TypedDict` with `@dataclass` for `UmeBundle`/`UmeSettings` (adds default values, `__post_init__` validation)
+- [x] **Consider `dataclass` for bundles** — Migrated `UmeBundle`, `UmeSettings`, `UmeImage` from `TypedDict` to `@dataclass` with defaults and validation; all consumers updated to attribute access
 - [x] **Centralize `process_and_stitch` import** — Moved to `_get_seedvr2_modules()` lazy loader in `logic_nodes.py`
-- [ ] **Integration tests** — Test full pipeline: Loader → Sampler → PostProcess → Saver with mocked ComfyUI nodes
+- [x] **Integration tests** — Added `test_integration.py` covering dataclass behavior, Pack/Unpack roundtrips, Settings flow, and full Loader→Sampler→Pipeline→Unpack pipeline

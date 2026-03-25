@@ -24,7 +24,7 @@ sys.modules['comfy.sample'] = MagicMock()
 sys.modules['nodes'] = MagicMock()
 mock_fp = MagicMock()
 mock_fp.get_filename_list.return_value = ["test_lora.safetensors", "style.safetensors"]
-sys.modules['folder_paths'] = mock_fp
+# sys.modules['folder_paths'] = mock_fp
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 

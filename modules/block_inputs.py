@@ -4,7 +4,7 @@ import folder_paths
 import nodes as comfy_nodes
 import comfy.sd
 import comfy.utils
-from .common import GenerationContext, resize_tensor, apply_outpaint_padding, log_node
+from .common import GenerationContext, UmeSettings, UmeImage, resize_tensor, apply_outpaint_padding, log_node
 import torchvision.transforms.functional as TF
 from .logger import logger
 from typing import Tuple, Dict, Any, Optional, List
@@ -96,16 +96,13 @@ class UmeAiRT_ControlNetImageApply_Advanced:
     FUNCTION = "apply_controlnet"
     CATEGORY = "UmeAiRT/Block/ControlNet"
 
-    def apply_controlnet(self, image_bundle: Dict[str, Any], control_net_name: str, strength: float, start_percent: float, end_percent: float, optional_control_image: Optional[Any] = None) -> Tuple[Dict[str, Any]]:
-        if not isinstance(image_bundle, dict):
-            raise ValueError("ControlNet Image Apply: Input is not a valid UME_IMAGE bundle.")
-
-        new_bundle = image_bundle.copy()
-        cnet_stack = new_bundle.get("controlnets", [])
-        if not isinstance(cnet_stack, list): cnet_stack = []
+    def apply_controlnet(self, image_bundle, control_net_name: str, strength: float, start_percent: float, end_percent: float, optional_control_image: Optional[Any] = None):
+        import copy
+        new_bundle = copy.copy(image_bundle)
+        cnet_stack = list(new_bundle.controlnets) if new_bundle.controlnets else []
         
         if control_net_name != "None":
-            control_use_image = optional_control_image if optional_control_image is not None else new_bundle.get("image")
+            control_use_image = optional_control_image if optional_control_image is not None else new_bundle.image
             
             if control_use_image is None:
                 raise ValueError("ControlNet Image Apply: No Image found in bundle and no optional image provided.")
@@ -113,7 +110,7 @@ class UmeAiRT_ControlNetImageApply_Advanced:
             # (name, image, strength, start, end)
             cnet_stack.append((control_net_name, control_use_image, strength, start_percent, end_percent))
             
-        new_bundle["controlnets"] = cnet_stack
+        new_bundle.controlnets = cnet_stack
 
         return (new_bundle,)
 
@@ -128,17 +125,8 @@ class UmeAiRT_ControlNetImageApply_Simple(UmeAiRT_ControlNetImageApply_Advanced)
                 "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05, "display": "slider", "tooltip": "How strongly the ControlNet guides the image. Start with 1.0 and lower if the effect is too strong."}),
             }
         }
-    def apply_controlnet(self, image_bundle: Dict[str, Any], control_net_name: str, strength: float) -> Tuple[Dict[str, Any]]:
-        """Funnels simple parameters down to the advanced method safely.
-
-        Args:
-            image_bundle (dict): The target UME_IMAGE bundle.
-            control_net_name (str): Selected model filename.
-            strength (float): ControlNet force multiplier.
-
-        Returns:
-            tuple: A tuple containing the updated image bundle.
-        """
+    def apply_controlnet(self, image_bundle, control_net_name: str, strength: float):
+        """Funnels simple parameters down to the advanced method safely."""
         return super().apply_controlnet(image_bundle, control_net_name, strength, 0.0, 1.0, None)
 
 class UmeAiRT_ControlNetImageProcess:
@@ -166,11 +154,9 @@ class UmeAiRT_ControlNetImageProcess:
     FUNCTION = "process"
     CATEGORY = "UmeAiRT/Block/ControlNet"
 
-    def process(self, image_bundle: Dict[str, Any], denoise: float, mode: str, control_net_name: str, strength: float, gen_pipe: Optional[GenerationContext] = None, resize: bool = False) -> Tuple[Dict[str, Any]]:
-        if not isinstance(image_bundle, dict): raise ValueError("ControlNet Image Process: Input is not a valid UME_IMAGE bundle.")
-        
-        image = image_bundle.get("image")
-        mask = image_bundle.get("mask")
+    def process(self, image_bundle, denoise: float, mode: str, control_net_name: str, strength: float, gen_pipe: Optional[GenerationContext] = None, resize: bool = False):
+        image = image_bundle.image
+        mask = image_bundle.mask
         
         if image is None: raise ValueError("ControlNet Image Process: Bundle has no image.")
 
@@ -196,19 +182,17 @@ class UmeAiRT_ControlNetImageProcess:
         elif mode == "img2img":
              final_mask = None
 
-        new_bundle = {
-            "image": final_image,
-            "mask": final_mask,
-            "mode": final_mode,
-            "denoise": denoise,
-            "controlnets": image_bundle.get("controlnets", []).copy() if image_bundle.get("controlnets") else []
-        }
-        
-        cnet_stack = new_bundle["controlnets"]
+        cnet_stack = list(image_bundle.controlnets) if image_bundle.controlnets else []
         if control_net_name != "None":
             cnet_stack.append((control_net_name, final_image, strength, 0.0, 1.0))
-        
-        new_bundle["controlnets"] = cnet_stack
+
+        new_bundle = UmeImage(
+            image=final_image,
+            mask=final_mask,
+            mode=final_mode,
+            denoise=denoise,
+            controlnets=cnet_stack,
+        )
 
         return (new_bundle,)
 
@@ -236,8 +220,8 @@ class UmeAiRT_GenerationSettings:
     FUNCTION = "process"
     CATEGORY = "UmeAiRT/Block/Settings"
 
-    def process(self, width: int, height: int, steps: int, cfg: float, sampler_name: str, scheduler: str, seed: int) -> Tuple[Dict[str, Any]]:
-        return ({"width": width, "height": height, "steps": steps, "cfg": cfg, "sampler_name": sampler_name, "scheduler": scheduler, "seed": seed},)
+    def process(self, width: int, height: int, steps: int, cfg: float, sampler_name: str, scheduler: str, seed: int):
+        return (UmeSettings(width=width, height=height, steps=steps, cfg=cfg, sampler_name=sampler_name, scheduler=scheduler, seed=seed),)
 
 
 
@@ -263,36 +247,22 @@ class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
     FUNCTION = "load_block_image"
     CATEGORY = "UmeAiRT/Block/Image"
 
-    def load_block_image(self, image: str) -> Tuple[Dict[str, Any]]:
-        """Loads the specified image file and wraps it in a dictionary.
-
-        Args:
-            image (str): The filename to load from the input directory.
-
-        Returns:
-            tuple: A tuple containing the `{"image": img, "mask": mask}` bundle.
-        """
+    def load_block_image(self, image: str):
+        """Loads the specified image file and wraps it in an UmeImage dataclass."""
         out = super().load_image(image)
         img, mask = out[0], out[1]
 
-        image_bundle = {"image": img, "mask": mask, "mode": "img2img", "denoise": 0.75}
+        image_bundle = UmeImage(image=img, mask=mask, mode="img2img", denoise=0.75)
         return (image_bundle,)
 
 class UmeAiRT_BlockImageLoader_Advanced(UmeAiRT_BlockImageLoader):
     """Advanced Image Loader providing both bundled and fragmented UI outputs."""
     RETURN_TYPES = ("UME_IMAGE", "IMAGE", "MASK")
     RETURN_NAMES = ("image_bundle", "image", "mask")
-    def load_block_image(self, image: str) -> Tuple[Dict[str, Any], Any, Any]:
-        """Loads the image and returns both the bundle and the raw tensors.
-
-        Args:
-            image (str): The filename.
-
-        Returns:
-            tuple: `(bundle_dict, image_tensor, mask_tensor)`
-        """
+    def load_block_image(self, image: str):
+        """Loads the image and returns both the bundle and the raw tensors."""
         res = super().load_block_image(image)
-        return (res[0], res[0]["image"], res[0]["mask"])
+        return (res[0], res[0].image, res[0].mask)
 
 class UmeAiRT_BlockImageProcess:
     """Structural pre-processor for UME_IMAGE bundles in Block-based workflows.
@@ -319,12 +289,12 @@ class UmeAiRT_BlockImageProcess:
     FUNCTION = "process_image"
     CATEGORY = "UmeAiRT/Block/Image"
 
-    def process_image(self, image_bundle: Dict[str, Any], denoise: float = 0.75, mode: str = "img2img", auto_resize: bool = False, mask_blur: int = 0, 
-                      padding_left: int = 0, padding_top: int = 0, padding_right: int = 0, padding_bottom: int = 0) -> Tuple[Dict[str, Any]]:
+    def process_image(self, image_bundle, denoise: float = 0.75, mode: str = "img2img", auto_resize: bool = False, mask_blur: int = 0, 
+                      padding_left: int = 0, padding_top: int = 0, padding_right: int = 0, padding_bottom: int = 0):
         """Modifies the image state based on the chosen mode."""
         
-        image = image_bundle.get("image")
-        mask = image_bundle.get("mask")
+        image = image_bundle.image
+        mask = image_bundle.mask
         
         if image is None: raise ValueError("Block Image Process: Bundle has no image.")
 
@@ -354,7 +324,7 @@ class UmeAiRT_BlockImageProcess:
         if mode == "txt2img": final_mode = "txt2img"
         elif mode == "img2img": final_mask = None
 
-        return ({"image": final_image, "mask": final_mask, "mode": final_mode, "denoise": denoise, "auto_resize": auto_resize},)
+        return (UmeImage(image=final_image, mask=final_mask, mode=final_mode, denoise=denoise, auto_resize=auto_resize),)
 
 class UmeAiRT_Positive_Input:
     """Multiline text editor for the positive prompt. Outputs a STRING."""

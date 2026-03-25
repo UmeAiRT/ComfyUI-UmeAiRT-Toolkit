@@ -22,7 +22,7 @@ sys.modules['comfy.sd'] = MagicMock()
 sys.modules['comfy.samplers'] = MagicMock()
 sys.modules['comfy.sample'] = MagicMock()
 sys.modules['nodes'] = MagicMock()
-sys.modules['folder_paths'] = MagicMock()
+# sys.modules['folder_paths'] = MagicMock()
 
 # Add project root
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

@@ -47,6 +47,13 @@ PublisherId = "UmeAiRT"
 DisplayName = "UmeAiRT Toolkit"
 Icon = ""
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+import_mode = "importlib"
+norecursedirs = ["modules", "vendor", "usdu_core", "facedetailer_core", "seedvr2_core", "web", "assets", ".git"]
+collect_ignore_glob = ["*/__init__.py", "__init__.py"]
+
 [tool.bandit]
 # B101 = assert usage (fine in non-production code)
 # B310 = urlopen audit (legitimate — we download models)

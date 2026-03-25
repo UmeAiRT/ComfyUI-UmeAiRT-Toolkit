@@ -8,7 +8,8 @@ import copy
 import torch
 import torchvision.transforms.functional as TF
 from collections import namedtuple
-from typing import TypedDict, Any, Optional, List, Tuple
+from dataclasses import dataclass, field, asdict
+from typing import Any, Optional, List, Tuple
 from .logger import log_node
 
 
@@ -56,22 +57,20 @@ def extract_pipeline_params(gen_pipe):
     )
 
 
-def validate_bundle(bundle, required_keys, context=""):
-    """Validates that a dict bundle contains all required keys.
+def validate_bundle(bundle, required_attrs, context=""):
+    """Validates that a dataclass bundle has all required attributes set (non-None).
 
     Args:
-        bundle: The object to validate (must be a dict).
-        required_keys (list[str]): Keys that must be present.
+        bundle: The dataclass instance to validate.
+        required_attrs (list[str]): Attribute names that must be non-None.
         context (str): Name of the calling node for error messages.
 
     Raises:
-        ValueError: If the bundle is not a dict or is missing required keys.
+        ValueError: If the bundle is missing required attributes.
     """
-    if not isinstance(bundle, dict):
-        raise ValueError(f"{context}: Expected a dict bundle, got {type(bundle).__name__}.")
-    missing = [k for k in required_keys if k not in bundle]
+    missing = [a for a in required_attrs if getattr(bundle, a, None) is None]
     if missing:
-        raise ValueError(f"{context}: Bundle is missing required keys: {', '.join(missing)}.")
+        raise ValueError(f"{context}: Bundle is missing required attributes: {', '.join(missing)}.")
 
 
 # --- SeedVR2 Known Models ---
@@ -87,33 +86,36 @@ KNOWN_DIT_MODELS = [
 
 # --- Typed Bundle Definitions ---
 
-class UmeBundle(TypedDict):
+@dataclass
+class UmeBundle:
     """Type contract for UME_BUNDLE — produced by all Loader nodes."""
-    model: Any
-    clip: Any
-    vae: Any
-    model_name: str
+    model: Any = None
+    clip: Any = None
+    vae: Any = None
+    model_name: str = ""
 
 
-class UmeSettings(TypedDict):
+@dataclass
+class UmeSettings:
     """Type contract for UME_SETTINGS — produced by GenerationSettings."""
-    width: int
-    height: int
-    steps: int
-    cfg: float
-    sampler_name: str
-    scheduler: str
-    seed: int
+    width: int = 1024
+    height: int = 1024
+    steps: int = 20
+    cfg: float = 8.0
+    sampler_name: str = "euler"
+    scheduler: str = "normal"
+    seed: int = 0
 
 
-class UmeImage(TypedDict, total=False):
+@dataclass
+class UmeImage:
     """Type contract for UME_IMAGE — produced by Image Loader/Process nodes."""
-    image: Any
-    mask: Any
-    mode: str
-    denoise: float
-    auto_resize: bool
-    controlnets: List[Tuple]
+    image: Any = None
+    mask: Any = None
+    mode: str = "img2img"
+    denoise: float = 1.0
+    auto_resize: bool = False
+    controlnets: List[Tuple] = field(default_factory=list)
 
 
 # --- GenerationContext (UME_PIPELINE) ---

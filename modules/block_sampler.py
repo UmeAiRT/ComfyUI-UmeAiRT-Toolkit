@@ -64,28 +64,28 @@ class UmeAiRT_BlockSampler:
                 image: Optional[Dict[str, Any]] = None) -> Tuple[GenerationContext]:
         # 1. Validate and unpack model_bundle
         validate_bundle(model_bundle, ["model", "clip", "vae"], context="Block Sampler")
-        model = model_bundle["model"]
-        clip = model_bundle["clip"]
-        vae = model_bundle["vae"]
+        model = model_bundle.model
+        clip = model_bundle.clip
+        vae = model_bundle.vae
 
         ctx = GenerationContext()
         ctx.model = model
         ctx.clip = clip
         ctx.vae = vae
-        ctx.model_name = model_bundle.get("model_name", "")
+        ctx.model_name = model_bundle.model_name
 
         # 2. Apply settings
-        ctx.width = settings.get("width", 1024)
-        ctx.height = settings.get("height", 1024)
-        ctx.steps = settings.get("steps", 20)
-        ctx.cfg = settings.get("cfg", 8.0)
-        ctx.sampler_name = settings.get("sampler_name", "euler")
-        ctx.scheduler = settings.get("scheduler", "normal")
-        ctx.seed = settings.get("seed", 0)
+        ctx.width = settings.width
+        ctx.height = settings.height
+        ctx.steps = settings.steps
+        ctx.cfg = settings.cfg
+        ctx.sampler_name = settings.sampler_name
+        ctx.scheduler = settings.scheduler
+        ctx.seed = settings.seed
 
         controlnets = []
-        if image and isinstance(image, dict):
-            controlnets = image.get("controlnets", [])
+        if image:
+            controlnets = image.controlnets if image.controlnets else []
 
         # 3. Apply LoRAs
         if loras:
@@ -110,7 +110,7 @@ class UmeAiRT_BlockSampler:
         sampler_name, scheduler = ctx.sampler_name, ctx.scheduler
         seed = ctx.seed
 
-        denoise = image.get("denoise", 1.0) if image else ctx.denoise
+        denoise = image.denoise if image else ctx.denoise
         ctx.denoise = denoise
 
         # 4. Handle Prompts
@@ -124,10 +124,10 @@ class UmeAiRT_BlockSampler:
         raw_image, source_mask = None, None
 
         if image:
-             raw_image = image.get("image")
-             source_mask = image.get("mask")
-             mode_str = image.get("mode", "img2img")
-             auto_resize = image.get("auto_resize", False)
+             raw_image = image.image
+             source_mask = image.mask
+             mode_str = image.mode or "img2img"
+             auto_resize = image.auto_resize
 
              # Auto-resize source image to settings dimensions
              if auto_resize and raw_image is not None:
