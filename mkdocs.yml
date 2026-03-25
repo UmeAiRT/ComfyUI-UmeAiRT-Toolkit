@@ -1,0 +1,104 @@
+site_name: UmeAiRT Toolkit
+site_description: Modern node pack for ComfyUI — block-based workflows with auto-downloading model bundles
+site_url: https://toolkit.umeai.art/
+repo_url: https://github.com/UmeAiRT/ComfyUI-UmeAiRT-Toolkit
+repo_name: UmeAiRT/ComfyUI-UmeAiRT-Toolkit
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: light blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: light blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - content.code.copy
+    - search.suggest
+    - search.highlight
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+  - tables
+
+nav:
+  - Home:
+    - Overview: index.md
+    - Getting Started: getting-started.md
+    - Architecture: architecture.md
+  - Nodes:
+    - Overview: nodes/index.md
+    - Loaders:
+      - Checkpoint Loader: nodes/checkpoint-loader.md
+      - FLUX Loader: nodes/flux-loader.md
+      - Z-IMG Loader: nodes/zimg-loader.md
+      - Fragmented Loader: nodes/fragmented-loader.md
+      - Bundle Auto-Loader: nodes/bundle-loader.md
+      - Multi-LoRA Loader: nodes/multi-lora.md
+    - Generation:
+      - Generation Settings: nodes/generation-settings.md
+      - Image Loader: nodes/image-loader.md
+      - Image Process: nodes/image-process.md
+      - LoRA Blocks: nodes/lora-blocks.md
+      - ControlNet: nodes/controlnet.md
+      - Prompt Inputs: nodes/prompt-inputs.md
+    - Sampling & Post-Process:
+      - KSampler: nodes/ksampler.md
+      - UltimateSD Upscale: nodes/ultimate-upscale.md
+      - SeedVR2 Upscale: nodes/seedvr2-upscale.md
+      - FaceDetailer: nodes/facedetailer.md
+      - Detailer Daemon: nodes/detailer-daemon.md
+    - Image Output:
+      - Source Image Output: nodes/source-image-output.md
+      - Inpaint Composite: nodes/inpaint-composite.md
+      - Image Saver: nodes/image-saver.md
+    - Pack / Unpack:
+      - Overview: nodes/pack-unpack.md
+    - Utilities:
+      - Bundle Downloader: nodes/bundle-downloader.md
+      - Health Check: nodes/health-check.md
+      - Log Viewer: nodes/log-viewer.md
+      - Label: nodes/label.md
+  - Project:
+    - Changelog: changelog.md
+    - Contributing: contributing.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/UmeAiRT
