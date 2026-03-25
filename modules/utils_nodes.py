@@ -85,7 +85,7 @@ class UmeAiRT_Unpack_Settings:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {"settings": ("UME_SETTINGS",)}}
-    RETURN_TYPES = ("INT", "INT", "INT", "FLOAT", "STRING", "STRING", "INT")
+    RETURN_TYPES = ("INT", "INT", "INT", "FLOAT", "*", "*", "INT")
     RETURN_NAMES = ("width", "height", "steps", "cfg", "sampler", "scheduler", "seed")
     FUNCTION = "unpack"
     CATEGORY = "UmeAiRT/Utils/Unpack"
@@ -192,7 +192,7 @@ class UmeAiRT_Unpack_Pipeline:
             }
         }
 
-    RETURN_TYPES = ("IMAGE", "MODEL", "CLIP", "VAE", "STRING", "STRING", "STRING", "INT", "INT", "INT", "FLOAT", "STRING", "STRING", "INT", "FLOAT")
+    RETURN_TYPES = ("IMAGE", "MODEL", "CLIP", "VAE", "STRING", "STRING", "STRING", "INT", "INT", "INT", "FLOAT", "*", "*", "INT", "FLOAT")
     RETURN_NAMES = ("image", "model", "clip", "vae", "model_name", "positive", "negative", "width", "height", "steps", "cfg", "sampler_name", "scheduler", "seed", "denoise")
     FUNCTION = "unpack"
     CATEGORY = "UmeAiRT/Utils/Unpack"
