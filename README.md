@@ -1,6 +1,7 @@
 # 🌌 ComfyUI UmeAiRT Toolkit
 
 ![CI](https://github.com/UmeAiRT/ComfyUI-UmeAiRT-Toolkit/actions/workflows/ci.yml/badge.svg)
+![Docs](https://github.com/UmeAiRT/ComfyUI-UmeAiRT-Toolkit/actions/workflows/docs.yml/badge.svg)
 
 **A Block-Based, Pipeline-Driven Toolkit for ComfyUI.**
 
@@ -134,26 +135,36 @@ UmeAiRT Toolkit is audited for common vulnerabilities:
 
 ## 🧪 Testing
 
-42 unit tests across 7 suites, with GitHub Actions CI on Python 3.10-3.12:
+140+ unit tests with GitHub Actions CI on Python 3.10–3.14:
 
 ```bash
 # Run all tests locally
-python tests/test_common.py -v
-python tests/test_traversal.py -v
-python tests/test_optimization.py -v
-python tests/test_block_inputs.py -v
-python tests/test_tooltips.py -v
-python tests/test_registration.py -v
+python run_tests.py
+
+# Run with coverage
+coverage run --source=modules run_tests.py
+coverage report -m --skip-covered
 ```
 
-| Suite | Tests | Validates |
-|:---|:---:|:---|
-| `test_common` | 11 | GenerationContext, resize_tensor, encode_prompts, outpaint padding |
-| `test_traversal` | 6 | Path traversal security (6 attack vectors) |
-| `test_optimization` | 8 | Lib cache, SamplerContext safety, VAEDecode singleton |
-| `test_block_inputs` | 9 | LoRA factory, stack processing, tooltip completeness |
-| `test_tooltips` | 1 | Regression: every input must have a tooltip |
-| `test_registration` | 7 | NODE_CLASS ↔ DISPLAY_NAME sync, dependency sync |
+CI enforces a **40% coverage floor** (`--fail-under=40`).
+
+New nodes should include structural tests — copy `tests/_template_node_test.py`.
+
+---
+
+## 📖 Documentation
+
+Full documentation with node reference (I/O tables, usage tips) is available at:
+
+🔗 **[toolkit.umeai.art](https://toolkit.umeai.art/)** (or [GitHub Pages](https://umeairt.github.io/ComfyUI-UmeAiRT-Toolkit/))
+
+Docs are built with [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) and auto-deployed on push.
+
+```bash
+# Preview docs locally
+pip install mkdocs-material
+mkdocs serve  # → http://127.0.0.1:8000
+```
 
 ---
 
