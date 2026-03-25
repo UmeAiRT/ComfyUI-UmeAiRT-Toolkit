@@ -50,7 +50,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: pip-audit (CVE scan)
-        run: pip-audit --strict --desc
+        run: pip-audit --strict --desc --ignore-vuln CVE-2026-4539  # pygments ReDoS (no fix available)
 
   # ── Unit Tests (matrix across Python versions) ─────────────────
   test:
