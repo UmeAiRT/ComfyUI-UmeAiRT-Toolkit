@@ -99,4 +99,4 @@ jobs:
       - name: Run tests with coverage
         run: |
           coverage run --source=modules run_tests.py
-          coverage report -m --skip-covered --fail-under=30
+          coverage report -m --skip-covered --fail-under=40
