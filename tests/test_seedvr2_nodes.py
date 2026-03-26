@@ -1,10 +1,7 @@
-"""Tests for modules/seedvr2_nodes.py — SeedVR2 Upscale pipeline nodes."""
+"""Tests for modules/seedvr2_nodes.py — SeedVR2 Upscale pipeline node."""
 import unittest
 
-from modules.seedvr2_nodes import (
-    UmeAiRT_PipelineSeedVR2Upscale,
-    UmeAiRT_PipelineSeedVR2Upscale_Advanced,
-)
+from modules.seedvr2_nodes import UmeAiRT_PipelineSeedVR2Upscale
 
 
 class TestPipelineSeedVR2Upscale(unittest.TestCase):
@@ -16,6 +13,15 @@ class TestPipelineSeedVR2Upscale(unittest.TestCase):
         self.assertIn("enabled", req)
         self.assertIn("model", req)
         self.assertIn("upscale_by", req)
+
+    def test_input_types_has_tiling_params(self):
+        inputs = UmeAiRT_PipelineSeedVR2Upscale.INPUT_TYPES()
+        req = inputs["required"]
+        self.assertIn("tile_width", req)
+        self.assertIn("tile_height", req)
+        self.assertIn("tiling_strategy", req)
+        self.assertIn("blending_method", req)
+        self.assertIn("color_correction", req)
 
     def test_return_types(self):
         self.assertEqual(UmeAiRT_PipelineSeedVR2Upscale.RETURN_TYPES, ("UME_PIPELINE",))
@@ -33,23 +39,6 @@ class TestPipelineSeedVR2Upscale(unittest.TestCase):
     def test_has_build_configs(self):
         self.assertTrue(hasattr(UmeAiRT_PipelineSeedVR2Upscale, "_build_configs"))
         self.assertTrue(callable(UmeAiRT_PipelineSeedVR2Upscale._build_configs))
-
-
-class TestPipelineSeedVR2UpscaleAdvanced(unittest.TestCase):
-    def test_input_types_has_tiling_params(self):
-        inputs = UmeAiRT_PipelineSeedVR2Upscale_Advanced.INPUT_TYPES()
-        req = inputs["required"]
-        self.assertIn("tile_width", req)
-        self.assertIn("tile_height", req)
-        self.assertIn("tiling_strategy", req)
-        self.assertIn("blending_method", req)
-        self.assertIn("color_correction", req)
-
-    def test_function_name(self):
-        self.assertEqual(UmeAiRT_PipelineSeedVR2Upscale_Advanced.FUNCTION, "upscale")
-
-    def test_return_types(self):
-        self.assertEqual(UmeAiRT_PipelineSeedVR2Upscale_Advanced.RETURN_TYPES, ("UME_PIPELINE",))
 
 
 if __name__ == "__main__":

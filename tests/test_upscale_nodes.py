@@ -1,10 +1,8 @@
 """Tests for modules/upscale_nodes.py — UltimateSD Upscale pipeline nodes."""
 import unittest
-from unittest.mock import MagicMock
 
 from modules.upscale_nodes import (
     UmeAiRT_PipelineUltimateUpscale,
-    UmeAiRT_PipelineUltimateUpscale_Advanced,
     UmeAiRT_UltimateUpscale_Base,
 )
 
@@ -28,9 +26,15 @@ class TestPipelineUltimateUpscale(unittest.TestCase):
         self.assertIn("required", inputs)
         req = inputs["required"]
         self.assertIn("gen_pipe", req)
-        self.assertIn("enabled", req)
         self.assertIn("model", req)
         self.assertIn("upscale_by", req)
+
+    def test_input_types_has_optional(self):
+        inputs = UmeAiRT_PipelineUltimateUpscale.INPUT_TYPES()
+        self.assertIn("optional", inputs)
+        opt = inputs["optional"]
+        self.assertIn("tile_width", opt)
+        self.assertIn("seam_fix_mode", opt)
 
     def test_return_types(self):
         self.assertEqual(UmeAiRT_PipelineUltimateUpscale.RETURN_TYPES, ("UME_PIPELINE",))
@@ -45,20 +49,8 @@ class TestPipelineUltimateUpscale(unittest.TestCase):
         node = UmeAiRT_PipelineUltimateUpscale()
         self.assertTrue(callable(node.upscale))
 
-
-class TestPipelineUltimateUpscaleAdvanced(unittest.TestCase):
-    def test_input_types_has_optional(self):
-        inputs = UmeAiRT_PipelineUltimateUpscale_Advanced.INPUT_TYPES()
-        self.assertIn("optional", inputs)
-        opt = inputs["optional"]
-        self.assertIn("tile_width", opt)
-        self.assertIn("seam_fix_mode", opt)
-
-    def test_function_name(self):
-        self.assertEqual(UmeAiRT_PipelineUltimateUpscale_Advanced.FUNCTION, "upscale")
-
     def test_inherits_base(self):
-        self.assertTrue(issubclass(UmeAiRT_PipelineUltimateUpscale_Advanced, UmeAiRT_UltimateUpscale_Base))
+        self.assertTrue(issubclass(UmeAiRT_PipelineUltimateUpscale, UmeAiRT_UltimateUpscale_Base))
 
 
 if __name__ == "__main__":

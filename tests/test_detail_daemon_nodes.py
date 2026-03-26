@@ -1,4 +1,4 @@
-"""Tests for modules/detail_daemon_nodes.py — Detailer Daemon nodes and schedule helpers."""
+"""Tests for modules/detail_daemon_nodes.py — Detailer Daemon node and schedule helpers."""
 import unittest
 
 # numpy may be mocked in the test harness when not installed
@@ -9,8 +9,7 @@ except (ImportError, AttributeError):
     _HAS_NUMPY = False
 
 from modules.detail_daemon_nodes import (
-    UmeAiRT_Detailer_Daemon_Simple,
-    UmeAiRT_Detailer_Daemon_Advanced,
+    UmeAiRT_Detailer_Daemon,
     make_detail_daemon_schedule,
 )
 
@@ -69,43 +68,35 @@ class TestMakeDetailDaemonSchedule(unittest.TestCase):
         self.assertFalse(np.array_equal(smooth, linear))
 
 
-class TestDetailerDaemonSimple(unittest.TestCase):
+class TestDetailerDaemon(unittest.TestCase):
     def test_input_types_required(self):
-        inputs = UmeAiRT_Detailer_Daemon_Simple.INPUT_TYPES()
+        inputs = UmeAiRT_Detailer_Daemon.INPUT_TYPES()
         req = inputs["required"]
         self.assertIn("gen_pipe", req)
         self.assertIn("enabled", req)
         self.assertIn("detail_amount", req)
 
-    def test_return_types(self):
-        self.assertEqual(UmeAiRT_Detailer_Daemon_Simple.RETURN_TYPES, ("UME_PIPELINE",))
-
-    def test_function_name(self):
-        self.assertEqual(UmeAiRT_Detailer_Daemon_Simple.FUNCTION, "process")
-
-    def test_category(self):
-        self.assertEqual(UmeAiRT_Detailer_Daemon_Simple.CATEGORY, "UmeAiRT/Pipeline/Post-Processing")
-
-
-class TestDetailerDaemonAdvanced(unittest.TestCase):
-    def test_inherits_simple(self):
-        self.assertTrue(issubclass(UmeAiRT_Detailer_Daemon_Advanced, UmeAiRT_Detailer_Daemon_Simple))
-
     def test_input_types_has_schedule_params(self):
-        inputs = UmeAiRT_Detailer_Daemon_Advanced.INPUT_TYPES()
+        inputs = UmeAiRT_Detailer_Daemon.INPUT_TYPES()
         req = inputs["required"]
         for key in ["start", "end", "bias", "exponent", "smooth", "fade"]:
-            self.assertIn(key, req, f"Missing '{key}' in Advanced required inputs")
+            self.assertIn(key, req, f"Missing '{key}' in required inputs")
 
-    def test_function_name(self):
-        self.assertEqual(UmeAiRT_Detailer_Daemon_Advanced.FUNCTION, "process_advanced")
-
-    def test_has_optional_overrides(self):
-        inputs = UmeAiRT_Detailer_Daemon_Advanced.INPUT_TYPES()
+    def test_input_types_has_optional_overrides(self):
+        inputs = UmeAiRT_Detailer_Daemon.INPUT_TYPES()
         opt = inputs.get("optional", {})
         self.assertIn("steps", opt)
         self.assertIn("cfg", opt)
         self.assertIn("seed", opt)
+
+    def test_return_types(self):
+        self.assertEqual(UmeAiRT_Detailer_Daemon.RETURN_TYPES, ("UME_PIPELINE",))
+
+    def test_function_name(self):
+        self.assertEqual(UmeAiRT_Detailer_Daemon.FUNCTION, "process")
+
+    def test_category(self):
+        self.assertEqual(UmeAiRT_Detailer_Daemon.CATEGORY, "UmeAiRT/Pipeline/Post-Processing")
 
 
 if __name__ == "__main__":

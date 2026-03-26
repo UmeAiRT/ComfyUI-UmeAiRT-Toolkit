@@ -184,7 +184,7 @@ def _download_with_aria2(url, dest_path, connections=8, hf_token=""):
         req = urllib.request.Request(url, method="HEAD", headers=headers)
         with urllib.request.urlopen(req, timeout=30) as resp:
             total_size = int(resp.headers.get("Content-Length", 0))
-    except Exception as e:
+    except Exception:
         pass  # Non-critical: aria2c handles its own progress
 
     size_mb = f" ({total_size / 1024 / 1024:.0f} MB)" if total_size else ""
