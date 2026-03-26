@@ -1202,18 +1202,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#simple-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Simple Version
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Simple Version">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#inputs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1223,28 +1211,12 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#outputs" class="md-nav__link">
     <span class="md-ellipsis">
       
         Outputs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#advanced-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Advanced Version
       
     </span>
   </a>
@@ -1894,18 +1866,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#simple-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Simple Version
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Simple Version">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#inputs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1915,28 +1875,12 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#outputs" class="md-nav__link">
     <span class="md-ellipsis">
       
         Outputs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#advanced-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Advanced Version
       
     </span>
   </a>
@@ -1965,9 +1909,8 @@
 
 <h1 id="seedvr2-upscale">⬡ SeedVR2 Upscale<a class="headerlink" href="#seedvr2-upscale" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>AI-native upscaling using the SeedVR2 tiling and stitching engine.</p>
+<p>AI-native upscaling using the SeedVR2 tiling and stitching engine. Tile/blending parameters are available via <strong>Show advanced inputs</strong>.</p>
 </blockquote>
-<h2 id="simple-version">Simple Version<a class="headerlink" href="#simple-version" title="Permanent link">&para;</a></h2>
 <h3 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -1975,6 +1918,8 @@
 <th>Name</th>
 <th>Type</th>
 <th>Required</th>
+<th>Advanced</th>
+<th>Default</th>
 <th>Description</th>
 </tr>
 </thead>
@@ -1983,7 +1928,105 @@
 <td><code>gen_pipe</code></td>
 <td><code>UME_PIPELINE</code></td>
 <td>✅</td>
+<td></td>
+<td>—</td>
 <td>Pipeline from KSampler</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td><code>BOOLEAN</code></td>
+<td>✅</td>
+<td></td>
+<td>ON</td>
+<td>Toggle upscaling on/off</td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td><code>COMBO</code></td>
+<td>✅</td>
+<td></td>
+<td>seedvr2_ema_3b_fp8</td>
+<td>SeedVR2 model selection</td>
+</tr>
+<tr>
+<td><code>upscale_by</code></td>
+<td><code>FLOAT</code></td>
+<td>✅</td>
+<td></td>
+<td>2.0</td>
+<td>Scale factor (1–8x)</td>
+</tr>
+<tr>
+<td><code>tile_width</code></td>
+<td><code>INT</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>512</td>
+<td>Tile width in pixels</td>
+</tr>
+<tr>
+<td><code>tile_height</code></td>
+<td><code>INT</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>512</td>
+<td>Tile height in pixels</td>
+</tr>
+<tr>
+<td><code>mask_blur</code></td>
+<td><code>INT</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>0</td>
+<td>Tile edge softening</td>
+</tr>
+<tr>
+<td><code>tile_padding</code></td>
+<td><code>INT</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>32</td>
+<td>Tile overlap in pixels</td>
+</tr>
+<tr>
+<td><code>tile_upscale_resolution</code></td>
+<td><code>INT</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>1024</td>
+<td>Per-tile processing resolution</td>
+</tr>
+<tr>
+<td><code>tiling_strategy</code></td>
+<td><code>COMBO</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>Chess</td>
+<td>Tile layout strategy</td>
+</tr>
+<tr>
+<td><code>anti_aliasing_strength</code></td>
+<td><code>FLOAT</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>0.0</td>
+<td>Edge smoothing between tiles</td>
+</tr>
+<tr>
+<td><code>blending_method</code></td>
+<td><code>COMBO</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>auto</td>
+<td>Tile merging algorithm</td>
+</tr>
+<tr>
+<td><code>color_correction</code></td>
+<td><code>COMBO</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>lab</td>
+<td>Color matching between tiles</td>
 </tr>
 </tbody>
 </table>
@@ -2004,14 +2047,10 @@
 </tr>
 </tbody>
 </table>
-<h2 id="advanced-version">Advanced Version<a class="headerlink" href="#advanced-version" title="Permanent link">&para;</a></h2>
-<p>Additional control over the upscaling process.</p>
 <div class="admonition warning">
 <p class="admonition-title">VRAM Requirements</p>
 <p>SeedVR2 requires approximately <strong>6 GB of free VRAM</strong>. The node includes automatic VRAM management — it will unload cached models if necessary to free space.</p>
 </div>
-<!-- TODO: Screenshot — SeedVR2 Upscale in a workflow: KSampler → SeedVR2 → Image Saver -->
-<!-- PLACEHOLDER: Show a SeedVR2 node between KSampler and Image Saver, with the console showing "SeedVR2 VRAM Check: OK" -->
 
 
 

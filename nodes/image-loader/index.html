@@ -941,18 +941,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#simple-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Simple Version
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Simple Version">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#inputs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -962,8 +950,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#outputs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -971,39 +959,6 @@
       
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#advanced-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Advanced Version
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Advanced Version">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#outputs_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Outputs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1911,18 +1866,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#simple-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Simple Version
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Simple Version">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#inputs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1932,8 +1875,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#outputs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1941,39 +1884,6 @@
       
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#advanced-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Advanced Version
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Advanced Version">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#outputs_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Outputs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2001,7 +1911,6 @@
 <blockquote>
 <p>Load a source image from disk for img2img, inpaint, or outpaint workflows.</p>
 </blockquote>
-<h2 id="simple-version">Simple Version<a class="headerlink" href="#simple-version" title="Permanent link">&para;</a></h2>
 <h3 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -2036,25 +1945,6 @@
 <td><code>UME_IMAGE</code></td>
 <td>Bundle containing image + mask + default settings (mode=img2img, denoise=0.75)</td>
 </tr>
-</tbody>
-</table>
-<h2 id="advanced-version">Advanced Version<a class="headerlink" href="#advanced-version" title="Permanent link">&para;</a></h2>
-<p>Same inputs as the simple version, but with additional raw outputs:</p>
-<h3 id="outputs_1">Outputs<a class="headerlink" href="#outputs_1" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>image_bundle</code></td>
-<td><code>UME_IMAGE</code></td>
-<td>Complete image bundle</td>
-</tr>
 <tr>
 <td><code>image</code></td>
 <td><code>IMAGE</code></td>
@@ -2071,8 +1961,6 @@
 <p class="admonition-title">Pair with Image Process</p>
 <p>The Image Loader outputs a default <code>img2img</code> bundle. Use <a href="../image-process/">Image Process</a> to set the mode (inpaint, outpaint), denoise, auto-resize, and padding.</p>
 </div>
-<!-- TODO: Screenshot — Image Loader (Advanced) with its 3 outputs visible -->
-<!-- PLACEHOLDER: Show the advanced loader with an image selected and the 3 outputs wired to different nodes -->
 
 
 

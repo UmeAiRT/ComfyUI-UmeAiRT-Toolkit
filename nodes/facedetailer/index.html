@@ -1230,18 +1230,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#simple-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Simple Version
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Simple Version">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#inputs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1251,28 +1239,12 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#outputs" class="md-nav__link">
     <span class="md-ellipsis">
       
         Outputs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#advanced-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Advanced Version
       
     </span>
   </a>
@@ -1933,18 +1905,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#simple-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Simple Version
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Simple Version">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#inputs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1954,28 +1914,12 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#outputs" class="md-nav__link">
     <span class="md-ellipsis">
       
         Outputs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#advanced-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Advanced Version
       
     </span>
   </a>
@@ -2043,9 +1987,8 @@
 
 <h1 id="facedetailer">⬡ FaceDetailer<a class="headerlink" href="#facedetailer" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Automatically detect and enhance faces in generated images.</p>
+<p>Automatically detect and enhance faces in generated images. Advanced parameters are available via <strong>Show advanced inputs</strong>.</p>
 </blockquote>
-<h2 id="simple-version">Simple Version<a class="headerlink" href="#simple-version" title="Permanent link">&para;</a></h2>
 <h3 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -2053,6 +1996,8 @@
 <th>Name</th>
 <th>Type</th>
 <th>Required</th>
+<th>Advanced</th>
+<th>Default</th>
 <th>Description</th>
 </tr>
 </thead>
@@ -2061,7 +2006,33 @@
 <td><code>gen_pipe</code></td>
 <td><code>UME_PIPELINE</code></td>
 <td>✅</td>
+<td></td>
+<td>—</td>
 <td>Pipeline with generated image</td>
+</tr>
+<tr>
+<td><code>bbox_detector</code></td>
+<td><code>BBOX_DETECTOR</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>Detection model (from BBOX Detector Loader)</td>
+</tr>
+<tr>
+<td><code>denoise</code></td>
+<td><code>FLOAT</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>0.5</td>
+<td>Enhancement denoising strength</td>
+</tr>
+<tr>
+<td><code>guide_size</code></td>
+<td><code>FLOAT</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>384</td>
+<td>Target face crop size</td>
 </tr>
 </tbody>
 </table>
@@ -2082,9 +2053,6 @@
 </tr>
 </tbody>
 </table>
-<h2 id="advanced-version">Advanced Version<a class="headerlink" href="#advanced-version" title="Permanent link">&para;</a></h2>
-<p>Full control over face detection and enhancement parameters.</p>
-<p>Requires a <strong>BBOX detector model</strong> — use the <a href="#bbox-detector-loader">BBOX Detector Loader</a> node.</p>
 <h2 id="bbox-detector-loader">BBOX Detector Loader<a class="headerlink" href="#bbox-detector-loader" title="Permanent link">&para;</a></h2>
 <p>Loads a face/body detection model for FaceDetailer.</p>
 <h3 id="inputs_1">Inputs<a class="headerlink" href="#inputs_1" title="Permanent link">&para;</a></h3>
@@ -2127,8 +2095,6 @@
 <p class="admonition-title">Recommended detector</p>
 <p>Use <code>face_yolov8m.pt</code> for face detection. Place it in <code>ComfyUI/models/bbox/</code>.</p>
 </div>
-<!-- TODO: Screenshot — FaceDetailer workflow: KSampler → FaceDetailer → Image Saver, with detected faces visible -->
-<!-- PLACEHOLDER: Show a portrait generation where FaceDetailer has enhanced the face. Include a side-by-side before/after if possible. -->
 
 
 

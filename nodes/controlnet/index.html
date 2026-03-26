@@ -1025,15 +1025,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#controlnet-apply-simple" class="md-nav__link">
+  <a href="#controlnet-apply" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ControlNet Apply (Simple)
+        ControlNet Apply
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="ControlNet Apply (Simple)">
+    <nav class="md-nav" aria-label="ControlNet Apply">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1064,15 +1064,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#controlnet-apply-advanced" class="md-nav__link">
+  <a href="#controlnet-process" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ControlNet Apply (Advanced)
+        ControlNet Process
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="ControlNet Apply (Advanced)">
+    <nav class="md-nav" aria-label="ControlNet Process">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1088,45 +1088,6 @@
         
           <li class="md-nav__item">
   <a href="#outputs_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Outputs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#controlnet-process" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ControlNet Process
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="ControlNet Process">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#inputs_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Inputs
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#outputs_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Outputs
@@ -1961,15 +1922,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#controlnet-apply-simple" class="md-nav__link">
+  <a href="#controlnet-apply" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ControlNet Apply (Simple)
+        ControlNet Apply
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="ControlNet Apply (Simple)">
+    <nav class="md-nav" aria-label="ControlNet Apply">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2000,15 +1961,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#controlnet-apply-advanced" class="md-nav__link">
+  <a href="#controlnet-process" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ControlNet Apply (Advanced)
+        ControlNet Process
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="ControlNet Apply (Advanced)">
+    <nav class="md-nav" aria-label="ControlNet Process">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2024,45 +1985,6 @@
         
           <li class="md-nav__item">
   <a href="#outputs_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Outputs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#controlnet-process" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ControlNet Process
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="ControlNet Process">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#inputs_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Inputs
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#outputs_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Outputs
@@ -2099,8 +2021,8 @@
 
 <h1 id="controlnet">⬡ ControlNet<a class="headerlink" href="#controlnet" title="Permanent link">&para;</a></h1>
 <p>Three nodes for applying ControlNet guidance to image bundles.</p>
-<h2 id="controlnet-apply-simple">ControlNet Apply (Simple)<a class="headerlink" href="#controlnet-apply-simple" title="Permanent link">&para;</a></h2>
-<p>Minimal ControlNet application with just model and strength.</p>
+<h2 id="controlnet-apply">ControlNet Apply<a class="headerlink" href="#controlnet-apply" title="Permanent link">&para;</a></h2>
+<p>Apply a ControlNet model to an image bundle. Advanced parameters (timing, override image) are available via <strong>Show advanced inputs</strong>.</p>
 <h3 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -2108,6 +2030,7 @@
 <th>Name</th>
 <th>Type</th>
 <th>Required</th>
+<th>Advanced</th>
 <th>Default</th>
 <th>Description</th>
 </tr>
@@ -2117,6 +2040,7 @@
 <td><code>image_bundle</code></td>
 <td><code>UME_IMAGE</code></td>
 <td>✅</td>
+<td></td>
 <td>—</td>
 <td>Image bundle to apply ControlNet to</td>
 </tr>
@@ -2124,6 +2048,7 @@
 <td><code>control_net_name</code></td>
 <td><code>COMBO</code></td>
 <td>✅</td>
+<td></td>
 <td>—</td>
 <td>ControlNet model from <code>models/controlnet/</code></td>
 </tr>
@@ -2131,8 +2056,33 @@
 <td><code>strength</code></td>
 <td><code>FLOAT</code></td>
 <td>✅</td>
+<td></td>
 <td>1.0</td>
 <td>Guidance strength (0–2, slider)</td>
+</tr>
+<tr>
+<td><code>start_percent</code></td>
+<td><code>FLOAT</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>0.0</td>
+<td>When guidance starts (0.0 = beginning)</td>
+</tr>
+<tr>
+<td><code>end_percent</code></td>
+<td><code>FLOAT</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>1.0</td>
+<td>When guidance ends (1.0 = final step)</td>
+</tr>
+<tr>
+<td><code>optional_control_image</code></td>
+<td><code>IMAGE</code></td>
+<td>❌</td>
+<td>✅</td>
+<td>—</td>
+<td>Override: use this image instead of bundle image</td>
 </tr>
 </tbody>
 </table>
@@ -2154,85 +2104,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="controlnet-apply-advanced">ControlNet Apply (Advanced)<a class="headerlink" href="#controlnet-apply-advanced" title="Permanent link">&para;</a></h2>
-<p>Full control over ControlNet timing and optional separate control image.</p>
-<h3 id="inputs_1">Inputs<a class="headerlink" href="#inputs_1" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Required</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>image_bundle</code></td>
-<td><code>UME_IMAGE</code></td>
-<td>✅</td>
-<td>—</td>
-<td>Input image bundle</td>
-</tr>
-<tr>
-<td><code>control_net_name</code></td>
-<td><code>COMBO</code></td>
-<td>✅</td>
-<td>—</td>
-<td>ControlNet model</td>
-</tr>
-<tr>
-<td><code>strength</code></td>
-<td><code>FLOAT</code></td>
-<td>✅</td>
-<td>1.0</td>
-<td>Guidance strength (0–10)</td>
-</tr>
-<tr>
-<td><code>start_percent</code></td>
-<td><code>FLOAT</code></td>
-<td>✅</td>
-<td>0.0</td>
-<td>When guidance starts (0.0 = beginning)</td>
-</tr>
-<tr>
-<td><code>end_percent</code></td>
-<td><code>FLOAT</code></td>
-<td>✅</td>
-<td>1.0</td>
-<td>When guidance ends (1.0 = final step)</td>
-</tr>
-<tr>
-<td><code>optional_control_image</code></td>
-<td><code>IMAGE</code></td>
-<td>❌</td>
-<td>—</td>
-<td>Override: use this image instead of bundle image</td>
-</tr>
-</tbody>
-</table>
-<h3 id="outputs_1">Outputs<a class="headerlink" href="#outputs_1" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>image_bundle</code></td>
-<td><code>UME_IMAGE</code></td>
-<td>Bundle with ControlNet attached</td>
-</tr>
-</tbody>
-</table>
-<hr />
 <h2 id="controlnet-process">ControlNet Process<a class="headerlink" href="#controlnet-process" title="Permanent link">&para;</a></h2>
 <p>Combined image pre-processing + ControlNet application.</p>
-<h3 id="inputs_2">Inputs<a class="headerlink" href="#inputs_2" title="Permanent link">&para;</a></h3>
+<h3 id="inputs_1">Inputs<a class="headerlink" href="#inputs_1" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -2295,7 +2169,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="outputs_2">Outputs<a class="headerlink" href="#outputs_2" title="Permanent link">&para;</a></h3>
+<h3 id="outputs_1">Outputs<a class="headerlink" href="#outputs_1" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -2312,8 +2186,6 @@
 </tr>
 </tbody>
 </table>
-<!-- TODO: Screenshot — ControlNet Apply (Advanced) with start/end percent visible -->
-<!-- PLACEHOLDER: Show an Image Loader → ControlNet Apply (Advanced) → KSampler chain with start_percent=0.2 and end_percent=0.8 -->
 
 
 

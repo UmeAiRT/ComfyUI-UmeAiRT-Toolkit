@@ -1174,18 +1174,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#simple-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Simple Version
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Simple Version">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#inputs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1195,28 +1183,12 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#outputs" class="md-nav__link">
     <span class="md-ellipsis">
       
         Outputs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#advanced-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Advanced Version
       
     </span>
   </a>
@@ -1894,18 +1866,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#simple-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Simple Version
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Simple Version">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#inputs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1915,28 +1875,12 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#outputs" class="md-nav__link">
     <span class="md-ellipsis">
       
         Outputs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#advanced-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Advanced Version
       
     </span>
   </a>
@@ -1965,10 +1909,8 @@
 
 <h1 id="ultimatesd-upscale">⬡ UltimateSD Upscale<a class="headerlink" href="#ultimatesd-upscale" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Tiled upscaling with redraw — upscales the generated image by processing it in overlapping tiles.</p>
+<p>Tiled upscaling with redraw — upscales the generated image by processing it in overlapping tiles. Tile/denoise parameters are available via <strong>Show advanced inputs</strong>.</p>
 </blockquote>
-<h2 id="simple-version">Simple Version<a class="headerlink" href="#simple-version" title="Permanent link">&para;</a></h2>
-<p>Connects to a <code>UME_PIPELINE</code> and upscales inplace.</p>
 <h3 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -1976,6 +1918,8 @@
 <th>Name</th>
 <th>Type</th>
 <th>Required</th>
+<th>Advanced</th>
+<th>Default</th>
 <th>Description</th>
 </tr>
 </thead>
@@ -1984,7 +1928,65 @@
 <td><code>gen_pipe</code></td>
 <td><code>UME_PIPELINE</code></td>
 <td>✅</td>
+<td></td>
+<td>—</td>
 <td>Pipeline from KSampler with generated image</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td><code>BOOLEAN</code></td>
+<td>✅</td>
+<td></td>
+<td>ON</td>
+<td>Toggle upscaling on/off</td>
+</tr>
+<tr>
+<td><code>upscale_model_name</code></td>
+<td><code>COMBO</code></td>
+<td>✅</td>
+<td></td>
+<td>—</td>
+<td>Upscale model (e.g. 4x-UltraSharp)</td>
+</tr>
+<tr>
+<td><code>upscale_by</code></td>
+<td><code>FLOAT</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>2.0</td>
+<td>Scale factor</td>
+</tr>
+<tr>
+<td><code>tile_width</code></td>
+<td><code>INT</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>512</td>
+<td>Tile width in pixels</td>
+</tr>
+<tr>
+<td><code>tile_height</code></td>
+<td><code>INT</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>512</td>
+<td>Tile height in pixels</td>
+</tr>
+<tr>
+<td><code>denoise</code></td>
+<td><code>FLOAT</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>0.2</td>
+<td>Redraw denoising strength</td>
+</tr>
+<tr>
+<td><code>seam_fix_mode</code></td>
+<td><code>COMBO</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>None</td>
+<td>Seam fixing strategy</td>
 </tr>
 </tbody>
 </table>
@@ -2005,11 +2007,6 @@
 </tr>
 </tbody>
 </table>
-<h2 id="advanced-version">Advanced Version<a class="headerlink" href="#advanced-version" title="Permanent link">&para;</a></h2>
-<p>Full control over upscale parameters (scale factor, tile size, overlap, etc.).</p>
-<!-- TODO: Screenshot — UltimateSD Upscale (Advanced) node showing upscale parameters -->
-<!-- PLACEHOLDER: Show the Advanced variant with visible parameters: upscale_by=2.0, tile_width=512, tile_height=512, and a before/after comparison -->
-
 <div class="admonition tip">
 <p class="admonition-title">When to use</p>
 <p>Use UltimateSD Upscale for <strong>traditional tiled upscaling</strong> with model redraw. For AI-native upscaling with better coherence, try <a href="../seedvr2-upscale/">SeedVR2 Upscale</a>.</p>
