@@ -118,7 +118,7 @@ def get_download_dest(filename, folder_type):
 # --- Manifest Loading & Caching ---
 
 _MANIFEST_CACHE = None
-_MANIFEST_URL = "https://huggingface.co/UmeAiRT/ComfyUI-Auto-Installer-Assets/resolve/main/models/model_manifest.json"
+_MANIFEST_URL = "https://huggingface.co/UmeAiRT/ComfyUI-Auto-Installer-Assets/resolve/main/model_manifest.json"
 
 
 def _get_manifest_cache_path():

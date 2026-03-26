@@ -10,10 +10,10 @@ The actual implementations live in:
 
 from .block_inputs import (
     UmeAiRT_LoraBlock_1, UmeAiRT_LoraBlock_3, UmeAiRT_LoraBlock_5, UmeAiRT_LoraBlock_10,
-    UmeAiRT_ControlNetImageApply_Advanced, UmeAiRT_ControlNetImageApply_Simple,
+    UmeAiRT_ControlNetImageApply,
     UmeAiRT_ControlNetImageProcess,
     UmeAiRT_GenerationSettings,
-    UmeAiRT_BlockImageLoader, UmeAiRT_BlockImageLoader_Advanced, UmeAiRT_BlockImageProcess,
+    UmeAiRT_BlockImageLoader, UmeAiRT_BlockImageProcess,
     UmeAiRT_Positive_Input, UmeAiRT_Negative_Input,
 )
 

@@ -27,25 +27,21 @@ if "bbox" not in folder_paths.folder_names_and_paths:
 
 from .modules.logic_nodes import (
     UmeAiRT_PipelineUltimateUpscale,
-    UmeAiRT_PipelineUltimateUpscale_Advanced,
     UmeAiRT_PipelineSeedVR2Upscale,
-    UmeAiRT_PipelineSeedVR2Upscale_Advanced,
     UmeAiRT_BboxDetectorLoader,
-    UmeAiRT_PipelineFaceDetailer_Advanced,
     UmeAiRT_PipelineFaceDetailer,
-    UmeAiRT_Detailer_Daemon_Simple,
-    UmeAiRT_Detailer_Daemon_Advanced
+    UmeAiRT_Detailer_Daemon
 )
 from .modules.block_nodes import (
     UmeAiRT_LoraBlock_1, UmeAiRT_LoraBlock_3, UmeAiRT_LoraBlock_5, UmeAiRT_LoraBlock_10,
-    UmeAiRT_ControlNetImageApply_Advanced, UmeAiRT_ControlNetImageApply_Simple, UmeAiRT_ControlNetImageProcess,
+    UmeAiRT_ControlNetImageApply, UmeAiRT_ControlNetImageProcess,
     UmeAiRT_GenerationSettings,
     UmeAiRT_FilesSettings_Checkpoint,
     UmeAiRT_FilesSettings_Checkpoint_Advanced,
     UmeAiRT_FilesSettings_FLUX,
     UmeAiRT_FilesSettings_Fragmented,
     UmeAiRT_FilesSettings_ZIMG,
-    UmeAiRT_BlockImageLoader, UmeAiRT_BlockImageLoader_Advanced, UmeAiRT_BlockImageProcess,
+    UmeAiRT_BlockImageLoader, UmeAiRT_BlockImageProcess,
     UmeAiRT_BlockSampler,
     UmeAiRT_BundleLoader,
     UmeAiRT_Positive_Input, UmeAiRT_Negative_Input
@@ -82,14 +78,12 @@ NODE_CLASS_MAPPINGS = {
     # Block Settings & Image
     "UmeAiRT_GenerationSettings": UmeAiRT_GenerationSettings,
     "UmeAiRT_BlockImageLoader": UmeAiRT_BlockImageLoader,
-    "UmeAiRT_BlockImageLoader_Advanced": UmeAiRT_BlockImageLoader_Advanced,
     "UmeAiRT_BlockImageProcess": UmeAiRT_BlockImageProcess,
     "UmeAiRT_LoraBlock_1": UmeAiRT_LoraBlock_1,
     "UmeAiRT_LoraBlock_3": UmeAiRT_LoraBlock_3,
     "UmeAiRT_LoraBlock_5": UmeAiRT_LoraBlock_5,
     "UmeAiRT_LoraBlock_10": UmeAiRT_LoraBlock_10,
-    "UmeAiRT_ControlNetImageApply_Advanced": UmeAiRT_ControlNetImageApply_Advanced,
-    "UmeAiRT_ControlNetImageApply_Simple": UmeAiRT_ControlNetImageApply_Simple,
+    "UmeAiRT_ControlNetImageApply": UmeAiRT_ControlNetImageApply,
     "UmeAiRT_ControlNetImageProcess": UmeAiRT_ControlNetImageProcess,
 
     # Prompt Editors
@@ -99,13 +93,9 @@ NODE_CLASS_MAPPINGS = {
     # Sampler & Post-Process (Pipeline)
     "UmeAiRT_BlockSampler": UmeAiRT_BlockSampler,
     "UmeAiRT_PipelineUltimateUpscale": UmeAiRT_PipelineUltimateUpscale,
-    "UmeAiRT_PipelineUltimateUpscale_Advanced": UmeAiRT_PipelineUltimateUpscale_Advanced,
     "UmeAiRT_PipelineSeedVR2Upscale": UmeAiRT_PipelineSeedVR2Upscale,
-    "UmeAiRT_PipelineSeedVR2Upscale_Advanced": UmeAiRT_PipelineSeedVR2Upscale_Advanced,
-    "UmeAiRT_PipelineFaceDetailer_Advanced": UmeAiRT_PipelineFaceDetailer_Advanced,
     "UmeAiRT_PipelineFaceDetailer": UmeAiRT_PipelineFaceDetailer,
-    "UmeAiRT_Detailer_Daemon_Simple": UmeAiRT_Detailer_Daemon_Simple,
-    "UmeAiRT_Detailer_Daemon_Advanced": UmeAiRT_Detailer_Daemon_Advanced,
+    "UmeAiRT_Detailer_Daemon": UmeAiRT_Detailer_Daemon,
     "UmeAiRT_BboxDetectorLoader": UmeAiRT_BboxDetectorLoader,
 
     # Image
@@ -145,14 +135,12 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     # Settings & Image
     "UmeAiRT_GenerationSettings": "⬡ Generation Settings",
     "UmeAiRT_BlockImageLoader": "⬡ Image Loader",
-    "UmeAiRT_BlockImageLoader_Advanced": "⬡ Image Loader (Advanced)",
     "UmeAiRT_BlockImageProcess": "⬡ Image Process",
     "UmeAiRT_LoraBlock_1": "⬡ LoRA 1x",
     "UmeAiRT_LoraBlock_3": "⬡ LoRA 3x",
     "UmeAiRT_LoraBlock_5": "⬡ LoRA 5x",
     "UmeAiRT_LoraBlock_10": "⬡ LoRA 10x",
-    "UmeAiRT_ControlNetImageApply_Simple": "⬡ ControlNet Apply",
-    "UmeAiRT_ControlNetImageApply_Advanced": "⬡ ControlNet Apply (Advanced)",
+    "UmeAiRT_ControlNetImageApply": "⬡ ControlNet Apply",
     "UmeAiRT_ControlNetImageProcess": "⬡ ControlNet Process",
 
     # Prompt Editors
@@ -162,13 +150,9 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     # Sampler & Post-Process
     "UmeAiRT_BlockSampler": "⬡ KSampler",
     "UmeAiRT_PipelineUltimateUpscale": "⬡ UltimateSD Upscale",
-    "UmeAiRT_PipelineUltimateUpscale_Advanced": "⬡ UltimateSD Upscale (Advanced)",
     "UmeAiRT_PipelineSeedVR2Upscale": "⬡ SeedVR2 Upscale",
-    "UmeAiRT_PipelineSeedVR2Upscale_Advanced": "⬡ SeedVR2 Upscale (Advanced)",
-    "UmeAiRT_PipelineFaceDetailer_Advanced": "⬡ FaceDetailer (Advanced)",
     "UmeAiRT_PipelineFaceDetailer": "⬡ FaceDetailer",
-    "UmeAiRT_Detailer_Daemon_Simple": "⬡ Detailer Daemon",
-    "UmeAiRT_Detailer_Daemon_Advanced": "⬡ Detailer Daemon (Advanced)",
+    "UmeAiRT_Detailer_Daemon": "⬡ Detailer Daemon",
     "UmeAiRT_BboxDetectorLoader": "⬡ BBOX Detector Loader",
 
     # Image

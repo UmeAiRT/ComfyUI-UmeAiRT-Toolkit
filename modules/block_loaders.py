@@ -29,6 +29,33 @@ _download_bundle_files = download_bundle_files
 _download_file = download_file
 
 
+# --- Shared Loader Helper ---
+
+def _load_diffusion_model(filename, folder="diffusion_models"):
+    """Load a diffusion model (safetensors or GGUF) with dtype auto-detection.
+
+    Centralizes the duplicated GGUF/dtype logic shared by FLUX, ZIMG, and Bundle loaders.
+
+    Args:
+        filename (str): The model filename (may end in .gguf or .safetensors).
+        folder (str): The ComfyUI folder category (default: "diffusion_models").
+
+    Returns:
+        The loaded diffusion model object.
+    """
+    if filename.endswith(".gguf"):
+        from ..vendor.comfyui_gguf.gguf_nodes import UnetLoaderGGUF
+        return UnetLoaderGGUF().load_unet(filename)[0]
+    model_path = folder_paths.get_full_path(folder, filename)
+    model_options = {}
+    ln = filename.lower()
+    if "e4m3fn" in ln:
+        model_options["dtype"] = torch.float8_e4m3fn
+    elif "e5m2" in ln:
+        model_options["dtype"] = torch.float8_e5m2
+    return comfy.sd.load_diffusion_model(model_path, model_options=model_options)
+
+
 # --- Files / Model Loaders (Block) ---
 
 class UmeAiRT_FilesSettings_Checkpoint:
@@ -152,16 +179,7 @@ class UmeAiRT_FilesSettings_FLUX:
     def load_flux(self, diff_model, clip_1, clip_2, vae):
         model_name = diff_model
         # Model
-        if diff_model.endswith(".gguf"):
-            from ..vendor.comfyui_gguf.gguf_nodes import UnetLoaderGGUF
-            model = UnetLoaderGGUF().load_unet(diff_model)[0]
-        else:
-            model_path = folder_paths.get_full_path("diffusion_models", diff_model)
-            model_options = {}
-            ln = diff_model.lower()
-            if "e4m3fn" in ln: model_options["dtype"] = torch.float8_e4m3fn
-            elif "e5m2" in ln: model_options["dtype"] = torch.float8_e5m2
-            model = comfy.sd.load_diffusion_model(model_path, model_options=model_options)
+        model = _load_diffusion_model(diff_model)
         # Dual CLIP
         if clip_1.endswith(".gguf") or clip_2.endswith(".gguf"):
             from ..vendor.comfyui_gguf.gguf_nodes import DualCLIPLoaderGGUF
@@ -239,16 +257,7 @@ class UmeAiRT_FilesSettings_ZIMG:
     def load_zimg(self, diff_model, clip, vae):
         model_name = diff_model
         # Model
-        if diff_model.endswith(".gguf"):
-            from ..vendor.comfyui_gguf.gguf_nodes import UnetLoaderGGUF
-            model = UnetLoaderGGUF().load_unet(diff_model)[0]
-        else:
-            model_path = folder_paths.get_full_path("diffusion_models", diff_model)
-            model_options = {}
-            ln = diff_model.lower()
-            if "e4m3fn" in ln: model_options["dtype"] = torch.float8_e4m3fn
-            elif "e5m2" in ln: model_options["dtype"] = torch.float8_e5m2
-            model = comfy.sd.load_diffusion_model(model_path, model_options=model_options)
+        model = _load_diffusion_model(diff_model)
         # CLIP (Lumina2 / Qwen)
         if clip.endswith(".gguf"):
             from ..vendor.comfyui_gguf.gguf_nodes import CLIPLoaderGGUF
@@ -327,7 +336,8 @@ class UmeAiRT_BundleLoader:
         if clip_files:
             if loader_type == "flux" and len(clip_files) >= 2:
                 clip_paths = [find_file_in_folders(cf, ["clip", "text_encoders"]) for cf in clip_files]
-                clip = comfy.sd.load_clip(ckpt_paths=clip_paths, embedding_directory=folder_paths.get_folder_paths("embeddings"))
+                ct = getattr(comfy.sd.CLIPType, clip_type_str.upper(), comfy.sd.CLIPType.FLUX)
+                clip = comfy.sd.load_clip(ckpt_paths=clip_paths, embedding_directory=folder_paths.get_folder_paths("embeddings"), clip_type=ct)
             else:
                 cf = clip_files[0]
                 if cf.endswith(".gguf"):

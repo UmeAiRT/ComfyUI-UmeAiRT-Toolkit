@@ -13,6 +13,8 @@
 - [x] **CI test harness** — All tests run via `run_tests.py` with ComfyUI mocks
 - [x] **MkDocs documentation site** — 20 node pages, architecture diagrams, auto-deploy to GitHub Pages
 - [x] **Wildcard output types** — Unpack nodes use `*` type for sampler/scheduler (fixes COMBO connection issue)
+- [x] **Split `logic_nodes.py`** — Split 811-line monolith into `upscale_nodes.py`, `seedvr2_nodes.py`, `face_nodes.py`, `detail_daemon_nodes.py` with re-export shim
+- [x] **Extract `_load_diffusion_model()` helper** — DRY loader logic in `block_loaders.py` (FLUX/ZIMG/Bundle)
 
 ## Medium Priority
 
@@ -22,6 +24,7 @@
 
 ## Low Priority / Future
 
-- [ ] **Increase coverage to 50%+** — Focus on `logic_nodes.py`, `block_sampler.py` (need deep ComfyUI mocks)
+- [ ] **Increase coverage to 50%+** — Focus on `block_sampler.py` (need deep ComfyUI mocks)
 - [ ] **Docs translations** — French translation of documentation
 - [ ] **MkDocs CI strict check** — Add `mkdocs build --strict` validation to CI pipeline
+

@@ -1,29 +1,25 @@
 # ⬡ UltimateSD Upscale
 
-> Tiled upscaling with redraw — upscales the generated image by processing it in overlapping tiles.
-
-## Simple Version
-
-Connects to a `UME_PIPELINE` and upscales inplace.
+> Tiled upscaling with redraw — upscales the generated image by processing it in overlapping tiles. Tile/denoise parameters are available via **Show advanced inputs**.
 
 ### Inputs
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `gen_pipe` | `UME_PIPELINE` | ✅ | Pipeline from KSampler with generated image |
+| Name | Type | Required | Advanced | Default | Description |
+|------|------|----------|----------|---------|-------------|
+| `gen_pipe` | `UME_PIPELINE` | ✅ | | — | Pipeline from KSampler with generated image |
+| `enabled` | `BOOLEAN` | ✅ | | ON | Toggle upscaling on/off |
+| `upscale_model_name` | `COMBO` | ✅ | | — | Upscale model (e.g. 4x-UltraSharp) |
+| `upscale_by` | `FLOAT` | ✅ | ✅ | 2.0 | Scale factor |
+| `tile_width` | `INT` | ✅ | ✅ | 512 | Tile width in pixels |
+| `tile_height` | `INT` | ✅ | ✅ | 512 | Tile height in pixels |
+| `denoise` | `FLOAT` | ✅ | ✅ | 0.2 | Redraw denoising strength |
+| `seam_fix_mode` | `COMBO` | ✅ | ✅ | None | Seam fixing strategy |
 
 ### Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
 | `gen_pipe` | `UME_PIPELINE` | Pipeline with upscaled image |
-
-## Advanced Version
-
-Full control over upscale parameters (scale factor, tile size, overlap, etc.).
-
-<!-- TODO: Screenshot — UltimateSD Upscale (Advanced) node showing upscale parameters -->
-<!-- PLACEHOLDER: Show the Advanced variant with visible parameters: upscale_by=2.0, tile_width=512, tile_height=512, and a before/after comparison -->
 
 !!! tip "When to use"
     Use UltimateSD Upscale for **traditional tiled upscaling** with model redraw. For AI-native upscaling with better coherence, try [SeedVR2 Upscale](seedvr2-upscale.md).

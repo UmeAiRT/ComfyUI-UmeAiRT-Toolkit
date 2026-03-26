@@ -33,6 +33,19 @@ sys.modules['tqdm'] = tqdm_mock
 sys.modules['tqdm.auto'] = tqdm_mock
 sys.modules['tqdm._tqdm_pandas'] = MagicMock()
 
+# Ensure numpy is available (required by detail_daemon_nodes schedule helpers)
+try:
+    import numpy
+except ImportError:
+    sys.modules['numpy'] = MagicMock()
+
+# Mock PIL/Pillow (required by image_saver_core)
+if 'PIL' not in sys.modules:
+    pil_mock = MagicMock()
+    sys.modules['PIL'] = pil_mock
+    sys.modules['PIL.Image'] = pil_mock
+    sys.modules['PIL.PngImagePlugin'] = pil_mock
+
 # Mock heavy math dependencies that cause WMI deadlocks internally
 class DummyTorch:
     def __init__(self):

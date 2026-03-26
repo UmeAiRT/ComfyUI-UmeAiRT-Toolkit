@@ -185,7 +185,7 @@ def _download_with_aria2(url, dest_path, connections=8, hf_token=""):
         with urllib.request.urlopen(req, timeout=30) as resp:
             total_size = int(resp.headers.get("Content-Length", 0))
     except Exception as e:
-        log_node(f"Bundle Loader: HEAD request for file size failed: {e}", color="YELLOW")
+        pass  # Non-critical: aria2c handles its own progress
 
     size_mb = f" ({total_size / 1024 / 1024:.0f} MB)" if total_size else ""
     log_node(f"Bundle Loader: Downloading '{filename}'{size_mb} via aria2c ({connections} connections)...")

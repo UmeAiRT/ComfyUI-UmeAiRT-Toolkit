@@ -158,8 +158,6 @@ Full documentation with node reference (I/O tables, usage tips) is available at:
 
 🔗 **[toolkit.umeai.art](https://toolkit.umeai.art/)** (or [GitHub Pages](https://umeairt.github.io/ComfyUI-UmeAiRT-Toolkit/))
 
-Docs are built with [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) and auto-deployed on push.
-
 ```bash
 # Preview docs locally
 pip install mkdocs-material

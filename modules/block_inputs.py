@@ -71,10 +71,11 @@ UmeAiRT_LoraBlock_10 = _make_lora_block_class(10)
 
 # --- ControlNet Blocks ---
 
-class UmeAiRT_ControlNetImageApply_Advanced:
-    """Injects deeply parameterized ControlNet configuration into an image bundle.
-    
-    Allows explicitly separating the target image mapped from the control image (optional).
+class UmeAiRT_ControlNetImageApply:
+    """Injects ControlNet configuration into an image bundle.
+
+    Basic mode shows only strength. Advanced inputs expose start/end percent
+    and an optional override control image.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -83,11 +84,11 @@ class UmeAiRT_ControlNetImageApply_Advanced:
                 "image_bundle": ("UME_IMAGE", {"tooltip": "Input Image Bundle."}),
                 "control_net_name": (folder_paths.get_filename_list("controlnet"), {"tooltip": "Select ControlNet model."}),
                 "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.01, "tooltip": "How strongly the ControlNet guides the image. Start with 1.0 and lower if the effect is too strong."}),
-                "start_percent": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001, "tooltip": "When the ControlNet starts influencing (0.0 = from the beginning). Raise to let the AI establish composition first."}),
-                "end_percent": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.001, "tooltip": "When the ControlNet stops influencing (1.0 = until the very end). Lower to let the AI refine details freely."}),
+                "start_percent": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001, "advanced": True, "tooltip": "When the ControlNet starts influencing (0.0 = from the beginning). Raise to let the AI establish composition first."}),
+                "end_percent": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.001, "advanced": True, "tooltip": "When the ControlNet stops influencing (1.0 = until the very end). Lower to let the AI refine details freely."}),
             },
             "optional": {
-                "optional_control_image": ("IMAGE", {"tooltip": "Optional: Override control image."}), 
+                "optional_control_image": ("IMAGE", {"advanced": True, "tooltip": "Optional: Override control image."}),
             }
         }
 
@@ -96,38 +97,22 @@ class UmeAiRT_ControlNetImageApply_Advanced:
     FUNCTION = "apply_controlnet"
     CATEGORY = "UmeAiRT/Block/ControlNet"
 
-    def apply_controlnet(self, image_bundle, control_net_name: str, strength: float, start_percent: float, end_percent: float, optional_control_image: Optional[Any] = None):
+    def apply_controlnet(self, image_bundle, control_net_name: str, strength: float, start_percent: float = 0.0, end_percent: float = 1.0, optional_control_image: Optional[Any] = None):
         import copy
         new_bundle = copy.copy(image_bundle)
         cnet_stack = list(new_bundle.controlnets) if new_bundle.controlnets else []
-        
+
         if control_net_name != "None":
             control_use_image = optional_control_image if optional_control_image is not None else new_bundle.image
-            
+
             if control_use_image is None:
                 raise ValueError("ControlNet Image Apply: No Image found in bundle and no optional image provided.")
-            
-            # (name, image, strength, start, end)
+
             cnet_stack.append((control_net_name, control_use_image, strength, start_percent, end_percent))
-            
+
         new_bundle.controlnets = cnet_stack
 
         return (new_bundle,)
-
-class UmeAiRT_ControlNetImageApply_Simple(UmeAiRT_ControlNetImageApply_Advanced):
-    """Injects a simplified ControlNet configuration into an image bundle."""
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-            "required": {
-                "image_bundle": ("UME_IMAGE",),
-                "control_net_name": (folder_paths.get_filename_list("controlnet"),),
-                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05, "display": "slider", "tooltip": "How strongly the ControlNet guides the image. Start with 1.0 and lower if the effect is too strong."}),
-            }
-        }
-    def apply_controlnet(self, image_bundle, control_net_name: str, strength: float):
-        """Funnels simple parameters down to the advanced method safely."""
-        return super().apply_controlnet(image_bundle, control_net_name, strength, 0.0, 1.0, None)
 
 class UmeAiRT_ControlNetImageProcess:
     """Pre-processes image data (resize, mask blurring, inversion) before embedding ControlNets.
@@ -228,9 +213,9 @@ class UmeAiRT_GenerationSettings:
 # --- Image Blocks ---
 
 class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
-    """Standard image loader formatted as a Block.
+    """Image loader formatted as a Block.
 
-    Outputs a unified UME_IMAGE bundle containing the image and its associated mask.
+    Outputs a unified UME_IMAGE bundle plus raw IMAGE and MASK tensors.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -242,8 +227,8 @@ class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
                 "image": (sorted(files), {"image_upload": True, "tooltip": "Select an image file to load from disk."}),
             },
         }
-    RETURN_TYPES = ("UME_IMAGE",)
-    RETURN_NAMES = ("image_bundle",)
+    RETURN_TYPES = ("UME_IMAGE", "IMAGE", "MASK")
+    RETURN_NAMES = ("image_bundle", "image", "mask")
     FUNCTION = "load_block_image"
     CATEGORY = "UmeAiRT/Block/Image"
 
@@ -251,18 +236,8 @@ class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
         """Loads the specified image file and wraps it in an UmeImage dataclass."""
         out = super().load_image(image)
         img, mask = out[0], out[1]
-
         image_bundle = UmeImage(image=img, mask=mask, mode="img2img", denoise=0.75)
-        return (image_bundle,)
-
-class UmeAiRT_BlockImageLoader_Advanced(UmeAiRT_BlockImageLoader):
-    """Advanced Image Loader providing both bundled and fragmented UI outputs."""
-    RETURN_TYPES = ("UME_IMAGE", "IMAGE", "MASK")
-    RETURN_NAMES = ("image_bundle", "image", "mask")
-    def load_block_image(self, image: str):
-        """Loads the image and returns both the bundle and the raw tensors."""
-        res = super().load_block_image(image)
-        return (res[0], res[0].image, res[0].mask)
+        return (image_bundle, img, mask)
 
 class UmeAiRT_BlockImageProcess:
     """Structural pre-processor for UME_IMAGE bundles in Block-based workflows.
