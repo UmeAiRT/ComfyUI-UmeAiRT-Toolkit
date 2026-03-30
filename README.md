@@ -53,9 +53,12 @@ Stop fighting with "noodle soup"! The UmeAiRT Toolkit uses a **hub-and-spoke** a
 | **Settings** | `Generation Settings` | Width, Height, Steps, CFG, Seed → `UME_SETTINGS` |
 | **Prompts** | `Positive / Negative Prompt Input` | Multiline text editors with dynamic prompts |
 | **LoRA** | `LoRA 1x/3x/5x/10x` | Stackable LoRA loaders → `UME_LORA_STACK` |
-| **Image** | `Image Loader` | Load and prepare source images → `UME_IMAGE` |
-| **Image** | `Image Process` | Configure mode, denoise, auto-resize → `UME_IMAGE` |
-| **Sampler** | `KSampler` | Central hub — receives all bundles → `UME_PIPELINE` |
+| **Image** | `Image Loader` | Load and prepare source images → `UME_IMAGE` (bundle only) |
+| **Image** | `Image Process` | All-in-one: set mode, denoise, resize, outpaint → `UME_IMAGE` |
+| **Image** | `Image Process (Img2Img)` | Dedicated img2img: denoise + auto-resize → `UME_IMAGE` |
+| **Image** | `Image Process (Inpaint)` | Dedicated inpaint: denoise + mask_blur → `UME_IMAGE` |
+| **Image** | `Image Process (Outpaint)` | Target dimensions + alignment → `UME_IMAGE` (KSampler executes) |
+| **Sampler** | `KSampler` | Central hub — receives all bundles, handles outpaint → `UME_PIPELINE` |
 
 ### Post-Processing (Pipeline-Aware)
 
@@ -135,7 +138,7 @@ UmeAiRT Toolkit is audited for common vulnerabilities:
 
 ## 🧪 Testing
 
-140+ unit tests with GitHub Actions CI on Python 3.10–3.14:
+177 unit tests with GitHub Actions CI on Python 3.10–3.14:
 
 ```bash
 # Run all tests locally

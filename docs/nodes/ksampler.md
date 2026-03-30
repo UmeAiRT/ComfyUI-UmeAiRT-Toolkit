@@ -27,10 +27,15 @@ The KSampler orchestrates the full generation pipeline:
 2. **Applies LoRAs** from the stack (if connected)
 3. **Encodes prompts** via CLIP (with caching for repeated prompts)
 4. **Applies ControlNets** from image bundle (if present)
-5. **Prepares latent** — empty for txt2img, or VAE-encoded for img2img/inpaint
-6. **Samples** using the configured sampler + scheduler + steps
-7. **Decodes** the latent to pixel space via VAE
-8. **Packs** everything into a `UME_PIPELINE` for downstream nodes
+5. **Handles outpaint** (if `mode=outpaint`):
+    - Resizes source image to fit within target dimensions (aspect ratio preserved)
+    - Computes padding from alignment settings (center/left/right/top/bottom)
+    - Applies padding with replicate-edge fill
+    - Generates and blurs the inpaint mask
+6. **Prepares latent** — empty for txt2img, or VAE-encoded for img2img/inpaint/outpaint
+7. **Samples** using the configured sampler + scheduler + steps
+8. **Decodes** the latent to pixel space via VAE
+9. **Packs** everything into a `UME_PIPELINE` for downstream nodes
 
 !!! tip "Optimization"
     The KSampler caches prompt encodings and ControlNet models. If you change only the seed, re-encoding is skipped for faster iteration.

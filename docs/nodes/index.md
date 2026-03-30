@@ -24,7 +24,10 @@ Configure generation parameters and prepare images for processing.
 |------|-------------|--------|----------|
 | [Generation Settings](generation-settings.md) | ⬡ Generation Settings | UME_SETTINGS | Dimensions, steps, CFG, sampler, seed |
 | [Image Loader](image-loader.md) | ⬡ Image Loader | UME_IMAGE | Load source image for img2img/inpaint |
-| [Image Process](image-process.md) | ⬡ Image Process | UME_IMAGE | Crop, outpaint, resize, mode selection |
+| [Image Process](image-process.md) | ⬡ Image Process | UME_IMAGE | All-in-one: mode, denoise, resize, outpaint |
+| [Image Process (Img2Img)](image-process.md#-image-process-img2img) | ⬡ Image Process (Img2Img) | UME_IMAGE | Dedicated img2img |
+| [Image Process (Inpaint)](image-process.md#-image-process-inpaint) | ⬡ Image Process (Inpaint) | UME_IMAGE | Dedicated inpainting |
+| [Image Process (Outpaint)](image-process.md#-image-process-outpaint) | ⬡ Image Process (Outpaint) | UME_IMAGE | Target dimensions + alignment |
 | [LoRA Blocks](lora-blocks.md) | ⬡ LoRA 1x/3x/5x/10x | UME_LORA_STACK | Stack LoRA models with strengths |
 | [ControlNet](controlnet.md) | ⬡ ControlNet Apply/Process | UME_IMAGE | Apply ControlNet guidance |
 | [Prompt Inputs](prompt-inputs.md) | ⬡ Positive/Negative Prompt | POSITIVE/NEGATIVE | Text prompt editors |

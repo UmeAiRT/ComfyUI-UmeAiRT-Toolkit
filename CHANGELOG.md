@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **⬡ Image Process (Img2Img)**: New dedicated node for img2img workflows — denoise + optional auto-resize.
+- **⬡ Image Process (Inpaint)**: New dedicated node for inpainting — denoise + mask_blur + optional auto-resize.
+- **⬡ Image Process (Outpaint)**: New dedicated node using **target dimensions** (`target_width`, `target_height`) instead of raw padding pixels. Alignment (`center`/`left`/`right`/`top`/`bottom`) available in advanced settings. The node is passive — actual resize + padding is executed by the KSampler.
+- **Outpaint logic in KSampler**: When receiving `mode="outpaint"`, the sampler resizes the source to fit within target dimensions (maintaining aspect ratio), computes padding from alignment, applies padding + mask generation + blur, then encodes and samples.
+
+### Changed
+
+- **⬡ Image Loader**: Now returns only `UME_IMAGE` bundle (removed redundant raw `IMAGE` and `MASK` outputs). Use `⬡ Unpack Image Bundle` to extract raw tensors.
+- **Outpaint node UX**: Replaced 4 raw padding inputs with 2 intuitive target dimension inputs. Alignment defaults to `center` — no mental math required.
+- **UmeImage dataclass**: Added outpaint-specific fields (`outpaint_target_w`, `outpaint_target_h`, `outpaint_h_align`, `outpaint_v_align`, `outpaint_mask_blur`).
+
+### Fixed
+
+- **⬡ Signature node**: Fixed rendering as empty rectangle in ComfyUI Nodes 2.0 (Vue frontend). Restored canvas-based rendering with `computeSize` patch exclusion.
+- **⬡ Signature node**: Added periodic DOM watchdog for widget persistence across tab switches and workflow reloads.
+- **Image Process node colors**: Applied Ambre/Bronze theme to all Image Process variants.
+
+---
+
 ### Changed
 
 - **⬡ Display Names**: All 47 nodes prefixed with `⬡` for instant visual identification. Loader names clarified (e.g., `Model Loader` → `⬡ Checkpoint Loader`, `⬡ FLUX Loader`, `⬡ Z-IMG Loader`, `⬡ Fragmented Loader`).
