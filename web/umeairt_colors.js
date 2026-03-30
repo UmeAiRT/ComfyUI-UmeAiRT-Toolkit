@@ -289,7 +289,7 @@ app.registerExtension({
         // the height of ALL widgets (even visually hidden "advanced" ones).
         // This causes a massive empty space at the bottom of nodes.
         // We strip advanced widgets from the LiteGraph math so Vue can use DOM flex dynamically.
-        if (nodeData.name.startsWith("UmeAiRT_")) {
+        if (nodeData.name.startsWith("UmeAiRT_") && nodeData.name !== "UmeAiRT_Signature") {
             const defaultComputeSize = nodeType.prototype.computeSize;
             nodeType.prototype.computeSize = function (out) {
                 let size = [0, 0];
