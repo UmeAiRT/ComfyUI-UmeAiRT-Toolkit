@@ -259,10 +259,20 @@ def apply_outpaint_padding(image, mask, pad_l, pad_t, pad_r, pad_b, overlap=8, f
 
     B, H, W, C = image.shape
 
-    # Pad image using replicate mode
+    # Pad image using replicate mode to stretch edge pixels
     img_p = image.permute(0, 3, 1, 2)
     img_padded = torch.nn.functional.pad(img_p, (pad_l, pad_r, pad_t, pad_b), mode='replicate')
-    final_image = img_padded.permute(0, 2, 3, 1)
+    
+    # Melt the stretched lines into a smooth color gradient
+    kernel_size = min(max(pad_l, pad_t, pad_r, pad_b) // 2 * 2 + 1, 99)
+    if kernel_size < 3: 
+        kernel_size = 3
+    blurred_padded = TF.gaussian_blur(img_padded, kernel_size=kernel_size)
+    
+    # Restore the sharp original image over the blurred canvas
+    blurred_padded[:, :, pad_t:pad_t+H, pad_l:pad_l+W] = img_p
+    
+    final_image = blurred_padded.permute(0, 2, 3, 1)
 
     # Build outpaint mask
     new_h = H + pad_t + pad_b
