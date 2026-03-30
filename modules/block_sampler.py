@@ -135,7 +135,6 @@ class UmeAiRT_BlockSampler:
                  raw_image = resize_tensor(raw_image, height, width, interp_mode="bilinear")
                  if source_mask is not None:
                      source_mask = resize_tensor(source_mask, height, width, interp_mode="nearest", is_mask=True)
-                 log_node(f"Block Sampler: Auto-resized source to {width}x{height}", color="YELLOW")
 
              # Outpaint: resize source to fit within target, then pad
              if mode_str == "outpaint" and raw_image is not None:
@@ -156,7 +155,6 @@ class UmeAiRT_BlockSampler:
                      if source_mask is not None:
                          source_mask = resize_tensor(source_mask, fit_h, fit_w, interp_mode="nearest", is_mask=True)
                      src_w, src_h = fit_w, fit_h
-                     log_node(f"Block Sampler: Outpaint resized source to {fit_w}x{fit_h}", color="YELLOW")
 
                  # Compute padding from alignment
                  total_pad_w = max(0, target_w - src_w)
@@ -196,7 +194,6 @@ class UmeAiRT_BlockSampler:
                      source_mask = m.squeeze(0).squeeze(0) if len(source_mask.shape) == 2 else m
 
                  mode_str = "inpaint"
-                 log_node(f"Block Sampler: Outpaint applied → {target_w}x{target_h} (pad L={pad_l} T={pad_t} R={pad_r} B={pad_b})", color="GREEN")
 
              ctx.source_image = raw_image
              ctx.source_mask = source_mask
