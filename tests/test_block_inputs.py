@@ -32,6 +32,9 @@ from modules.block_inputs import (
     UmeAiRT_LoraBlock_1, UmeAiRT_LoraBlock_3,
     UmeAiRT_LoraBlock_5, UmeAiRT_LoraBlock_10,
     get_lora_inputs, process_lora_stack,
+    UmeAiRT_ImageProcess_Img2Img,
+    UmeAiRT_ImageProcess_Inpaint,
+    UmeAiRT_ImageProcess_Outpaint
 )
 
 
@@ -130,6 +133,29 @@ class TestProcessLoraStack(unittest.TestCase):
             lora_1_strength=1.0
         )
         self.assertEqual(result, ([],))
+
+
+class TestImageProcessNodes(unittest.TestCase):
+    def test_img2img_node(self):
+        inputs = UmeAiRT_ImageProcess_Img2Img.INPUT_TYPES()
+        self.assertIn("required", inputs)
+        self.assertIn("denoise", inputs["required"])
+        self.assertNotIn("mask_blur", inputs.get("optional", {}))
+        self.assertNotIn("padding_left", inputs["required"])
+
+    def test_inpaint_node(self):
+        inputs = UmeAiRT_ImageProcess_Inpaint.INPUT_TYPES()
+        self.assertIn("required", inputs)
+        self.assertIn("denoise", inputs["required"])
+        self.assertIn("mask_blur", inputs.get("optional", {}))
+        self.assertNotIn("padding_left", inputs["required"])
+
+    def test_outpaint_node(self):
+        inputs = UmeAiRT_ImageProcess_Outpaint.INPUT_TYPES()
+        self.assertIn("required", inputs)
+        self.assertIn("denoise", inputs["required"])
+        self.assertIn("padding_left", inputs["required"])
+        self.assertIn("mask_blur", inputs.get("optional", {}))
 
 
 if __name__ == "__main__":

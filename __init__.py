@@ -39,7 +39,8 @@ from .modules.block_nodes import (
     UmeAiRT_FilesSettings_FLUX,
     UmeAiRT_FilesSettings_Fragmented,
     UmeAiRT_FilesSettings_ZIMG,
-    UmeAiRT_BlockImageLoader, UmeAiRT_BlockImageProcess,
+    UmeAiRT_BlockImageLoader,
+    UmeAiRT_ImageProcess_Img2Img, UmeAiRT_ImageProcess_Inpaint, UmeAiRT_ImageProcess_Outpaint,
     UmeAiRT_BlockSampler,
     UmeAiRT_BundleLoader,
     UmeAiRT_Positive_Input, UmeAiRT_Negative_Input
@@ -75,7 +76,9 @@ NODE_CLASS_MAPPINGS = {
     # Block Settings & Image
     "UmeAiRT_GenerationSettings": UmeAiRT_GenerationSettings,
     "UmeAiRT_BlockImageLoader": UmeAiRT_BlockImageLoader,
-    "UmeAiRT_BlockImageProcess": UmeAiRT_BlockImageProcess,
+    "UmeAiRT_ImageProcess_Img2Img": UmeAiRT_ImageProcess_Img2Img,
+    "UmeAiRT_ImageProcess_Inpaint": UmeAiRT_ImageProcess_Inpaint,
+    "UmeAiRT_ImageProcess_Outpaint": UmeAiRT_ImageProcess_Outpaint,
     "UmeAiRT_LoraBlock_1": UmeAiRT_LoraBlock_1,
     "UmeAiRT_LoraBlock_3": UmeAiRT_LoraBlock_3,
     "UmeAiRT_LoraBlock_5": UmeAiRT_LoraBlock_5,
@@ -130,7 +133,9 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     # Settings & Image
     "UmeAiRT_GenerationSettings": "⬡ Generation Settings",
     "UmeAiRT_BlockImageLoader": "⬡ Image Loader",
-    "UmeAiRT_BlockImageProcess": "⬡ Image Process",
+    "UmeAiRT_ImageProcess_Img2Img": "⬡ Image Process (Img2Img)",
+    "UmeAiRT_ImageProcess_Inpaint": "⬡ Image Process (Inpaint)",
+    "UmeAiRT_ImageProcess_Outpaint": "⬡ Image Process (Outpaint)",
     "UmeAiRT_LoraBlock_1": "⬡ LoRA 1x",
     "UmeAiRT_LoraBlock_3": "⬡ LoRA 3x",
     "UmeAiRT_LoraBlock_5": "⬡ LoRA 5x",

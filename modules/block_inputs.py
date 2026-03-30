@@ -239,67 +239,107 @@ class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
         image_bundle = UmeImage(image=img, mask=mask, mode="img2img", denoise=0.75)
         return (image_bundle, img, mask)
 
-class UmeAiRT_BlockImageProcess:
-    """Structural pre-processor for UME_IMAGE bundles in Block-based workflows.
+def process_image_core(image_bundle, mode: str, denoise: float = 0.75, auto_resize: bool = False, mask_blur: int = 0, 
+                      padding_left: int = 0, padding_top: int = 0, padding_right: int = 0, padding_bottom: int = 0):
+    image = image_bundle.image
+    mask = image_bundle.mask
+    
+    if image is None: raise ValueError("Block Image Process: Bundle has no image.")
 
-    Handles cropping, padding (Outpaint mapping), and conditional context tagging.
-    """
+    B, H, W, C = image.shape
+    final_image, final_mask = image, mask
+
+    if mode == "outpaint":
+         pad_l, pad_t, pad_r, pad_b = padding_left, padding_top, padding_right, padding_bottom
+         final_image, final_mask = apply_outpaint_padding(
+             final_image, final_mask, pad_l, pad_t, pad_r, pad_b, overlap=8, feathering=40
+         )
+
+    if (mode == "inpaint" or mode == "outpaint") and final_mask is not None and mask_blur > 0:
+         if len(final_mask.shape) == 2: m = final_mask.unsqueeze(0).unsqueeze(0)
+         else: m = final_mask
+         k = mask_blur
+         if k % 2 == 0: k += 1
+         m = TF.gaussian_blur(m, kernel_size=k)
+         final_mask = m.squeeze(0).squeeze(0) if len(final_mask.shape) == 2 else m
+
+    final_mode = "inpaint" if mode in ["inpaint", "outpaint"] else "img2img"
+    if mode == "img2img": final_mask = None
+
+    return (UmeImage(image=final_image, mask=final_mask, mode=final_mode, denoise=denoise, auto_resize=auto_resize),)
+
+
+class UmeAiRT_ImageProcess_Img2Img:
+    """Pre-processor for Img2Img workflows."""
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
                 "image_bundle": ("UME_IMAGE",),
-                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "How much the AI changes the image. 1.0 = completely new image, 0.5 = keeps half the original detail."}),
-                "mode": (["img2img", "inpaint", "outpaint", "txt2img"], {"default": "img2img", "tooltip": "How to process the image: img2img (transform), inpaint (fill masked area), or outpaint (extend edges)."}),
+                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "How much the AI changes the image."}),
             },
             "optional": {
                 "auto_resize": ("BOOLEAN", {"default": False, "label_on": "Resize to Settings", "label_off": "Keep Original", "tooltip": "Automatically resize the source image to match the width/height from Generation Settings."}),
-                "mask_blur": ("INT", {"default": 10, "tooltip": "Softens the edge of the inpaint mask for smoother blending. Higher = softer transitions."}),
-                "padding_left": ("INT", {"default": 0, "tooltip": "Pixels to add on the left side when using outpaint mode."}), "padding_top": ("INT", {"default": 0}),
-                "padding_right": ("INT", {"default": 0, "tooltip": "Pixels to add on the right side when using outpaint mode."}), "padding_bottom": ("INT", {"default": 0}),
             }
         }
     RETURN_TYPES = ("UME_IMAGE",)
     RETURN_NAMES = ("image_bundle",)
-    FUNCTION = "process_image"
+    FUNCTION = "process"
     CATEGORY = "UmeAiRT/Block/Image"
 
-    def process_image(self, image_bundle, denoise: float = 0.75, mode: str = "img2img", auto_resize: bool = False, mask_blur: int = 0, 
-                      padding_left: int = 0, padding_top: int = 0, padding_right: int = 0, padding_bottom: int = 0):
-        """Modifies the image state based on the chosen mode."""
-        
-        image = image_bundle.image
-        mask = image_bundle.mask
-        
-        if image is None: raise ValueError("Block Image Process: Bundle has no image.")
+    def process(self, image_bundle, denoise=0.75, auto_resize=False):
+        return process_image_core(image_bundle, mode="img2img", denoise=denoise, auto_resize=auto_resize)
 
-        if mode == "txt2img":
-             log_node("Block Process: Txt2Img Mode (Forcing Denoise=1.0, Ignoring Mask).", color="YELLOW")
-             denoise = 1.0
-             mask = None 
 
-        B, H, W, C = image.shape
-        final_image, final_mask = image, mask
+class UmeAiRT_ImageProcess_Inpaint:
+    """Pre-processor for Inpaint workflows."""
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image_bundle": ("UME_IMAGE",),
+                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "How much the AI changes the image inside the mask."}),
+            },
+            "optional": {
+                "mask_blur": ("INT", {"default": 10, "tooltip": "Softens the edge of the inpaint mask for smoother blending."}),
+                "auto_resize": ("BOOLEAN", {"default": False, "label_on": "Resize to Settings", "label_off": "Keep Original", "tooltip": "Automatically resize the source image to match the width/height from Generation Settings."}),
+            }
+        }
+    RETURN_TYPES = ("UME_IMAGE",)
+    RETURN_NAMES = ("image_bundle",)
+    FUNCTION = "process"
+    CATEGORY = "UmeAiRT/Block/Image"
 
-        if mode == "outpaint":
-             pad_l, pad_t, pad_r, pad_b = padding_left, padding_top, padding_right, padding_bottom
-             final_image, final_mask = apply_outpaint_padding(
-                 final_image, final_mask, pad_l, pad_t, pad_r, pad_b, overlap=8, feathering=40
-             )
+    def process(self, image_bundle, denoise=0.75, mask_blur=10, auto_resize=False):
+        return process_image_core(image_bundle, mode="inpaint", denoise=denoise, mask_blur=mask_blur, auto_resize=auto_resize)
 
-        if (mode == "inpaint" or mode == "outpaint") and final_mask is not None and mask_blur > 0:
-             if len(final_mask.shape) == 2: m = final_mask.unsqueeze(0).unsqueeze(0)
-             else: m = final_mask
-             k = mask_blur
-             if k % 2 == 0: k += 1
-             m = TF.gaussian_blur(m, kernel_size=k)
-             final_mask = m.squeeze(0).squeeze(0) if len(final_mask.shape) == 2 else m
 
-        final_mode = "inpaint" if mode in ["inpaint", "outpaint"] else "img2img"
-        if mode == "txt2img": final_mode = "txt2img"
-        elif mode == "img2img": final_mask = None
+class UmeAiRT_ImageProcess_Outpaint:
+    """Pre-processor for Outpaint workflows."""
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image_bundle": ("UME_IMAGE",),
+                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "How much the AI changes the image in the padded areas."}),
+                "padding_left": ("INT", {"default": 0, "tooltip": "Pixels to add on the left side."}),
+                "padding_top": ("INT", {"default": 0, "tooltip": "Pixels to add on the top."}),
+                "padding_right": ("INT", {"default": 0, "tooltip": "Pixels to add on the right side."}),
+                "padding_bottom": ("INT", {"default": 0, "tooltip": "Pixels to add on the bottom."}),
+            },
+            "optional": {
+                "mask_blur": ("INT", {"default": 10, "tooltip": "Softens the edge of the outpaint mask for smoother blending."}),
+                "auto_resize": ("BOOLEAN", {"default": False, "label_on": "Resize to Settings", "label_off": "Keep Original", "tooltip": "Automatically resize the final extended image."}),
+            }
+        }
+    RETURN_TYPES = ("UME_IMAGE",)
+    RETURN_NAMES = ("image_bundle",)
+    FUNCTION = "process"
+    CATEGORY = "UmeAiRT/Block/Image"
 
-        return (UmeImage(image=final_image, mask=final_mask, mode=final_mode, denoise=denoise, auto_resize=auto_resize),)
+    def process(self, image_bundle, denoise=0.75, padding_left=0, padding_top=0, padding_right=0, padding_bottom=0, mask_blur=10, auto_resize=False):
+        return process_image_core(image_bundle, mode="outpaint", denoise=denoise, auto_resize=auto_resize, mask_blur=mask_blur, 
+                                  padding_left=padding_left, padding_top=padding_top, padding_right=padding_right, padding_bottom=padding_bottom)
 
 class UmeAiRT_Positive_Input:
     """Multiline text editor for the positive prompt. Outputs a STRING."""

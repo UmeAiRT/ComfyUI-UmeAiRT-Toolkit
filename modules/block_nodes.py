@@ -13,7 +13,8 @@ from .block_inputs import (
     UmeAiRT_ControlNetImageApply,
     UmeAiRT_ControlNetImageProcess,
     UmeAiRT_GenerationSettings,
-    UmeAiRT_BlockImageLoader, UmeAiRT_BlockImageProcess,
+    UmeAiRT_BlockImageLoader,
+    UmeAiRT_ImageProcess_Img2Img, UmeAiRT_ImageProcess_Inpaint, UmeAiRT_ImageProcess_Outpaint,
     UmeAiRT_Positive_Input, UmeAiRT_Negative_Input,
 )
 
