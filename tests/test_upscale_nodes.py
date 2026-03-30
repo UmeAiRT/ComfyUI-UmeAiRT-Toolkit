@@ -28,6 +28,7 @@ class TestPipelineUltimateUpscale(unittest.TestCase):
         self.assertIn("gen_pipe", req)
         self.assertIn("model", req)
         self.assertIn("upscale_by", req)
+        self.assertIn("enabled", req)
 
     def test_input_types_has_optional(self):
         inputs = UmeAiRT_PipelineUltimateUpscale.INPUT_TYPES()

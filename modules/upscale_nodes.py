@@ -47,6 +47,7 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
         return {
              "required": {
                 "gen_pipe": ("UME_PIPELINE", {"tooltip": "The generation pipeline carrying your image, model, and all settings through the workflow."}),
+                "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough", "tooltip": "Turn this effect on or off. When off, the image passes through unchanged."}),
                 "model": (folder_paths.get_filename_list("upscale_models"),),
                 "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider", "tooltip": "How much to enlarge the image (e.g. 2.0 = double the resolution)."}),
                 "denoise": ("FLOAT", {"default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "advanced": True, "tooltip": "How much the AI redraws during upscale. Lower = sharper but less detail added."}),
@@ -76,11 +77,14 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
     FUNCTION = "upscale"
     CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
-    def upscale(self, gen_pipe, model, upscale_by, denoise=0.35, clean_prompt=True,
+    def upscale(self, gen_pipe, model, upscale_by, denoise=0.35, enabled=True, clean_prompt=True,
                 upscale_steps=0, upscale_cfg=1.0, upscale_sampler="Pipeline", upscale_scheduler="Pipeline",
                 mode_type="Linear", tile_width=512, tile_height=512, mask_blur=8, tile_padding=32,
                 seam_fix_mode="None", seam_fix_denoise=1.0, seam_fix_width=64,
                 seam_fix_mask_blur=8, seam_fix_padding=16, force_uniform_tiles=True, tiled_decode=False):
+
+        if not enabled:
+            return (gen_pipe,)
 
         image = gen_pipe.image
         if image is None:
