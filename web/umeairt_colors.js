@@ -173,10 +173,7 @@ const UME_NODE_COLORS = {
         color: "#935116",
         bgcolor: "#4A290B"
     },
-    "UmeAiRT_ControlNetImageProcess": {
-        color: "#935116",
-        bgcolor: "#4A290B"
-    },
+
 
     // Bundle Downloader - Light Grey/Dark Text
     "UmeAiRT_Bundle_Downloader": {

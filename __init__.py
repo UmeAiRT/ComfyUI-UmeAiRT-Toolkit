@@ -33,7 +33,7 @@ from .modules.logic_nodes import (
 )
 from .modules.block_nodes import (
     UmeAiRT_LoraBlock_1, UmeAiRT_LoraBlock_3, UmeAiRT_LoraBlock_5, UmeAiRT_LoraBlock_10,
-    UmeAiRT_ControlNetImageApply, UmeAiRT_ControlNetImageProcess,
+    UmeAiRT_ControlNetImageApply,
     UmeAiRT_GenerationSettings,
     UmeAiRT_FilesSettings_Checkpoint,
     UmeAiRT_FilesSettings_FLUX,
@@ -85,7 +85,6 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_LoraBlock_5": UmeAiRT_LoraBlock_5,
     "UmeAiRT_LoraBlock_10": UmeAiRT_LoraBlock_10,
     "UmeAiRT_ControlNetImageApply": UmeAiRT_ControlNetImageApply,
-    "UmeAiRT_ControlNetImageProcess": UmeAiRT_ControlNetImageProcess,
 
     # Prompt Editors
     "UmeAiRT_Positive_Input": UmeAiRT_Positive_Input,
@@ -143,7 +142,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_LoraBlock_5": "⬡ LoRA 5x",
     "UmeAiRT_LoraBlock_10": "⬡ LoRA 10x",
     "UmeAiRT_ControlNetImageApply": "⬡ ControlNet Apply",
-    "UmeAiRT_ControlNetImageProcess": "⬡ ControlNet Process",
 
     # Prompt Editors
     "UmeAiRT_Positive_Input": "⬡ Positive Prompt Input",
