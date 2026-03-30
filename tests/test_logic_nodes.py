@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 
 from modules.logic_nodes import (
     UmeAiRT_PipelineSeedVR2Upscale,
-    UmeAiRT_PipelineFaceDetailer,
+    UmeAiRT_PipelineSubjectDetailer,
     UmeAiRT_UltimateUpscale_Base,
 )
 
@@ -23,18 +23,18 @@ class TestPipelineSeedVR2Upscale(unittest.TestCase):
         self.assertEqual(UmeAiRT_PipelineSeedVR2Upscale.FUNCTION, "upscale")
 
 
-class TestPipelineFaceDetailer(unittest.TestCase):
+class TestPipelineSubjectDetailer(unittest.TestCase):
     def test_input_types(self):
-        inputs = UmeAiRT_PipelineFaceDetailer.INPUT_TYPES()
+        inputs = UmeAiRT_PipelineSubjectDetailer.INPUT_TYPES()
         self.assertIn("required", inputs)
 
-    def test_has_face_detail_method(self):
-        node = UmeAiRT_PipelineFaceDetailer()
-        self.assertTrue(hasattr(node, "face_detail"))
-        self.assertTrue(callable(node.face_detail))
+    def test_has_subject_detail_method(self):
+        node = UmeAiRT_PipelineSubjectDetailer()
+        self.assertTrue(hasattr(node, "subject_detail"))
+        self.assertTrue(callable(node.subject_detail))
 
     def test_function_name(self):
-        self.assertEqual(UmeAiRT_PipelineFaceDetailer.FUNCTION, "face_detail")
+        self.assertEqual(UmeAiRT_PipelineSubjectDetailer.FUNCTION, "subject_detail")
 
 
 class TestUltimateUpscaleBase(unittest.TestCase):
