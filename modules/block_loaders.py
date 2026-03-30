@@ -71,10 +71,11 @@ class UmeAiRT_FilesSettings_Checkpoint:
                 "vae_name": (vaes, {"default": "Baked VAE", "tooltip": "Select an external VAE or use the one baked into the checkpoint."}),
             }
         }
-    RETURN_TYPES = ("MODEL", "CLIP", "VAE", "STRING")
-    RETURN_NAMES = ("model", "clip", "vae", "model_name")
+    RETURN_TYPES = ("UME_BUNDLE",)
+    RETURN_NAMES = ("model_bundle",)
     FUNCTION = "load_checkpoint"
     CATEGORY = "UmeAiRT/Block/Loaders"
+    OUTPUT_NODE = True
 
     def load_checkpoint(self, ckpt_name, vae_name):
         ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
@@ -85,69 +86,12 @@ class UmeAiRT_FilesSettings_Checkpoint:
             vae = comfy.sd.VAE(sd=comfy.utils.load_torch_file(vae_path))
         else:
             vae = vae_ckpt
-        return (model, clip, vae, ckpt_name)
+        return (UmeBundle(model=model, clip=clip, vae=vae, model_name=ckpt_name),)
 
 
 
 
-class UmeAiRT_FilesSettings_Checkpoint_Advanced:
-    """Full-featured checkpoint loader with extensive model configuration.
 
-    Provides granular control over checkpoint loading including LoRA stack
-    processing, VAE selection, CLIP skip, positive/negative prompt encoding,
-    and generation parameter overrides (steps, CFG, sampler, scheduler, etc.).
-    """
-
-    @classmethod
-    def INPUT_TYPES(s):
-        checkpoints = folder_paths.get_filename_list("checkpoints")
-        vaes = ["Baked VAE"] + folder_paths.get_filename_list("vae")
-        import comfy.samplers
-        return {
-            "required": {
-                "ckpt_name": (checkpoints, {"tooltip": "Select a checkpoint (model) file to load."}),
-                "vae_name": (vaes, {"default": "Baked VAE", "tooltip": "Select an external VAE, or use the one embedded in the checkpoint."}),
-                "clip_skip": ("INT", {"default": -1, "min": -24, "max": -1, "step": 1, "tooltip": "CLIP skip parameter. -1 is default (no skip). More negative values skip more end layers — common for anime models."}),
-                "positive": ("STRING", {"default": "", "multiline": True, "tooltip": "Positive prompt text — what you want to see in the image."}),
-                "negative": ("STRING", {"default": "", "multiline": True, "tooltip": "Negative prompt text — what you want to avoid in the image."}),
-                "width": ("INT", {"default": 512, "min": 64, "max": 8192, "step": 8, "tooltip": "Output image width in pixels."}),
-                "height": ("INT", {"default": 768, "min": 64, "max": 8192, "step": 8, "tooltip": "Output image height in pixels."}),
-                "batch_size": ("INT", {"default": 1, "min": 1, "max": 64, "tooltip": "Number of images to generate simultaneously."}),
-                "steps": ("INT", {"default": 20, "min": 1, "max": 200, "tooltip": "Number of sampling steps. More steps → smoother results but slower."}),
-                "cfg": ("FLOAT", {"default": 7.0, "min": 0.0, "max": 50.0, "step": 0.5, "tooltip": "Classifier-free guidance scale. Higher → more prompt adherence, lower → more creative."}),
-                "sampler_name": (comfy.samplers.KSampler.SAMPLERS, {"tooltip": "Sampling algorithm to use (default: 'euler')."}),
-                "scheduler": (comfy.samplers.KSampler.SCHEDULERS, {"tooltip": "Noise schedule algorithm (default: 'normal'). Controls how noise is reduced across steps."}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "Random seed for reproducibility. Same seed + same settings = same image."}),
-                "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "Denoising strength. 1.0 = full generation from noise, lower values preserve more of the input image (for img2img)."}),
-            },
-            "optional": {
-                "lora_stack": ("LORA_STACK", {"tooltip": "Optional LoRA stack to apply. Connect from a LoRA Block node."}),
-            }
-        }
-    RETURN_TYPES = ("UME_BUNDLE",)
-    RETURN_NAMES = ("model_bundle",)
-    FUNCTION = "load_settings"
-    CATEGORY = "UmeAiRT/Block/Loaders"
-
-    def load_settings(self, ckpt_name, vae_name, clip_skip, positive, negative,
-                      width, height, batch_size, steps, cfg, sampler_name,
-                      scheduler, seed, denoise, lora_stack=None):
-        from .block_inputs import process_lora_stack
-        from .common import encode_prompts
-        ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
-        out = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True)
-        model, clip, vae_ckpt = out[:3]
-        if vae_name != "Baked VAE":
-            vae_path = folder_paths.get_full_path("vae", vae_name)
-            vae = comfy.sd.VAE(sd=comfy.utils.load_torch_file(vae_path))
-        else:
-            vae = vae_ckpt
-        model, clip = process_lora_stack(model, clip, lora_stack)
-        clip_with_skip = clip.clone()
-        clip_with_skip.clip_layer(clip_skip)
-        positive_cond, negative_cond = encode_prompts(clip_with_skip, positive, negative)
-        bundle = UmeBundle(model=model, clip=clip, vae=vae, model_name=ckpt_name)
-        return (bundle,)
 
 
 class UmeAiRT_FilesSettings_FLUX:
@@ -171,10 +115,11 @@ class UmeAiRT_FilesSettings_FLUX:
                 "vae": (vaes, {"tooltip": "VAE model (e.g. ae.safetensors for FLUX)."}),
             }
         }
-    RETURN_TYPES = ("MODEL", "CLIP", "VAE", "STRING")
-    RETURN_NAMES = ("model", "clip", "vae", "model_name")
+    RETURN_TYPES = ("UME_BUNDLE",)
+    RETURN_NAMES = ("model_bundle",)
     FUNCTION = "load_flux"
     CATEGORY = "UmeAiRT/Block/Loaders"
+    OUTPUT_NODE = True
 
     def load_flux(self, diff_model, clip_1, clip_2, vae):
         model_name = diff_model
@@ -193,7 +138,7 @@ class UmeAiRT_FilesSettings_FLUX:
         # VAE
         vae_path = folder_paths.get_full_path("vae", vae)
         vae_obj = comfy.sd.VAE(sd=comfy.utils.load_torch_file(vae_path))
-        return (model, clip, vae_obj, model_name)
+        return (UmeBundle(model=model, clip=clip, vae=vae_obj, model_name=model_name),)
 
 
 class UmeAiRT_FilesSettings_Fragmented:
@@ -218,16 +163,17 @@ class UmeAiRT_FilesSettings_Fragmented:
                 "model_path": (paths, {"tooltip": "Select a model folder from your diffusion_models directory. Folders typically contain index.json + sharded safetensors files."}),
             }
         }
-    RETURN_TYPES = ("MODEL", "CLIP", "VAE", "STRING")
-    RETURN_NAMES = ("model", "clip", "vae", "model_name")
+    RETURN_TYPES = ("UME_BUNDLE",)
+    RETURN_NAMES = ("model_bundle",)
     FUNCTION = "load_diffusers"
     CATEGORY = "UmeAiRT/Block/Loaders"
+    OUTPUT_NODE = True
 
     def load_diffusers(self, model_path):
         model_name = model_path
         node = comfy_nodes.DiffusersLoader()
         model, clip, vae = node.load_checkpoint(model_path)[:3]
-        return (model, clip, vae, model_name)
+        return (UmeBundle(model=model, clip=clip, vae=vae, model_name=model_name),)
 
 
 class UmeAiRT_FilesSettings_ZIMG:
@@ -249,10 +195,11 @@ class UmeAiRT_FilesSettings_ZIMG:
                 "vae": (vaes, {"tooltip": "VAE model (e.g. ae.safetensors)."}),
             }
         }
-    RETURN_TYPES = ("MODEL", "CLIP", "VAE", "STRING")
-    RETURN_NAMES = ("model", "clip", "vae", "model_name")
+    RETURN_TYPES = ("UME_BUNDLE",)
+    RETURN_NAMES = ("model_bundle",)
     FUNCTION = "load_zimg"
     CATEGORY = "UmeAiRT/Block/Loaders"
+    OUTPUT_NODE = True
 
     def load_zimg(self, diff_model, clip, vae):
         model_name = diff_model
@@ -273,7 +220,7 @@ class UmeAiRT_FilesSettings_ZIMG:
         # VAE
         vae_path = folder_paths.get_full_path("vae", vae)
         vae_obj = comfy.sd.VAE(sd=comfy.utils.load_torch_file(vae_path))
-        return (model, clip_obj, vae_obj, model_name)
+        return (UmeBundle(model=model, clip=clip_obj, vae=vae_obj, model_name=model_name),)
 
 
 class UmeAiRT_BundleLoader:

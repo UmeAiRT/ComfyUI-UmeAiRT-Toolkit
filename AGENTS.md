@@ -74,6 +74,12 @@ Source Image ───┘                          │
     1. `NODE_CLASS_MAPPINGS`
     2. `NODE_DISPLAY_NAME_MAPPINGS`
 
+### Advanced Inputs (Vue 2.0 Engine)
+
+ComfyUI's Nodes 2.0 (Vue) layout engine natively suffers from a "ghost padding" bug when using `"advanced": True`. Visually hidden inputs still mathematically reserve their height in the node's `min-height`, causing massive empty gaps.
+**The UmeAiRT Solution**: The `web/umeairt_colors.js` script contains an automated `computeSize` interceptor that subtracts the mathematical height of advanced widgets for all nodes prefixed with `UmeAiRT_`. 
+**Rule**: You are free to use `"advanced": True` directly in your Python `INPUT_TYPES` for optional or heavy sliders. You do **not** need to split nodes into `_Simple` and `_Advanced` variants just to fix spacing gaps, as the Javascript layer will dynamically handle the CSS flex constraints for any `UmeAiRT_` node.
+
 ### File Structure
 
 - `modules/common.py`: `GenerationContext` class, `TypedDict` bundle types (`UmeBundle`, `UmeSettings`, `UmeImage`), pipeline helpers (`extract_pipeline_params`, `validate_bundle`, `PipelineParams`), shared helpers (`resize_tensor`, `encode_prompts`, `apply_outpaint_padding`), `KNOWN_DIT_MODELS` constant.

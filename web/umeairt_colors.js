@@ -16,10 +16,6 @@ const UME_NODE_COLORS = {
         color: "#154360",
         bgcolor: "#0A2130"
     },
-    "UmeAiRT_FilesSettings_Checkpoint_Advanced": {
-        color: "#154360",
-        bgcolor: "#0A2130"
-    },
     "UmeAiRT_FilesSettings_FLUX": {
         color: "#154360",
         bgcolor: "#0A2130"
@@ -89,12 +85,8 @@ const UME_NODE_COLORS = {
         bgcolor: "#123851"
     },
 
-    // Pipeline FaceDetailer - Pale Blue
-    "UmeAiRT_PipelineFaceDetailer": {
-        color: "#2471A3",
-        bgcolor: "#123851"
-    },
-    "UmeAiRT_PipelineFaceDetailer_Advanced": {
+    // Pipeline SubjectDetailer - Pale Blue
+    "UmeAiRT_PipelineSubjectDetailer": {
         color: "#2471A3",
         bgcolor: "#123851"
     },
@@ -261,78 +253,52 @@ const UME_SLOT_COLORS = {
     "UME_PIPELINE": "#1ABC9C"    // Teal (generation context)
 };
 
-// Enforce minimum sizes for specific nodes (fixes Nodes 2.0 shrinking issues)
-const UME_NODE_SIZES = {
-    "UmeAiRT_Positive_Input": [600, 240],
-    "UmeAiRT_Negative_Input": [600, 160],
-    "UmeAiRT_Signature": [250, 80]
-};
+// Enforce minimum sizes was removed as Nodes 2.0 fixed the shrinking native bug.
 
 app.registerExtension({
     name: "UmeAiRT.NodeColors",
 
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
         const colors = UME_NODE_COLORS[nodeData.name];
-        const minSize = UME_NODE_SIZES[nodeData.name];
 
-        // Single unified onNodeCreated handler for both colors and sizing
-        if (colors || minSize) {
+        if (colors) {
             const onNodeCreated = nodeType.prototype.onNodeCreated;
             nodeType.prototype.onNodeCreated = function () {
                 if (onNodeCreated) {
                     onNodeCreated.apply(this, arguments);
                 }
-                // Apply colors
-                if (colors) {
-                    this.color = colors.color;
-                    this.bgcolor = colors.bgcolor;
-                }
-                // Apply minimum size
-                if (minSize) {
-                    setTimeout(() => {
-                        this.size[0] = Math.max(this.size[0] || 0, minSize[0]);
-                        this.size[1] = Math.max(this.size[1] || 0, minSize[1]);
-                        this.setDirtyCanvas(true, true);
-                    }, 100);
-                }
+                this.color = colors.color;
+                this.bgcolor = colors.bgcolor;
             };
         }
 
-        // Size enforcement hooks (only for sized nodes)
-        if (minSize) {
-            // Override computeSize (LiteGraph standard)
-            const computeSize = nodeType.prototype.computeSize;
+        // --- VUE 2.0 BUG FIX: Ghost Spacing for Advanced Inputs ---
+        // ComfyUI Vue reads computeSize to set min-height. By default, Litegraph adds 
+        // the height of ALL widgets (even visually hidden "advanced" ones).
+        // This causes a massive empty space at the bottom of nodes.
+        // We strip advanced widgets from the LiteGraph math so Vue can use DOM flex dynamically.
+        if (nodeData.name.startsWith("UmeAiRT_")) {
+            const defaultComputeSize = nodeType.prototype.computeSize;
             nodeType.prototype.computeSize = function (out) {
                 let size = [0, 0];
-                if (computeSize) {
-                    size = computeSize.apply(this, arguments);
+                if (defaultComputeSize) {
+                    size = defaultComputeSize.apply(this, arguments);
                 }
-                size[0] = Math.max(size[0] || 0, minSize[0]);
-                size[1] = Math.max(size[1] || 0, minSize[1]);
+                
+                if (this.widgets && this.widgets.length > 0) {
+                    let advancedCount = 0;
+                    for (let w of this.widgets) {
+                        // Mark advanced widgets to be omitted from absolute height calculation
+                        if (w.advanced || (w.options && w.options.advanced)) {
+                            advancedCount++;
+                        }
+                    }
+                    if (advancedCount > 0) {
+                        // Standard ComfyUI widget height calculation is approx 24px per line + 4px padding
+                        size[1] -= (advancedCount * 28);
+                    }
+                }
                 return size;
-            };
-
-            // Override onResize (LiteGraph standard)
-            const onResize = nodeType.prototype.onResize;
-            nodeType.prototype.onResize = function (size) {
-                if (onResize) {
-                    onResize.apply(this, arguments);
-                }
-                if (this.size[0] < minSize[0]) this.size[0] = minSize[0];
-                if (this.size[1] < minSize[1]) this.size[1] = minSize[1];
-            };
-
-            // Ultimate Defense against Vue 2.0 background-tab crushing
-            const onDrawForeground = nodeType.prototype.onDrawForeground;
-            nodeType.prototype.onDrawForeground = function (ctx) {
-                if (onDrawForeground) {
-                    onDrawForeground.apply(this, arguments);
-                }
-                if (this.size[0] < minSize[0] || this.size[1] < minSize[1]) {
-                    this.size[0] = Math.max(this.size[0], minSize[0]);
-                    this.size[1] = Math.max(this.size[1], minSize[1]);
-                    this.setDirtyCanvas(true, true);
-                }
             };
         }
     },

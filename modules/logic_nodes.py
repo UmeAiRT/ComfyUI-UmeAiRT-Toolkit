@@ -19,8 +19,7 @@ from .seedvr2_nodes import (
 )
 
 from .face_nodes import (
-    UmeAiRT_BboxDetectorLoader,
-    UmeAiRT_PipelineFaceDetailer,
+    UmeAiRT_PipelineSubjectDetailer,
 )
 
 from .detail_daemon_nodes import (

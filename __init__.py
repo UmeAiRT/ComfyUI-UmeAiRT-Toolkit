@@ -28,8 +28,7 @@ if "bbox" not in folder_paths.folder_names_and_paths:
 from .modules.logic_nodes import (
     UmeAiRT_PipelineUltimateUpscale,
     UmeAiRT_PipelineSeedVR2Upscale,
-    UmeAiRT_BboxDetectorLoader,
-    UmeAiRT_PipelineFaceDetailer,
+    UmeAiRT_PipelineSubjectDetailer,
     UmeAiRT_Detailer_Daemon
 )
 from .modules.block_nodes import (
@@ -37,7 +36,6 @@ from .modules.block_nodes import (
     UmeAiRT_ControlNetImageApply, UmeAiRT_ControlNetImageProcess,
     UmeAiRT_GenerationSettings,
     UmeAiRT_FilesSettings_Checkpoint,
-    UmeAiRT_FilesSettings_Checkpoint_Advanced,
     UmeAiRT_FilesSettings_FLUX,
     UmeAiRT_FilesSettings_Fragmented,
     UmeAiRT_FilesSettings_ZIMG,
@@ -68,7 +66,6 @@ from .modules.utils_nodes import (
 NODE_CLASS_MAPPINGS = {
     # Block Loaders
     "UmeAiRT_FilesSettings_Checkpoint": UmeAiRT_FilesSettings_Checkpoint,
-    "UmeAiRT_FilesSettings_Checkpoint_Advanced": UmeAiRT_FilesSettings_Checkpoint_Advanced,
     "UmeAiRT_FilesSettings_FLUX": UmeAiRT_FilesSettings_FLUX,
     "UmeAiRT_FilesSettings_Fragmented": UmeAiRT_FilesSettings_Fragmented,
     "UmeAiRT_FilesSettings_ZIMG": UmeAiRT_FilesSettings_ZIMG,
@@ -94,9 +91,8 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_BlockSampler": UmeAiRT_BlockSampler,
     "UmeAiRT_PipelineUltimateUpscale": UmeAiRT_PipelineUltimateUpscale,
     "UmeAiRT_PipelineSeedVR2Upscale": UmeAiRT_PipelineSeedVR2Upscale,
-    "UmeAiRT_PipelineFaceDetailer": UmeAiRT_PipelineFaceDetailer,
+    "UmeAiRT_PipelineSubjectDetailer": UmeAiRT_PipelineSubjectDetailer,
     "UmeAiRT_Detailer_Daemon": UmeAiRT_Detailer_Daemon,
-    "UmeAiRT_BboxDetectorLoader": UmeAiRT_BboxDetectorLoader,
 
     # Image
     "UmeAiRT_SourceImage_Output": UmeAiRT_SourceImage_Output,
@@ -125,7 +121,6 @@ NODE_CLASS_MAPPINGS = {
 NODE_DISPLAY_NAME_MAPPINGS = {
     # Loaders
     "UmeAiRT_FilesSettings_Checkpoint": "⬡ Checkpoint Loader",
-    "UmeAiRT_FilesSettings_Checkpoint_Advanced": "⬡ Checkpoint Loader (Advanced)",
     "UmeAiRT_FilesSettings_FLUX": "⬡ FLUX Loader",
     "UmeAiRT_FilesSettings_Fragmented": "⬡ Fragmented Loader",
     "UmeAiRT_FilesSettings_ZIMG": "⬡ Z-IMG Loader",
@@ -151,9 +146,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_BlockSampler": "⬡ KSampler",
     "UmeAiRT_PipelineUltimateUpscale": "⬡ UltimateSD Upscale",
     "UmeAiRT_PipelineSeedVR2Upscale": "⬡ SeedVR2 Upscale",
-    "UmeAiRT_PipelineFaceDetailer": "⬡ FaceDetailer",
+    "UmeAiRT_PipelineSubjectDetailer": "⬡ Subject Detailer",
     "UmeAiRT_Detailer_Daemon": "⬡ Detailer Daemon",
-    "UmeAiRT_BboxDetectorLoader": "⬡ BBOX Detector Loader",
 
     # Image
     "UmeAiRT_SourceImage_Output": "⬡ Source Image Output",

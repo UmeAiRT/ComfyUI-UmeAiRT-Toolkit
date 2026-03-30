@@ -274,7 +274,7 @@ def download_bundle_files(category, version):
             raise ValueError(f"Category '{category}' not found in manifest.")
         variant_data = data[category]
         meta = variant_data.get("_meta", {})
-        base_url = meta.get("base_url", "")
+        base_url = meta.get("base_url", "https://huggingface.co/UmeAiRT/ComfyUI-Auto-Installer-Assets/resolve/main/models")
 
     if version not in variant_data:
         raise ValueError(f"Version '{version}' not found for {category}.")
@@ -292,6 +292,7 @@ def download_bundle_files(category, version):
         pt = file_entry["path_type"]
         # Manifest v3 uses "path", legacy uses "filename" + "url"
         rel_path = file_entry.get("path", file_entry.get("url", ""))
+        rel_path = rel_path.lstrip("/")
         filename = os.path.basename(rel_path) if rel_path else file_entry.get("filename", "")
         expected_sha256 = file_entry.get("sha256", "")
         folder_types = PATH_TYPE_TO_FOLDERS.get(pt, [pt])
