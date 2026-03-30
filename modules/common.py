@@ -259,17 +259,24 @@ def apply_outpaint_padding(image, mask, pad_l, pad_t, pad_r, pad_b, overlap=8, f
 
     B, H, W, C = image.shape
 
-    # Pad image using replicate mode to stretch edge pixels
+    # 1. Pad image using reflect mode to mirror internal pixels outward (User's suggestion)
+    # Reflect requires padding to be strictly less than the corresponding dimension.
     img_p = image.permute(0, 3, 1, 2)
-    img_padded = torch.nn.functional.pad(img_p, (pad_l, pad_r, pad_t, pad_b), mode='replicate')
+    try:
+        if pad_l < W and pad_r < W and pad_t < H and pad_b < H:
+            img_padded = torch.nn.functional.pad(img_p, (pad_l, pad_r, pad_t, pad_b), mode='reflect')
+        else:
+            img_padded = torch.nn.functional.pad(img_p, (pad_l, pad_r, pad_t, pad_b), mode='replicate')
+    except Exception:
+        img_padded = torch.nn.functional.pad(img_p, (pad_l, pad_r, pad_t, pad_b), mode='replicate')
     
-    # Melt the stretched lines into a smooth color gradient
-    kernel_size = min(max(pad_l, pad_t, pad_r, pad_b) // 2 * 2 + 1, 99)
+    # 2. Mildly melt the mirrored lines/edges to prevent exact symmetry recognition
+    kernel_size = min(max(pad_l, pad_t, pad_r, pad_b) // 2 * 2 + 1, 21)
     if kernel_size < 3: 
         kernel_size = 3
     blurred_padded = TF.gaussian_blur(img_padded, kernel_size=kernel_size)
     
-    # Restore the sharp original image over the blurred canvas
+    # 3. Restore the sharp original image exactly in its designated center spot
     blurred_padded[:, :, pad_t:pad_t+H, pad_l:pad_l+W] = img_p
     
     final_image = blurred_padded.permute(0, 2, 3, 1)

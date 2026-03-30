@@ -178,7 +178,7 @@ class UmeAiRT_BlockSampler:
 
                  # Apply padding + mask generation
                  raw_image, source_mask = apply_outpaint_padding(
-                     raw_image, source_mask, pad_l, pad_t, pad_r, pad_b, overlap=8, feathering=40
+                     raw_image, source_mask, pad_l, pad_t, pad_r, pad_b, overlap=48, feathering=48
                  )
 
                  # Blur the mask
