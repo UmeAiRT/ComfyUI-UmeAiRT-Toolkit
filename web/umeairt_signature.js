@@ -27,6 +27,7 @@ app.registerExtension({
                 container.style.justifyContent = "center";
                 container.style.overflow = "hidden";
                 container.style.background = "transparent";
+                container.style.pointerEvents = "none";
 
                 const img = document.createElement("img");
                 img.src = SIGNATURE_URL;
