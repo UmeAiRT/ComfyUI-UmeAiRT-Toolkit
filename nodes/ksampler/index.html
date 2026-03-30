@@ -2006,7 +2006,14 @@
 <li><strong>Applies LoRAs</strong> from the stack (if connected)</li>
 <li><strong>Encodes prompts</strong> via CLIP (with caching for repeated prompts)</li>
 <li><strong>Applies ControlNets</strong> from image bundle (if present)</li>
-<li><strong>Prepares latent</strong> — empty for txt2img, or VAE-encoded for img2img/inpaint</li>
+<li><strong>Handles outpaint</strong> (if <code>mode=outpaint</code>):<ul>
+<li>Resizes source image to fit within target dimensions (aspect ratio preserved)</li>
+<li>Computes padding from alignment settings (center/left/right/top/bottom)</li>
+<li>Applies padding with replicate-edge fill</li>
+<li>Generates and blurs the inpaint mask</li>
+</ul>
+</li>
+<li><strong>Prepares latent</strong> — empty for txt2img, or VAE-encoded for img2img/inpaint/outpaint</li>
 <li><strong>Samples</strong> using the configured sampler + scheduler + steps</li>
 <li><strong>Decodes</strong> the latent to pixel space via VAE</li>
 <li><strong>Packs</strong> everything into a <code>UME_PIPELINE</code> for downstream nodes</li>
