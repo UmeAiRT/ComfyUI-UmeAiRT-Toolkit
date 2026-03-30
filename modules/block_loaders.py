@@ -68,7 +68,10 @@ class UmeAiRT_FilesSettings_Checkpoint:
         return {
             "required": {
                 "ckpt_name": (checkpoints, {"tooltip": "Select a checkpoint file."}),
-                "vae_name": (vaes, {"default": "Baked VAE", "tooltip": "Select an external VAE or use the one baked into the checkpoint."}),
+            },
+            "optional": {
+                "vae_name": (vaes, {"default": "Baked VAE", "advanced": True, "tooltip": "Select an external VAE or use the one baked into the checkpoint."}),
+                "clip_skip": ("INT", {"default": -1, "min": -24, "max": -1, "step": 1, "advanced": True, "tooltip": "Stop at which CLIP layer. -1 is default. -2 is common for anime models."}),
             }
         }
     RETURN_TYPES = ("UME_BUNDLE",)
@@ -77,10 +80,15 @@ class UmeAiRT_FilesSettings_Checkpoint:
     CATEGORY = "UmeAiRT/Block/Loaders"
     OUTPUT_NODE = True
 
-    def load_checkpoint(self, ckpt_name, vae_name):
+    def load_checkpoint(self, ckpt_name, vae_name="Baked VAE", clip_skip=-1):
         ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
         out = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True)
         model, clip, vae_ckpt = out[:3]
+
+        if clip_skip < -1:
+            clip = clip.clone()
+            clip.clip_layer(clip_skip)
+
         if vae_name != "Baked VAE":
             vae_path = folder_paths.get_full_path("vae", vae_name)
             vae = comfy.sd.VAE(sd=comfy.utils.load_torch_file(vae_path))

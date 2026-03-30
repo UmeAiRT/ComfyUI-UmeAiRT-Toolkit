@@ -14,6 +14,10 @@ class TestFilesSettingsCheckpoint(unittest.TestCase):
     def test_input_types(self):
         inputs = UmeAiRT_FilesSettings_Checkpoint.INPUT_TYPES()
         self.assertIn("required", inputs)
+        self.assertIn("optional", inputs)
+        self.assertIn("ckpt_name", inputs["required"])
+        self.assertIn("vae_name", inputs["optional"])
+        self.assertIn("clip_skip", inputs["optional"])
 
     def test_instantiation(self):
         node = UmeAiRT_FilesSettings_Checkpoint()
