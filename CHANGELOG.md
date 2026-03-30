@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **⬡ Image Process (Inpaint)**: New dedicated node for inpainting — denoise + mask_blur + optional auto-resize.
 - **⬡ Image Process (Outpaint)**: New dedicated node using **target dimensions** (`target_width`, `target_height`) instead of raw padding pixels. Alignment (`center`/`left`/`right`/`top`/`bottom`) available in advanced settings. The node is passive — actual resize + padding is executed by the KSampler.
 - **Outpaint logic in KSampler**: When receiving `mode="outpaint"`, the sampler resizes the source to fit within target dimensions (maintaining aspect ratio), computes padding from alignment, applies padding + mask generation + blur, then encodes and samples.
+- **Upscale Models Auto-Download**: The `⬡ UltimateSD Upscale` node now dynamically populates its dropdown with auto-downloadable upscale models (`[⬇️]`) defined in the `_UPSCALE_MODELS` manifest block, seamlessly integrating with local files.
+
+### Changed
+
+- **Outpaint Padding Mechanism**: Replaced sharp `replicate` stretching with soft `reflect` padding (mirroring internal pixels) combined with a moderate gaussian blur. This utterly eliminates the "box" and "barcode" artifacts, granting the AI highly coherent, texture-rich gradients to outpaint over seamlessly.
+- **Outpaint Overlap**: Increased outpaint mask overlap from 8 to 48 pixels to ensure a flawless blend between the original image and the generated extension.
 
 ### Changed
 
