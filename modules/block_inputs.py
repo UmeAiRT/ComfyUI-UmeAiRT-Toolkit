@@ -346,7 +346,12 @@ class UmeAiRT_ImageProcess_Inpaint:
 
 
 class UmeAiRT_ImageProcess_Outpaint:
-    """Pre-processor for Outpaint workflows."""
+    """Pre-processor for Outpaint workflows.
+
+    When settings are provided, the source image is resized to the target
+    dimensions FIRST, then outpaint padding is applied on top. This ensures
+    large source images are properly scaled before expansion.
+    """
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -359,8 +364,8 @@ class UmeAiRT_ImageProcess_Outpaint:
                 "padding_bottom": ("INT", {"default": 0, "tooltip": "Pixels to add on the bottom."}),
             },
             "optional": {
+                "settings": ("UME_SETTINGS", {"tooltip": "Generation Settings — used to resize the source image BEFORE adding padding."}),
                 "mask_blur": ("INT", {"default": 10, "tooltip": "Softens the edge of the outpaint mask for smoother blending."}),
-                "auto_resize": ("BOOLEAN", {"default": False, "label_on": "Resize to Settings", "label_off": "Keep Original", "tooltip": "Automatically resize the final extended image."}),
             }
         }
     RETURN_TYPES = ("UME_IMAGE",)
@@ -368,9 +373,40 @@ class UmeAiRT_ImageProcess_Outpaint:
     FUNCTION = "process"
     CATEGORY = "UmeAiRT/Block/Image"
 
-    def process(self, image_bundle, denoise=0.75, padding_left=0, padding_top=0, padding_right=0, padding_bottom=0, mask_blur=10, auto_resize=False):
-        return process_image_core(image_bundle, mode="outpaint", denoise=denoise, auto_resize=auto_resize, mask_blur=mask_blur, 
-                                  padding_left=padding_left, padding_top=padding_top, padding_right=padding_right, padding_bottom=padding_bottom)
+    def process(self, image_bundle, denoise=0.75, padding_left=0, padding_top=0, padding_right=0, padding_bottom=0, settings=None, mask_blur=10):
+        image = image_bundle.image
+        mask = image_bundle.mask
+
+        if image is None:
+            raise ValueError("Outpaint Process: Bundle has no image.")
+
+        # Step 1: Resize source to settings dimensions BEFORE padding
+        if settings is not None:
+            target_w, target_h = settings.width, settings.height
+            image = resize_tensor(image, target_h, target_w, interp_mode="bilinear")
+            if mask is not None:
+                mask = resize_tensor(mask, target_h, target_w, interp_mode="nearest", is_mask=True)
+            log_node(f"Outpaint: Resized source to {target_w}x{target_h} before padding.", color="YELLOW")
+
+        # Step 2: Apply outpaint padding on the (now correctly sized) image
+        final_image, final_mask = apply_outpaint_padding(
+            image, mask, padding_left, padding_top, padding_right, padding_bottom, overlap=8, feathering=40
+        )
+
+        # Step 3: Blur the mask edges
+        if final_mask is not None and mask_blur > 0:
+            if len(final_mask.shape) == 2:
+                m = final_mask.unsqueeze(0).unsqueeze(0)
+            else:
+                m = final_mask
+            k = mask_blur
+            if k % 2 == 0:
+                k += 1
+            m = TF.gaussian_blur(m, kernel_size=k)
+            final_mask = m.squeeze(0).squeeze(0) if len(final_mask.shape) == 2 else m
+
+        # auto_resize=False: the resize already happened, sampler must NOT resize again
+        return (UmeImage(image=final_image, mask=final_mask, mode="inpaint", denoise=denoise, auto_resize=False),)
 
 class UmeAiRT_Positive_Input:
     """Multiline text editor for the positive prompt. Outputs a STRING."""
