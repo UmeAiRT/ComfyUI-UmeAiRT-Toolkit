@@ -9,6 +9,27 @@ import sys
 import folder_paths
 import comfy.samplers
 from .common import log_node, encode_prompts, extract_pipeline_params
+from .manifest import load_manifest, download_bundle_files
+
+
+def _get_upscale_models():
+    """Combine local upscale models with auto-downloadable ones from manifest."""
+    local_models = folder_paths.get_filename_list("upscale_models")
+    
+    REMOTE_PREFIX = "[⬇️] "
+    manifest_models = []
+    
+    try:
+        data = load_manifest()
+        upscale_data = data.get("_UPSCALE_MODELS", {})
+        for model_name in upscale_data.keys():
+            if model_name not in local_models:
+                manifest_models.append(f"{REMOTE_PREFIX}{model_name}")
+    except Exception as e:
+        log_node(f"UltimateUpscale: Could not load manifest for remote models: {e}", color="YELLOW")
+        
+    return local_models + sorted(manifest_models)
+
 
 
 # --- Base Class ---
@@ -48,7 +69,7 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
              "required": {
                 "gen_pipe": ("UME_PIPELINE", {"tooltip": "The generation pipeline carrying your image, model, and all settings through the workflow."}),
                 "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough", "tooltip": "Turn this effect on or off. When off, the image passes through unchanged."}),
-                "model": (folder_paths.get_filename_list("upscale_models"),),
+                "model": (_get_upscale_models(),),
                 "upscale_by": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 8.0, "step": 0.05, "display": "slider", "tooltip": "How much to enlarge the image (e.g. 2.0 = double the resolution)."}),
                 "denoise": ("FLOAT", {"default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "advanced": True, "tooltip": "How much the AI redraws during upscale. Lower = sharper but less detail added."}),
             },
@@ -100,6 +121,18 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
 
         target_pos_text = "" if clean_prompt else pp.pos_text
         positive, negative = self.encode_prompts(pp.clip, target_pos_text, pp.neg_text)
+
+        # Handle remote model logic
+        if model.startswith("[⬇️] "):
+            actual_model = model.replace("[⬇️] ", "")
+            try:
+                resolved_files, meta, dn, sk, err = download_bundle_files("_UPSCALE_MODELS", actual_model)
+                if err:
+                     raise RuntimeError(f"UltimateUpscale: Failed to auto-download {actual_model}: {', '.join(err)}")
+            except Exception as e:
+                log_node(f"UltimateUpscale: Remote manifest resolution error for '{actual_model}': {e}", color="RED")
+                raise RuntimeError(f"UltimateUpscale: failed to retrieve '{actual_model}': {e}")
+            model = actual_model
 
         try:
               from comfy_extras.nodes_upscale_model import UpscaleModelLoader

@@ -405,5 +405,28 @@
                 }
             ]
         }
+    },
+    "_UPSCALE_MODELS": {
+        "4x-AnimeSharp.pth": {
+            "files": [ { "url": "/upscale_models/4x-AnimeSharp.pth", "path_type": "latent_upscale", "filename": "4x-AnimeSharp.pth" } ]
+        },
+        "4x-UltraSharp.pth": {
+            "files": [ { "url": "/upscale_models/4x-UltraSharp.pth", "path_type": "latent_upscale", "filename": "4x-UltraSharp.pth" } ]
+        },
+        "4x_NMKD-Siax_200k.pth": {
+            "files": [ { "url": "/upscale_models/4x_NMKD-Siax_200k.pth", "path_type": "latent_upscale", "filename": "4x_NMKD-Siax_200k.pth" } ]
+        },
+        "RealESRGAN_x2.pth": {
+            "files": [ { "url": "/upscale_models/RealESRGAN_x2.pth", "path_type": "latent_upscale", "filename": "RealESRGAN_x2.pth" } ]
+        },
+        "RealESRGAN_x4.pth": {
+            "files": [ { "url": "/upscale_models/RealESRGAN_x4.pth", "path_type": "latent_upscale", "filename": "RealESRGAN_x4.pth" } ]
+        },
+        "RealESRGAN_x4plus.pth": {
+            "files": [ { "url": "/upscale_models/RealESRGAN_x4plus.pth", "path_type": "latent_upscale", "filename": "RealESRGAN_x4plus.pth" } ]
+        },
+        "RealESRGAN_x4plus_anime_6B.pth": {
+            "files": [ { "url": "/upscale_models/RealESRGAN_x4plus_anime_6B.pth", "path_type": "latent_upscale", "filename": "RealESRGAN_x4plus_anime_6B.pth" } ]
+        }
     }
 }
