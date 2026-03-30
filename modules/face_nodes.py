@@ -25,7 +25,7 @@ class UmeAiRT_PipelineSubjectDetailer:
             "required": {
                  "gen_pipe": ("UME_PIPELINE", {"tooltip": "The generation pipeline carrying your image, model, and all settings through the workflow."}),
                  "enabled": ("BOOLEAN", {"default": True, "label_on": "Active", "label_off": "Passthrough", "tooltip": "Turn this effect on or off. When off, the image passes through unchanged."}),
-                 "subject": (["face", "hand"], {"default": "face", "tooltip": "Which subject to automatically detect and detail. Hand detailing may be slower."}),
+                 "subject": (["face", "hand", "both"], {"default": "face", "tooltip": "Which subject to automatically detect and detail. 'both' processes faces then hands sequentially."}),
                  "denoise": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "How much the AI redraws during upscale. Lower = sharper but less detail added."}),
                  
                  # Advanced section
@@ -54,32 +54,37 @@ class UmeAiRT_PipelineSubjectDetailer:
             raise ValueError("Subject Detailer: No image in pipeline.")
         if not enabled: return (gen_pipe,)
 
-        # Auto-download the requested bbox model
-        try:
-            resolved_files, meta, dn, sk, err = download_bundle_files("_BBOX_MODELS", subject)
-            if err:
-                raise RuntimeError(f"Subject Detailer: Failed to auto-download {subject} detector: {', '.join(err)}")
-            bbox_filename = resolved_files["bbox"][0]
-        except Exception as e:
-            log_node(f"Subject Detailer: Manifest resolution error: {e}", color="RED")
-            raise RuntimeError(f"Subject Detailer: failed to retrieve detector: {e}")
-
-        # Load the model directly
-        bbox_detector_model = detector.load_bbox_model(bbox_filename)
-
         pp = extract_pipeline_params(gen_pipe)
         positive, negative = encode_prompts(pp.clip, pp.pos_text, pp.neg_text)
 
-        segs = bbox_detector_model.detect(image, bbox_threshold, bbox_dilation, bbox_crop_factor, drop_size)
+        current_image = image
+        subjects_to_process = ["face", "hand"] if subject == "both" else [subject]
 
-        result = fd_logic.do_detail(
-                 image=image, segs=segs, model=pp.model, clip=pp.clip, vae=pp.vae,
-                 guide_size=guide_size, guide_size_for_bbox=True, max_size=max_size,
-                 seed=pp.seed, steps=pp.steps, cfg=pp.cfg, sampler_name=pp.sampler_name, scheduler=pp.scheduler,
-                 positive=positive, negative=negative, denoise=denoise,
-                 feather=feather, noise_mask=noise_mask, force_inpaint=force_inpaint, drop_size=drop_size
-             )
+        for subj in subjects_to_process:
+            # Auto-download the requested bbox model
+            try:
+                resolved_files, meta, dn, sk, err = download_bundle_files("_BBOX_MODELS", subj)
+                if err:
+                    raise RuntimeError(f"Subject Detailer: Failed to auto-download {subj} detector: {', '.join(err)}")
+                bbox_filename = resolved_files["bbox"][0]
+            except Exception as e:
+                log_node(f"Subject Detailer: Manifest resolution error for '{subj}': {e}", color="RED")
+                raise RuntimeError(f"Subject Detailer: failed to retrieve detector for '{subj}': {e}")
+
+            # Load the model directly
+            bbox_detector_model = detector.load_bbox_model(bbox_filename)
+
+            segs = bbox_detector_model.detect(current_image, bbox_threshold, bbox_dilation, bbox_crop_factor, drop_size)
+
+            result = fd_logic.do_detail(
+                     image=current_image, segs=segs, model=pp.model, clip=pp.clip, vae=pp.vae,
+                     guide_size=guide_size, guide_size_for_bbox=True, max_size=max_size,
+                     seed=pp.seed, steps=pp.steps, cfg=pp.cfg, sampler_name=pp.sampler_name, scheduler=pp.scheduler,
+                     positive=positive, negative=negative, denoise=denoise,
+                     feather=feather, noise_mask=noise_mask, force_inpaint=force_inpaint, drop_size=drop_size
+                 )
+            current_image = result[0]
              
         ctx = gen_pipe.clone()
-        ctx.image = result[0]
+        ctx.image = current_image
         return (ctx,)

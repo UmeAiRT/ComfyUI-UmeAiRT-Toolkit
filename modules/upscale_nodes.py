@@ -7,6 +7,7 @@ Pipeline-aware UltimateSD Upscale nodes (Simple & Advanced).
 import os
 import sys
 import folder_paths
+import comfy.samplers
 from .common import log_node, encode_prompts, extract_pipeline_params
 
 
@@ -41,6 +42,8 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
     def INPUT_TYPES(s):
         usdu_modes = ["Linear", "Chess", "None"]
         seam_fix_modes = ["None", "Band Pass", "Half Tile", "Half Tile + Intersections"]
+        samplers = ["Pipeline"] + comfy.samplers.KSampler.SAMPLERS
+        schedulers = ["Pipeline"] + comfy.samplers.KSampler.SCHEDULERS
         return {
              "required": {
                 "gen_pipe": ("UME_PIPELINE", {"tooltip": "The generation pipeline carrying your image, model, and all settings through the workflow."}),
@@ -50,6 +53,10 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
             },
             "optional":{
                 "clean_prompt": ("BOOLEAN", {"default": True, "label_on": "Reduces Hallucinations", "label_off": "Use Pipeline Prompt", "advanced": True, "tooltip": "Simplify the prompt during upscaling to prevent the AI from adding unwanted new elements."}),
+                "upscale_steps": ("INT", {"default": 0, "min": 0, "max": 150, "advanced": True, "tooltip": "Tile steps. Leave at 0 for auto calculation (Pipeline Steps / 4)."}),
+                "upscale_cfg": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 50.0, "step": 0.5, "advanced": True, "tooltip": "Tile CFG Guidance. Default 1.0 (recommended), increase for stricter prompt adherence."}),
+                "upscale_sampler": (samplers, {"default": "Pipeline", "advanced": True, "tooltip": "Force a specific sampler for upscaling, or use the pipeline's."}),
+                "upscale_scheduler": (schedulers, {"default": "Pipeline", "advanced": True, "tooltip": "Force a specific noise scheduler for upscaling, or use the pipeline's."}),
                 "mode_type": (usdu_modes, {"default": "Linear", "advanced": True, "tooltip": "How tiles are arranged: Linear (rows), Chess (checkerboard for fewer seams), or None."}),
                 "tile_width": ("INT", {"default": 512, "min": 64, "max": 2048, "advanced": True, "tooltip": "Width of each tile in pixels. Smaller = less VRAM but slower. 512-1024 recommended."}),
                 "tile_height": ("INT", {"default": 512, "min": 64, "max": 2048, "advanced": True, "tooltip": "Height of each tile in pixels. Smaller = less VRAM but slower. 512-1024 recommended."}),
@@ -69,8 +76,9 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
     FUNCTION = "upscale"
     CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
 
-    def upscale(self, gen_pipe, model, upscale_by, denoise=0.35, clean_prompt=True, mode_type="Linear",
-                tile_width=512, tile_height=512, mask_blur=8, tile_padding=32,
+    def upscale(self, gen_pipe, model, upscale_by, denoise=0.35, clean_prompt=True,
+                upscale_steps=0, upscale_cfg=1.0, upscale_sampler="Pipeline", upscale_scheduler="Pipeline",
+                mode_type="Linear", tile_width=512, tile_height=512, mask_blur=8, tile_padding=32,
                 seam_fix_mode="None", seam_fix_denoise=1.0, seam_fix_width=64,
                 seam_fix_mask_blur=8, seam_fix_padding=16, force_uniform_tiles=True, tiled_decode=False):
 
@@ -80,8 +88,11 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
         log_node(f"UltimateSDUpscale: Processing | Ratio: x{upscale_by} | Model: {model} | Denoise: {denoise}")
 
         pp = extract_pipeline_params(gen_pipe)
-        steps = max(5, pp.steps // 4)
-        cfg = 1.0
+        steps = max(5, pp.steps // 4) if upscale_steps == 0 else upscale_steps
+        cfg = upscale_cfg
+        
+        final_sampler = pp.sampler_name if upscale_sampler == "Pipeline" else upscale_sampler
+        final_scheduler = pp.scheduler if upscale_scheduler == "Pipeline" else upscale_scheduler
 
         target_pos_text = "" if clean_prompt else pp.pos_text
         positive, negative = self.encode_prompts(pp.clip, target_pos_text, pp.neg_text)
@@ -97,7 +108,7 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
         res = usdu_node.upscale(
                  image=image, model=pp.model, positive=positive, negative=negative, vae=pp.vae,
                  upscale_by=upscale_by, seed=pp.seed, steps=steps, cfg=cfg,
-                 sampler_name=pp.sampler_name, scheduler=pp.scheduler, denoise=denoise,
+                 sampler_name=final_sampler, scheduler=final_scheduler, denoise=denoise,
                  upscale_model=upscale_model, mode_type=mode_type,
                  tile_width=tile_width, tile_height=tile_height, mask_blur=mask_blur, tile_padding=tile_padding,
                  seam_fix_mode=seam_fix_mode, seam_fix_denoise=seam_fix_denoise,
