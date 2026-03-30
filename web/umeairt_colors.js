@@ -151,6 +151,18 @@ const UME_NODE_COLORS = {
         color: "#935116",
         bgcolor: "#4A290B"
     },
+    "UmeAiRT_ImageProcess_Img2Img": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    },
+    "UmeAiRT_ImageProcess_Inpaint": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    },
+    "UmeAiRT_ImageProcess_Outpaint": {
+        color: "#935116",
+        bgcolor: "#4A290B"
+    },
 
     // ControlNet - Amber/Bronze
     "UmeAiRT_ControlNetImageApply_Simple": {
