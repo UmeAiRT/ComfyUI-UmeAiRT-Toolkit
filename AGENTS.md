@@ -49,13 +49,17 @@ Source Image ───┘                          │
 | `UME_BUNDLE` | `{model, clip, vae, model_name}` | All Loader nodes |
 | `UME_SETTINGS` | `{width, height, steps, cfg, sampler_name, scheduler, seed}` | GenerationSettings |
 | `UME_PIPELINE` | `GenerationContext` object (image + all context) | BlockSampler |
-| `UME_IMAGE` | `{image, mask, mode, denoise, auto_resize}` | BlockImageLoader → BlockImageProcess |
+| `UME_IMAGE` | `{image, mask, mode, denoise, outpaint_target_w, outpaint_target_h, outpaint_align}` | BlockImageLoader → BlockImageProcess |
 
 **Rules:**
 - Post-process nodes receive `UME_PIPELINE`, read `gen_pipe.image`, process, update `gen_pipe.image`, return `UME_PIPELINE`.
 - Never create `GenerationContext` outside the `BlockSampler`.
-- The `auto_resize` flag in `UME_IMAGE` is acted upon by the `BlockSampler` using `UME_SETTINGS` dimensions.
-- All pipeline/generation parameters are named `gen_pipe` (not `pipeline` or `generation`).
+- All pipeline/generation parameters are named `gen_pipe`.
+
+### Manifest & Auto-Download Architecture
+- The toolkit relies on a local and remote architecture (`umeairt_bundles.json` and a remote HuggingFace `model_manifest.json`) to map models (Upscale, BBox, SegM) to their download URLs.
+- **Dynamic UI**: Nodes like `⬡ UltimateSD Upscale` merge local scanned models with remote manifest entries. Remote files are prefixed with `[⬇️]` in dropdowns and are auto-downloaded on execution via `download_bundle_files` before processing.
+- **Outpaint Logic**: The passive `⬡ Image Process (Outpaint)` node sets target dimensions in `UME_IMAGE`. The `BlockSampler` uses this to apply **Reflect Padding + Moderate Gaussian Blur** prior to VAE encoding. This preserves local textures at the boundaries and totally eliminates "box" or "barcode" stretching artifacts!
 
 
 
