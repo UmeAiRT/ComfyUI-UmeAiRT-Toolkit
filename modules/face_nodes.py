@@ -8,8 +8,8 @@ import folder_paths
 from .common import log_node, encode_prompts, extract_pipeline_params
 
 try:
-    from .facedetailer_core import logic as fd_logic
-    from .facedetailer_core import detector
+    from ..facedetailer_core import logic as fd_logic
+    from ..facedetailer_core import detector
 except ImportError as e:
     log_node(f"Face Nodes: Could not import FaceDetailer internals: {e}", color="YELLOW")
 
