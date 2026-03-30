@@ -227,8 +227,8 @@ class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
                 "image": (sorted(files), {"image_upload": True, "tooltip": "Select an image file to load from disk."}),
             },
         }
-    RETURN_TYPES = ("UME_IMAGE", "IMAGE", "MASK")
-    RETURN_NAMES = ("image_bundle", "image", "mask")
+    RETURN_TYPES = ("UME_IMAGE",)
+    RETURN_NAMES = ("image_bundle",)
     FUNCTION = "load_block_image"
     CATEGORY = "UmeAiRT/Block/Image"
 
@@ -237,7 +237,7 @@ class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
         out = super().load_image(image)
         img, mask = out[0], out[1]
         image_bundle = UmeImage(image=img, mask=mask, mode="img2img", denoise=0.75)
-        return (image_bundle, img, mask)
+        return (image_bundle,)
 
 def process_image_core(image_bundle, mode: str, denoise: float = 0.75, auto_resize: bool = False, mask_blur: int = 0, 
                       padding_left: int = 0, padding_top: int = 0, padding_right: int = 0, padding_bottom: int = 0):
