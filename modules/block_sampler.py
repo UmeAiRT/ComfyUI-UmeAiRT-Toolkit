@@ -1,4 +1,5 @@
 import torch
+import torchvision.transforms.functional as TF
 import weakref
 import folder_paths
 import nodes as comfy_nodes
@@ -135,6 +136,67 @@ class UmeAiRT_BlockSampler:
                  if source_mask is not None:
                      source_mask = resize_tensor(source_mask, height, width, interp_mode="nearest", is_mask=True)
                  log_node(f"Block Sampler: Auto-resized source to {width}x{height}", color="YELLOW")
+
+             # Outpaint: resize source to fit within target, then pad
+             if mode_str == "outpaint" and raw_image is not None:
+                 target_w = images.outpaint_target_w
+                 target_h = images.outpaint_target_h
+                 h_align = images.outpaint_h_align
+                 v_align = images.outpaint_v_align
+                 mask_blur = images.outpaint_mask_blur
+
+                 B, src_h, src_w, C = raw_image.shape
+
+                 # Resize source to fit within target (maintain aspect ratio)
+                 if src_w > target_w or src_h > target_h:
+                     scale = min(target_w / src_w, target_h / src_h)
+                     fit_w = int(src_w * scale)
+                     fit_h = int(src_h * scale)
+                     raw_image = resize_tensor(raw_image, fit_h, fit_w, interp_mode="bilinear")
+                     if source_mask is not None:
+                         source_mask = resize_tensor(source_mask, fit_h, fit_w, interp_mode="nearest", is_mask=True)
+                     src_w, src_h = fit_w, fit_h
+                     log_node(f"Block Sampler: Outpaint resized source to {fit_w}x{fit_h}", color="YELLOW")
+
+                 # Compute padding from alignment
+                 total_pad_w = max(0, target_w - src_w)
+                 total_pad_h = max(0, target_h - src_h)
+
+                 if h_align == "left":
+                     pad_l, pad_r = 0, total_pad_w
+                 elif h_align == "right":
+                     pad_l, pad_r = total_pad_w, 0
+                 else:  # center
+                     pad_l = total_pad_w // 2
+                     pad_r = total_pad_w - pad_l
+
+                 if v_align == "top":
+                     pad_t, pad_b = 0, total_pad_h
+                 elif v_align == "bottom":
+                     pad_t, pad_b = total_pad_h, 0
+                 else:  # center
+                     pad_t = total_pad_h // 2
+                     pad_b = total_pad_h - pad_t
+
+                 # Apply padding + mask generation
+                 raw_image, source_mask = apply_outpaint_padding(
+                     raw_image, source_mask, pad_l, pad_t, pad_r, pad_b, overlap=8, feathering=40
+                 )
+
+                 # Blur the mask
+                 if source_mask is not None and mask_blur > 0:
+                     if len(source_mask.shape) == 2:
+                         m = source_mask.unsqueeze(0).unsqueeze(0)
+                     else:
+                         m = source_mask
+                     k = mask_blur
+                     if k % 2 == 0:
+                         k += 1
+                     m = TF.gaussian_blur(m, kernel_size=k)
+                     source_mask = m.squeeze(0).squeeze(0) if len(source_mask.shape) == 2 else m
+
+                 mode_str = "inpaint"
+                 log_node(f"Block Sampler: Outpaint applied → {target_w}x{target_h} (pad L={pad_l} T={pad_t} R={pad_r} B={pad_b})", color="GREEN")
 
              ctx.source_image = raw_image
              ctx.source_mask = source_mask

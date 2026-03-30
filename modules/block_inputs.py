@@ -346,10 +346,10 @@ class UmeAiRT_ImageProcess_Inpaint:
 
 
 class UmeAiRT_ImageProcess_Outpaint:
-    """Pre-processor for Outpaint workflows.
+    """Outpaint configurator — tags the image bundle with target dimensions.
 
-    Adds padding around the source image and generates the corresponding
-    inpaint mask. To resize the source first, chain an Img2Img node before this one.
+    Does NOT modify the image. The KSampler handles the actual resize,
+    padding, mask generation, and blurring at execution time.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -357,13 +357,13 @@ class UmeAiRT_ImageProcess_Outpaint:
             "required": {
                 "image_bundle": ("UME_IMAGE",),
                 "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "How much the AI changes the image in the padded areas."}),
-                "padding_left": ("INT", {"default": 0, "tooltip": "Pixels to add on the left side."}),
-                "padding_top": ("INT", {"default": 0, "tooltip": "Pixels to add on the top."}),
-                "padding_right": ("INT", {"default": 0, "tooltip": "Pixels to add on the right side."}),
-                "padding_bottom": ("INT", {"default": 0, "tooltip": "Pixels to add on the bottom."}),
+                "target_width": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 64, "tooltip": "Desired final width of the outpainted image."}),
+                "target_height": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 64, "tooltip": "Desired final height of the outpainted image."}),
             },
             "optional": {
-                "mask_blur": ("INT", {"default": 10, "tooltip": "Softens the edge of the outpaint mask for smoother blending."}),
+                "horizontal_align": (["center", "left", "right"], {"default": "center", "advanced": True, "tooltip": "Where to place the source image horizontally within the target canvas."}),
+                "vertical_align": (["center", "top", "bottom"], {"default": "center", "advanced": True, "tooltip": "Where to place the source image vertically within the target canvas."}),
+                "mask_blur": ("INT", {"default": 10, "advanced": True, "tooltip": "Softens the edge of the outpaint mask for smoother blending."}),
             }
         }
     RETURN_TYPES = ("UME_IMAGE",)
@@ -371,9 +371,19 @@ class UmeAiRT_ImageProcess_Outpaint:
     FUNCTION = "process"
     CATEGORY = "UmeAiRT/Block/Image"
 
-    def process(self, image_bundle, denoise=0.75, padding_left=0, padding_top=0, padding_right=0, padding_bottom=0, mask_blur=10):
-        return process_image_core(image_bundle, mode="outpaint", denoise=denoise, auto_resize=False, mask_blur=mask_blur, 
-                                  padding_left=padding_left, padding_top=padding_top, padding_right=padding_right, padding_bottom=padding_bottom)
+    def process(self, image_bundle, denoise=0.75, target_width=1024, target_height=1024,
+                horizontal_align="center", vertical_align="center", mask_blur=10):
+        import copy
+        new_bundle = copy.copy(image_bundle)
+        new_bundle.mode = "outpaint"
+        new_bundle.denoise = denoise
+        new_bundle.auto_resize = False
+        new_bundle.outpaint_target_w = target_width
+        new_bundle.outpaint_target_h = target_height
+        new_bundle.outpaint_h_align = horizontal_align
+        new_bundle.outpaint_v_align = vertical_align
+        new_bundle.outpaint_mask_blur = mask_blur
+        return (new_bundle,)
 
 class UmeAiRT_Positive_Input:
     """Multiline text editor for the positive prompt. Outputs a STRING."""

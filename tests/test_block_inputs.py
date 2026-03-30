@@ -154,8 +154,10 @@ class TestImageProcessNodes(unittest.TestCase):
         inputs = UmeAiRT_ImageProcess_Outpaint.INPUT_TYPES()
         self.assertIn("required", inputs)
         self.assertIn("denoise", inputs["required"])
-        self.assertIn("padding_left", inputs["required"])
+        self.assertIn("target_width", inputs["required"])
+        self.assertIn("target_height", inputs["required"])
         self.assertIn("mask_blur", inputs.get("optional", {}))
+        self.assertNotIn("padding_left", inputs["required"])
 
 
 if __name__ == "__main__":

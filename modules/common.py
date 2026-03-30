@@ -116,6 +116,12 @@ class UmeImage:
     denoise: float = 1.0
     auto_resize: bool = False
     controlnets: List[Tuple] = field(default_factory=list)
+    # Outpaint-specific (Solution C: target dimensions + alignment)
+    outpaint_target_w: int = 0
+    outpaint_target_h: int = 0
+    outpaint_h_align: str = "center"
+    outpaint_v_align: str = "center"
+    outpaint_mask_blur: int = 10
 
 
 # --- GenerationContext (UME_PIPELINE) ---
