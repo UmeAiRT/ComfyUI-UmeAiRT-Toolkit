@@ -199,8 +199,8 @@ class UmeAiRT_BlockSampler:
              ctx.source_mask = source_mask
 
              if mode_str in ["inpaint", "outpaint"] and source_mask is not None:
-                 import nodes
-                 latent_image = nodes.VAEEncodeForInpaint().encode(vae, raw_image, source_mask, grow_mask_by=6)[0]
+                 latent_image = self._vae_encode.encode(vae, raw_image)[0]
+                 latent_image["noise_mask"] = source_mask
              elif denoise < 1.0:
                  latent_image = self._vae_encode.encode(vae, raw_image)[0]
 
