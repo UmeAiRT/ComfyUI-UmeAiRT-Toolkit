@@ -10,8 +10,15 @@ class TestBlockSampler(unittest.TestCase):
     def test_input_types(self):
         inputs = UmeAiRT_BlockSampler.INPUT_TYPES()
         self.assertIn("required", inputs)
-        self.assertIn("model_bundle", inputs["required"])
-        self.assertIn("settings", inputs["required"])
+        self.assertIn("optional", inputs)
+        req = inputs["required"]
+        opt = inputs["optional"]
+        self.assertIn("model_bundle", req)
+        self.assertIn("positive", req)
+        self.assertIn("negative", req)
+        self.assertIn("settings", req)
+        self.assertIn("loras", opt)
+        self.assertIn("images", opt)
 
     def test_return_types(self):
         self.assertEqual(UmeAiRT_BlockSampler.RETURN_TYPES, ("UME_PIPELINE",))

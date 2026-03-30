@@ -25,13 +25,13 @@ class UmeAiRT_BlockSampler:
         return {
             "required": {
                 "model_bundle": ("UME_BUNDLE", {"tooltip": "Model bundle from a Loader node."}),
-                "settings": ("UME_SETTINGS", {"tooltip": "Settings from Generation Settings node."}),
                 "positive": ("POSITIVE", {"forceInput": True, "tooltip": "Describe what you want in the image. Connect a Prompt Input or CLIP Text Encode node."}),
+                "negative": ("NEGATIVE", {"forceInput": True, "tooltip": "Describe what to avoid in the image. Connect a Prompt Input or CLIP Text Encode node."}),
+                "settings": ("UME_SETTINGS", {"tooltip": "Settings from Generation Settings node."}),
             },
             "optional": {
-                "negative": ("NEGATIVE", {"forceInput": True, "tooltip": "Describe what to avoid in the image. Connect a Prompt Input or CLIP Text Encode node."}),
                 "loras": ("UME_LORA_STACK", {"tooltip": "Connect a LoRA Block node to apply style/character modifications to the model."}),
-                "image": ("UME_IMAGE", {"tooltip": "Connect an Image Process node for img2img, inpaint, or outpaint workflows."}),
+                "images": ("UME_IMAGE", {"tooltip": "Connect an Image Process node for img2img, inpaint, or outpaint workflows."}),
             }
         }
     RETURN_TYPES = ("UME_PIPELINE",)
@@ -57,11 +57,11 @@ class UmeAiRT_BlockSampler:
 
     def process(self, 
                 model_bundle: Dict[str, Any], 
-                settings: Dict[str, Any], 
                 positive: Optional[str] = None, 
-                negative: Optional[str] = None, 
+                negative: Optional[str] = None,
+                settings: Dict[str, Any] = None, 
                 loras: Optional[List[Tuple[str, float, float]]] = None, 
-                image: Optional[Dict[str, Any]] = None) -> Tuple[GenerationContext]:
+                images: Optional[Dict[str, Any]] = None) -> Tuple[GenerationContext]:
         # 1. Validate and unpack model_bundle
         validate_bundle(model_bundle, ["model", "clip", "vae"], context="Block Sampler")
         model = model_bundle.model
@@ -84,8 +84,8 @@ class UmeAiRT_BlockSampler:
         ctx.seed = settings.seed
 
         controlnets = []
-        if image:
-            controlnets = image.controlnets if image.controlnets else []
+        if images:
+            controlnets = images.controlnets if images.controlnets else []
 
         # 3. Apply LoRAs
         if loras:
@@ -110,7 +110,7 @@ class UmeAiRT_BlockSampler:
         sampler_name, scheduler = ctx.sampler_name, ctx.scheduler
         seed = ctx.seed
 
-        denoise = image.denoise if image else ctx.denoise
+        denoise = images.denoise if images else ctx.denoise
         ctx.denoise = denoise
 
         # 4. Handle Prompts
@@ -123,11 +123,11 @@ class UmeAiRT_BlockSampler:
         mode_str = "txt2img"
         raw_image, source_mask = None, None
 
-        if image:
-             raw_image = image.image
-             source_mask = image.mask
-             mode_str = image.mode or "img2img"
-             auto_resize = image.auto_resize
+        if images:
+             raw_image = images.image
+             source_mask = images.mask
+             mode_str = images.mode or "img2img"
+             auto_resize = images.auto_resize
 
              # Auto-resize source image to settings dimensions
              if auto_resize and raw_image is not None:
