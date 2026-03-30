@@ -39,7 +39,7 @@ from .modules.block_nodes import (
     UmeAiRT_FilesSettings_FLUX,
     UmeAiRT_FilesSettings_Fragmented,
     UmeAiRT_FilesSettings_ZIMG,
-    UmeAiRT_BlockImageLoader,
+    UmeAiRT_BlockImageLoader, UmeAiRT_BlockImageProcess,
     UmeAiRT_ImageProcess_Img2Img, UmeAiRT_ImageProcess_Inpaint, UmeAiRT_ImageProcess_Outpaint,
     UmeAiRT_BlockSampler,
     UmeAiRT_BundleLoader,
@@ -76,6 +76,7 @@ NODE_CLASS_MAPPINGS = {
     # Block Settings & Image
     "UmeAiRT_GenerationSettings": UmeAiRT_GenerationSettings,
     "UmeAiRT_BlockImageLoader": UmeAiRT_BlockImageLoader,
+    "UmeAiRT_BlockImageProcess": UmeAiRT_BlockImageProcess,
     "UmeAiRT_ImageProcess_Img2Img": UmeAiRT_ImageProcess_Img2Img,
     "UmeAiRT_ImageProcess_Inpaint": UmeAiRT_ImageProcess_Inpaint,
     "UmeAiRT_ImageProcess_Outpaint": UmeAiRT_ImageProcess_Outpaint,
@@ -133,6 +134,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     # Settings & Image
     "UmeAiRT_GenerationSettings": "⬡ Generation Settings",
     "UmeAiRT_BlockImageLoader": "⬡ Image Loader",
+    "UmeAiRT_BlockImageProcess": "⬡ Image Process",
     "UmeAiRT_ImageProcess_Img2Img": "⬡ Image Process (Img2Img)",
     "UmeAiRT_ImageProcess_Inpaint": "⬡ Image Process (Inpaint)",
     "UmeAiRT_ImageProcess_Outpaint": "⬡ Image Process (Outpaint)",

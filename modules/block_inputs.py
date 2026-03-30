@@ -269,6 +269,37 @@ def process_image_core(image_bundle, mode: str, denoise: float = 0.75, auto_resi
     return (UmeImage(image=final_image, mask=final_mask, mode=final_mode, denoise=denoise, auto_resize=auto_resize),)
 
 
+class UmeAiRT_BlockImageProcess:
+    """Structural pre-processor for UME_IMAGE bundles in Block-based workflows.
+
+    Handles cropping, padding (Outpaint mapping), and conditional context tagging.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image_bundle": ("UME_IMAGE",),
+                "denoise": ("FLOAT", {"default": 0.75, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "tooltip": "How much the AI changes the image. 1.0 = completely new image, 0.5 = keeps half the original detail."}),
+                "mode": (["img2img", "inpaint", "outpaint", "txt2img"], {"default": "img2img", "tooltip": "How to process the image: img2img (transform), inpaint (fill masked area), or outpaint (extend edges)."}),
+            },
+            "optional": {
+                "auto_resize": ("BOOLEAN", {"default": False, "label_on": "Resize to Settings", "label_off": "Keep Original", "tooltip": "Automatically resize the source image to match the width/height from Generation Settings."}),
+                "mask_blur": ("INT", {"default": 10, "tooltip": "Softens the edge of the inpaint mask for smoother blending. Higher = softer transitions."}),
+                "padding_left": ("INT", {"default": 0, "tooltip": "Pixels to add on the left side when using outpaint mode."}), "padding_top": ("INT", {"default": 0}),
+                "padding_right": ("INT", {"default": 0, "tooltip": "Pixels to add on the right side when using outpaint mode."}), "padding_bottom": ("INT", {"default": 0}),
+            }
+        }
+    RETURN_TYPES = ("UME_IMAGE",)
+    RETURN_NAMES = ("image_bundle",)
+    FUNCTION = "process_image"
+    CATEGORY = "UmeAiRT/Block/Image"
+
+    def process_image(self, image_bundle, denoise: float = 0.75, mode: str = "img2img", auto_resize: bool = False, mask_blur: int = 0, 
+                      padding_left: int = 0, padding_top: int = 0, padding_right: int = 0, padding_bottom: int = 0):
+        return process_image_core(image_bundle, mode=mode, denoise=denoise, auto_resize=auto_resize, mask_blur=mask_blur, 
+                                  padding_left=padding_left, padding_top=padding_top, padding_right=padding_right, padding_bottom=padding_bottom)
+
+
 class UmeAiRT_ImageProcess_Img2Img:
     """Pre-processor for Img2Img workflows."""
     @classmethod
