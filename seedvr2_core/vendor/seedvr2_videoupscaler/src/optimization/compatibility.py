@@ -645,19 +645,23 @@ NVIDIA_CONV3D_MEMORY_BUG_WORKAROUND = _check_conv3d_memory_bug()
 # proper formatting and the [UmeAiRT-Toolkit] prefix.
 
 
-# Bfloat16 CUBLAS support
+# Bfloat16 support detection
 def _probe_bfloat16_support() -> bool:
+    """Check if the GPU supports bfloat16 computation.
+
+    Uses torch.cuda.is_bf16_supported() which queries GPU compute capability
+    natively without creating CUDA tensors at import time. This avoids
+    stack overflow / access violation on Blackwell GPUs (RTX 50xx) where
+    early CUDA tensor creation conflicts with ComfyUI's initialization.
+
+    See: https://github.com/UmeAiRT/ComfyUI-UmeAiRT-Toolkit/issues/3
+    """
     if not torch.cuda.is_available():
         return True
     try:
-        a = torch.randn(8, 8, dtype=torch.bfloat16, device='cuda:0')
-        _ = torch.matmul(a, a)
-        del a
-        return True
-    except RuntimeError as e:
-        if "CUBLAS_STATUS_NOT_SUPPORTED" in str(e):
-            return False
-        raise
+        return torch.cuda.is_bf16_supported()
+    except Exception:
+        return False
 
 BFLOAT16_SUPPORTED = _probe_bfloat16_support()
 COMPUTE_DTYPE = torch.bfloat16 if BFLOAT16_SUPPORTED else torch.float16
