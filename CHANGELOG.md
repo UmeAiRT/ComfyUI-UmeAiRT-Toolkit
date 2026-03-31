@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **SeedVR2 Blackwell Crash**: Fixed stack overflow / access violation at ComfyUI startup on RTX 50xx GPUs. The `_probe_bfloat16_support()` function in `seedvr2_core` was creating CUDA tensors at import time before CUDA was fully initialized. Replaced with `torch.cuda.is_bf16_supported()` which queries GPU compute capability natively without touching CUDA memory. ([#3](https://github.com/UmeAiRT/ComfyUI-UmeAiRT-Toolkit/issues/3))
+- **Colorama Linux Crash**: Fixed `AttributeError: 'NoneType' object has no attribute 'erase_line'` on Linux caused by `colorama.init(convert=True)` forcing Win32 ANSI conversion on non-Windows platforms. Removed forced conversion to let colorama auto-detect the platform. ([#4](https://github.com/UmeAiRT/ComfyUI-UmeAiRT-Toolkit/issues/4))
 
 ### Added
 

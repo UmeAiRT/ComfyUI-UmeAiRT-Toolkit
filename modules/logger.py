@@ -7,7 +7,7 @@ Provides a standardized logging interface with color support using colorama.
 try:
     import colorama
     from colorama import Fore, Style
-    colorama.init(convert=True, autoreset=True)
+    colorama.init(autoreset=True)
     CYAN = Fore.CYAN
     GREEN = Fore.GREEN
     RED = Fore.LIGHTRED_EX
