@@ -2,134 +2,106 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://toolkit.umeai.art/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/architecture/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/changelog/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/contributing/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/getting-started/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/codemaps/structure/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/codemaps/wireless/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/bundle-downloader/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/bundle-loader/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/checkpoint-loader/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/controlnet/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/detailer-daemon/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/facedetailer/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/flux-loader/</loc>
-         <lastmod>2026-03-30</lastmod>
-    </url>
-    <url>
-         <loc>https://toolkit.umeai.art/nodes/fragmented-loader/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/generation-settings/</loc>
-         <lastmod>2026-03-30</lastmod>
-    </url>
-    <url>
-         <loc>https://toolkit.umeai.art/nodes/health-check/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/image-loader/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/image-process/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/image-saver/</loc>
-         <lastmod>2026-03-30</lastmod>
-    </url>
-    <url>
-         <loc>https://toolkit.umeai.art/nodes/inpaint-composite/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/ksampler/</loc>
-         <lastmod>2026-03-30</lastmod>
-    </url>
-    <url>
-         <loc>https://toolkit.umeai.art/nodes/label/</loc>
-         <lastmod>2026-03-30</lastmod>
-    </url>
-    <url>
-         <loc>https://toolkit.umeai.art/nodes/log-viewer/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/lora-blocks/</loc>
-         <lastmod>2026-03-30</lastmod>
-    </url>
-    <url>
-         <loc>https://toolkit.umeai.art/nodes/multi-lora/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/pack-unpack/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/prompt-inputs/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/seedvr2-upscale/</loc>
-         <lastmod>2026-03-30</lastmod>
-    </url>
-    <url>
-         <loc>https://toolkit.umeai.art/nodes/source-image-output/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/ultimate-upscale/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
     <url>
          <loc>https://toolkit.umeai.art/nodes/zimg-loader/</loc>
-         <lastmod>2026-03-30</lastmod>
+         <lastmod>2026-04-02</lastmod>
     </url>
 </urlset>

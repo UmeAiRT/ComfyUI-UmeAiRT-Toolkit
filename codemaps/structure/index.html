@@ -49,6 +49,8 @@
       
     
     
+      <link rel="stylesheet" href="../../assets/custom.css">
+    
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -692,34 +694,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../nodes/fragmented-loader/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Fragmented Loader
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../nodes/bundle-loader/" class="md-nav__link">
         
   
@@ -728,34 +702,6 @@
     
   
     Bundle Auto-Loader
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../nodes/multi-lora/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Multi-LoRA Loader
   
 
     
@@ -1270,62 +1216,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../nodes/source-image-output/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Source Image Output
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../nodes/inpaint-composite/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Inpaint Composite
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../nodes/image-saver/" class="md-nav__link">
         
   
@@ -1514,90 +1404,6 @@
     
   
     Bundle Downloader
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../nodes/health-check/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Health Check
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../nodes/log-viewer/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Log Viewer
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../nodes/label/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Label
   
 
     
@@ -1937,11 +1743,6 @@
 <td>UME → Native</td>
 <td>Extracts IMAGE, MASK, mode, denoise, auto_resize from <code>UME_IMAGE</code></td>
 </tr>
-<tr>
-<td><strong>Unpack Prompts Bundle</strong></td>
-<td>UME → Native</td>
-<td>Extracts positive/negative strings from <code>UME_PROMPTS</code></td>
-</tr>
 </tbody>
 </table>
 <h2 id="sub-modules-modules">Sub-Modules (<code>modules/</code>)<a class="headerlink" href="#sub-modules-modules" title="Permanent link">&para;</a></h2>
@@ -1949,7 +1750,6 @@
 <li><code>common.py</code>: <code>GenerationContext</code> class, <code>PipelineParams</code>, <code>extract_pipeline_params()</code>, <code>validate_bundle()</code>, shared constants (<code>KNOWN_DIT_MODELS</code>), and core utilities.</li>
 <li><code>logger.py</code>: Standardized colorized logging utility.</li>
 <li><code>optimization_utils.py</code>: Environment checks (SageAttention, Triton, etc.).</li>
-<li><code>model_nodes.py</code>: Multi-LoRA Loader.</li>
 <li><code>logic_nodes.py</code>: Pipeline-aware Upscalers, Detailers, and Detail Daemon nodes.</li>
 <li><code>block_nodes.py</code>: Re-export shim for backward compatibility — imports from sub-modules.</li>
 <li><code>block_inputs.py</code>: LoRA blocks, ControlNet, GenerationSettings (→ <code>UME_SETTINGS</code>), Image Loader/Process, Prompt Inputs.</li>

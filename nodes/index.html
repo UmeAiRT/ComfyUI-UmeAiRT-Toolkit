@@ -53,6 +53,8 @@
       
     
     
+      <link rel="stylesheet" href="../assets/custom.css">
+    
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -817,34 +819,6 @@
   
   
     <li class="md-nav__item">
-      <a href="fragmented-loader/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Fragmented Loader
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="bundle-loader/" class="md-nav__link">
         
   
@@ -853,34 +827,6 @@
     
   
     Bundle Auto-Loader
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="multi-lora/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Multi-LoRA Loader
   
 
     
@@ -1404,62 +1350,6 @@
   
   
     <li class="md-nav__item">
-      <a href="source-image-output/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Source Image Output
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="inpaint-composite/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Inpaint Composite
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="image-saver/" class="md-nav__link">
         
   
@@ -1654,90 +1544,6 @@
     
   
     Bundle Downloader
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="health-check/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Health Check
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="log-viewer/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Log Viewer
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="label/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Label
   
 
     
@@ -2034,22 +1840,10 @@
 <td>Z-IMAGE / Lumina2 architecture</td>
 </tr>
 <tr>
-<td><a href="fragmented-loader/">Fragmented Loader</a></td>
-<td>⬡ Fragmented Loader</td>
-<td>MODEL, CLIP, VAE</td>
-<td>Diffusers-format model folders</td>
-</tr>
-<tr>
 <td><a href="bundle-loader/">Bundle Auto-Loader</a></td>
 <td>⬡ 📦 Bundle Auto-Loader</td>
 <td>UME_BUNDLE</td>
 <td>Auto-download + load from manifest</td>
-</tr>
-<tr>
-<td><a href="multi-lora/">Multi-LoRA Loader</a></td>
-<td>⬡ Multi-LoRA Loader</td>
-<td>MODEL, CLIP</td>
-<td>Apply up to 3 LoRAs (wired)</td>
 </tr>
 </tbody>
 </table>
@@ -2178,18 +1972,6 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="source-image-output/">Source Image Output</a></td>
-<td>⬡ Source Image Output</td>
-<td>IMAGE, MASK</td>
-<td>Pass-through for source image</td>
-</tr>
-<tr>
-<td><a href="inpaint-composite/">Inpaint Composite</a></td>
-<td>⬡ Inpaint Composite</td>
-<td>IMAGE</td>
-<td>Blend generated + source via mask</td>
-</tr>
-<tr>
 <td><a href="image-saver/">Image Saver</a></td>
 <td>⬡ Image Saver</td>
 <td>—</td>
@@ -2217,24 +1999,6 @@
 <td>⬡ 💾 Bundle Model Downloader</td>
 <td>STRING</td>
 <td>Pre-download models without loading</td>
-</tr>
-<tr>
-<td><a href="health-check/">Health Check</a></td>
-<td>⬡ 🩺 Health Check</td>
-<td>—</td>
-<td>System diagnostics</td>
-</tr>
-<tr>
-<td><a href="log-viewer/">Log Viewer</a></td>
-<td>⬡ 📜 Log Viewer</td>
-<td>—</td>
-<td>View UmeAiRT logs</td>
-</tr>
-<tr>
-<td><a href="label/">Label</a></td>
-<td>⬡ Label</td>
-<td>—</td>
-<td>Visual annotation node</td>
 </tr>
 </tbody>
 </table>

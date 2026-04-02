@@ -53,6 +53,8 @@
       
     
     
+      <link rel="stylesheet" href="../../assets/custom.css">
+    
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -704,34 +706,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../fragmented-loader/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Fragmented Loader
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../bundle-loader/" class="md-nav__link">
         
   
@@ -740,34 +714,6 @@
     
   
     Bundle Auto-Loader
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../multi-lora/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Multi-LoRA Loader
   
 
     
@@ -1472,62 +1418,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../source-image-output/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Source Image Output
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../inpaint-composite/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Inpaint Composite
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../image-saver/" class="md-nav__link">
         
   
@@ -1722,90 +1612,6 @@
     
   
     Bundle Downloader
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../health-check/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Health Check
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../log-viewer/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Log Viewer
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../label/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Label
   
 
     
@@ -2214,6 +2020,7 @@
 </tr>
 </tbody>
 </table>
+<p><img alt="Image Process (All-in-One)" src="../../assets/UmeAiRT_BlockImageProcess.png" /></p>
 <hr />
 <h2 id="image-process-img2img">⬡ Image Process (Img2Img)<a class="headerlink" href="#image-process-img2img" title="Permanent link">&para;</a></h2>
 <p>Dedicated node for img2img workflows — the simplest Image Process node.</p>
@@ -2252,6 +2059,7 @@
 </tr>
 </tbody>
 </table>
+<p><img alt="Image Process (Img2Img)" src="../../assets/UmeAiRT_ImageProcess_Img2Img.png" /></p>
 <hr />
 <h2 id="image-process-inpaint">⬡ Image Process (Inpaint)<a class="headerlink" href="#image-process-inpaint" title="Permanent link">&para;</a></h2>
 <p>Dedicated node for inpainting — fills masked areas (white = modify).</p>
@@ -2297,6 +2105,7 @@
 </tr>
 </tbody>
 </table>
+<p><img alt="Image Process (Inpaint)" src="../../assets/UmeAiRT_ImageProcess_Inpaint.png" /></p>
 <hr />
 <h2 id="image-process-outpaint">⬡ Image Process (Outpaint)<a class="headerlink" href="#image-process-outpaint" title="Permanent link">&para;</a></h2>
 <p>Dedicated node for outpainting — specify the <strong>desired final image size</strong> instead of raw padding.</p>
@@ -2374,6 +2183,7 @@
 <li>Vertical padding: 0px (already matches)</li>
 <li>The AI generates content in the new areas, blending naturally</li>
 </ul>
+<p><img alt="Image Process (Outpaint)" src="../../assets/UmeAiRT_ImageProcess_Outpaint.png" /></p>
 <h3 id="outputs">Outputs<a class="headerlink" href="#outputs" title="Permanent link">&para;</a></h3>
 <p>All Image Process nodes output:</p>
 <table>
