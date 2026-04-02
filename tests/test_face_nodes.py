@@ -28,7 +28,7 @@ class TestPipelineSubjectDetailer(unittest.TestCase):
         self.assertEqual(UmeAiRT_PipelineSubjectDetailer.FUNCTION, "subject_detail")
 
     def test_category(self):
-        self.assertEqual(UmeAiRT_PipelineSubjectDetailer.CATEGORY, "UmeAiRT/Pipeline/Post-Processing")
+        self.assertEqual(UmeAiRT_PipelineSubjectDetailer.CATEGORY, "UmeAiRT/Post-Process")
 
     def test_has_subject_detail_method(self):
         node = UmeAiRT_PipelineSubjectDetailer()

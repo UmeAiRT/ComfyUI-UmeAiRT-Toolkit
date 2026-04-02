@@ -48,7 +48,7 @@ class TestLoraFactory(unittest.TestCase):
             self.assertTrue(hasattr(cls, 'INPUT_TYPES'))
             self.assertTrue(hasattr(cls, 'FUNCTION'))
             self.assertEqual(cls.FUNCTION, "process")
-            self.assertEqual(cls.CATEGORY, "UmeAiRT/Block/LoRA")
+            self.assertEqual(cls.CATEGORY, "UmeAiRT/Loaders/LoRA")
             self.assertEqual(cls.RETURN_TYPES, ("UME_LORA_STACK",))
 
     def test_class_names_are_correct(self):

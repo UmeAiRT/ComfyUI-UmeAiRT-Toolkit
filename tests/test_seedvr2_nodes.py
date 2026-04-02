@@ -30,7 +30,7 @@ class TestPipelineSeedVR2Upscale(unittest.TestCase):
         self.assertEqual(UmeAiRT_PipelineSeedVR2Upscale.FUNCTION, "upscale")
 
     def test_category(self):
-        self.assertEqual(UmeAiRT_PipelineSeedVR2Upscale.CATEGORY, "UmeAiRT/Pipeline/Post-Processing")
+        self.assertEqual(UmeAiRT_PipelineSeedVR2Upscale.CATEGORY, "UmeAiRT/Post-Process")
 
     def test_has_upscale_method(self):
         node = UmeAiRT_PipelineSeedVR2Upscale()

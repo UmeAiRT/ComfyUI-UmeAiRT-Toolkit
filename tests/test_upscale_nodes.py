@@ -44,7 +44,7 @@ class TestPipelineUltimateUpscale(unittest.TestCase):
         self.assertEqual(UmeAiRT_PipelineUltimateUpscale.FUNCTION, "upscale")
 
     def test_category(self):
-        self.assertEqual(UmeAiRT_PipelineUltimateUpscale.CATEGORY, "UmeAiRT/Pipeline/Post-Processing")
+        self.assertEqual(UmeAiRT_PipelineUltimateUpscale.CATEGORY, "UmeAiRT/Post-Process")
 
     def test_has_upscale_method(self):
         node = UmeAiRT_PipelineUltimateUpscale()

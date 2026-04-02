@@ -96,7 +96,7 @@ class TestDetailerDaemon(unittest.TestCase):
         self.assertEqual(UmeAiRT_Detailer_Daemon.FUNCTION, "process")
 
     def test_category(self):
-        self.assertEqual(UmeAiRT_Detailer_Daemon.CATEGORY, "UmeAiRT/Pipeline/Post-Processing")
+        self.assertEqual(UmeAiRT_Detailer_Daemon.CATEGORY, "UmeAiRT/Post-Process")
 
 
 if __name__ == "__main__":
