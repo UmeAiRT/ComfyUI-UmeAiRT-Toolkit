@@ -52,6 +52,7 @@ NODE_CLASS_MAPPINGS = {
     # Block Loaders
     "UmeAiRT_FilesSettings_Checkpoint": UmeAiRT_FilesSettings_Checkpoint,
     "UmeAiRT_FilesSettings_FLUX": UmeAiRT_FilesSettings_FLUX,
+    "UmeAiRT_FilesSettings_ZIMG": UmeAiRT_FilesSettings_ZIMG,
     "UmeAiRT_BundleLoader": UmeAiRT_BundleLoader,
 
     # Block Settings & Image
@@ -97,6 +98,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     # Loaders
     "UmeAiRT_FilesSettings_Checkpoint": "⬡ Checkpoint Loader",
     "UmeAiRT_FilesSettings_FLUX": "⬡ FLUX Loader",
+    "UmeAiRT_FilesSettings_ZIMG": "⬡ Z-IMG Loader",
     "UmeAiRT_BundleLoader": "⬡ 📦 Bundle Auto-Loader",
 
     # Settings & Image
