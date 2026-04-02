@@ -1,0 +1,1465 @@
+{
+  "id": "2db162ef-12ae-4758-aaa9-e647ad33b50e",
+  "revision": 0,
+  "last_node_id": 44,
+  "last_link_id": 0,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "UmeAiRT_FilesSettings_Checkpoint",
+      "pos": [
+        2399.9999260845143,
+        430.0000081210853
+      ],
+      "size": [
+        400,
+        90
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model_bundle",
+          "type": "UME_BUNDLE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_FilesSettings_Checkpoint",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        null,
+        "Baked VAE",
+        -1
+      ],
+      "color": "#154360",
+      "bgcolor": "#0A2130"
+    },
+    {
+      "id": 2,
+      "type": "UmeAiRT_FilesSettings_FLUX",
+      "pos": [
+        2399.9999260845143,
+        590.0000038824683
+      ],
+      "size": [
+        400,
+        190
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model_bundle",
+          "type": "UME_BUNDLE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_FilesSettings_FLUX",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "color": "#154360",
+      "bgcolor": "#0A2130"
+    },
+    {
+      "id": 4,
+      "type": "UmeAiRT_FilesSettings_ZIMG",
+      "pos": [
+        2399.9999260845143,
+        819.999987652503
+      ],
+      "size": [
+        400,
+        160
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model_bundle",
+          "type": "UME_BUNDLE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_FilesSettings_ZIMG",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        null,
+        null,
+        null
+      ],
+      "color": "#154360",
+      "bgcolor": "#0A2130"
+    },
+    {
+      "id": 5,
+      "type": "UmeAiRT_BundleLoader",
+      "pos": [
+        2399.9999260845143,
+        1010.0000130300054
+      ],
+      "size": [
+        400,
+        120
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model_bundle",
+          "type": "UME_BUNDLE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_BundleLoader",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        "FLUX/Dev",
+        "GGUF_Q3"
+      ],
+      "color": "#154360",
+      "bgcolor": "#0A2130"
+    },
+    {
+      "id": 7,
+      "type": "UmeAiRT_GenerationSettings",
+      "pos": [
+        2899.999904391375,
+        430.0000081210853
+      ],
+      "size": [
+        400,
+        290
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "settings",
+          "type": "UME_SETTINGS",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_GenerationSettings",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        1024,
+        1024,
+        20,
+        8,
+        "euler",
+        "simple",
+        0,
+        "randomize"
+      ],
+      "color": "#935116",
+      "bgcolor": "#4A290B"
+    },
+    {
+      "id": 8,
+      "type": "UmeAiRT_BlockImageLoader",
+      "pos": [
+        3399.999965483355,
+        430.0000081210853
+      ],
+      "size": [
+        400,
+        370
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "image_bundle",
+          "type": "UME_IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_BlockImageLoader",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        "example.png",
+        "image"
+      ],
+      "color": "#6B2D1A",
+      "bgcolor": "#35160D"
+    },
+    {
+      "id": 9,
+      "type": "UmeAiRT_BlockImageProcess",
+      "pos": [
+        2900,
+        760
+      ],
+      "size": [
+        400,
+        320
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_bundle",
+          "type": "UME_IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_bundle",
+          "type": "UME_IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_BlockImageProcess",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        0.75,
+        "img2img",
+        false,
+        10,
+        0,
+        0,
+        0,
+        0
+      ],
+      "color": "#935116",
+      "bgcolor": "#4A290B"
+    },
+    {
+      "id": 10,
+      "type": "UmeAiRT_ImageProcess_Img2Img",
+      "pos": [
+        2900,
+        1120
+      ],
+      "size": [
+        400,
+        120
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_bundle",
+          "type": "UME_IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_bundle",
+          "type": "UME_IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_ImageProcess_Img2Img",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        0.75,
+        false
+      ],
+      "color": "#935116",
+      "bgcolor": "#4A290B"
+    },
+    {
+      "id": 11,
+      "type": "UmeAiRT_ImageProcess_Inpaint",
+      "pos": [
+        2900,
+        1280
+      ],
+      "size": [
+        400,
+        150
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_bundle",
+          "type": "UME_IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_bundle",
+          "type": "UME_IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_ImageProcess_Inpaint",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        0.75,
+        10,
+        false
+      ],
+      "color": "#935116",
+      "bgcolor": "#4A290B"
+    },
+    {
+      "id": 12,
+      "type": "UmeAiRT_ImageProcess_Outpaint",
+      "pos": [
+        2900,
+        1470
+      ],
+      "size": [
+        400,
+        150
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_bundle",
+          "type": "UME_IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_bundle",
+          "type": "UME_IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_ImageProcess_Outpaint",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        0.75,
+        1024,
+        1024,
+        "center",
+        "center",
+        10
+      ],
+      "color": "#935116",
+      "bgcolor": "#4A290B"
+    },
+    {
+      "id": 13,
+      "type": "UmeAiRT_LoraBlock_1",
+      "pos": [
+        3899.9999184478324,
+        430.0000081210853
+      ],
+      "size": [
+        400,
+        160
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "loras",
+          "shape": 7,
+          "type": "UME_LORA_STACK",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "loras",
+          "type": "UME_LORA_STACK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_LoraBlock_1",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        true,
+        "None",
+        1
+      ],
+      "color": "#4A235A",
+      "bgcolor": "#25122D"
+    },
+    {
+      "id": 14,
+      "type": "UmeAiRT_LoraBlock_3",
+      "pos": [
+        3899.9999184478324,
+        630.0000163387518
+      ],
+      "size": [
+        400,
+        360
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "loras",
+          "shape": 7,
+          "type": "UME_LORA_STACK",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "loras",
+          "type": "UME_LORA_STACK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_LoraBlock_3",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        true,
+        "None",
+        1,
+        true,
+        "None",
+        1,
+        true,
+        "None",
+        1
+      ],
+      "color": "#4A235A",
+      "bgcolor": "#25122D"
+    },
+    {
+      "id": 15,
+      "type": "UmeAiRT_LoraBlock_5",
+      "pos": [
+        3899.9999184478324,
+        1029.9999787103338
+      ],
+      "size": [
+        400,
+        570
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "loras",
+          "shape": 7,
+          "type": "UME_LORA_STACK",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "loras",
+          "type": "UME_LORA_STACK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_LoraBlock_5",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        true,
+        "None",
+        1,
+        true,
+        "None",
+        1,
+        true,
+        "None",
+        1,
+        true,
+        "None",
+        1,
+        true,
+        "None",
+        1
+      ],
+      "color": "#4A235A",
+      "bgcolor": "#25122D"
+    },
+    {
+      "id": 16,
+      "type": "UmeAiRT_LoraBlock_10",
+      "pos": [
+        3899.9999184478324,
+        1640.0000402672488
+      ],
+      "size": [
+        400,
+        1090
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "loras",
+          "shape": 7,
+          "type": "UME_LORA_STACK",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "loras",
+          "type": "UME_LORA_STACK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_LoraBlock_10",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        true,
+        "None",
+        1,
+        true,
+        "None",
+        1,
+        true,
+        "None",
+        1,
+        true,
+        "None",
+        1,
+        true,
+        "None",
+        1,
+        true,
+        "None",
+        1,
+        true,
+        "None",
+        1,
+        true,
+        "None",
+        1,
+        true,
+        "None",
+        1,
+        true,
+        "None",
+        1
+      ],
+      "color": "#4A235A",
+      "bgcolor": "#25122D"
+    },
+    {
+      "id": 17,
+      "type": "UmeAiRT_ControlNetImageApply",
+      "pos": [
+        3399.999965483355,
+        859.999973076911
+      ],
+      "size": [
+        400,
+        140
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_bundle",
+          "type": "UME_IMAGE",
+          "link": null
+        },
+        {
+          "name": "optional_control_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_bundle",
+          "type": "UME_IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_ControlNetImageApply",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        null,
+        1,
+        0,
+        1
+      ],
+      "color": "#935116",
+      "bgcolor": "#4A290B"
+    },
+    {
+      "id": 18,
+      "type": "UmeAiRT_Positive_Input",
+      "pos": [
+        2399.9999260845143,
+        1180.0000186634281
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "positive",
+          "type": "POSITIVE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_Positive_Input",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        ""
+      ],
+      "color": "#145A32",
+      "bgcolor": "#0A2D19"
+    },
+    {
+      "id": 19,
+      "type": "UmeAiRT_Negative_Input",
+      "pos": [
+        2399.9999260845143,
+        1429.9999951456668
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "negative",
+          "type": "NEGATIVE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_Negative_Input",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        "text, watermark"
+      ],
+      "color": "#641E16",
+      "bgcolor": "#3B100C"
+    },
+    {
+      "id": 20,
+      "type": "UmeAiRT_BlockSampler",
+      "pos": [
+        3399.999965483355,
+        1069.9999641347417
+      ],
+      "size": [
+        400,
+        360
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model_bundle",
+          "type": "UME_BUNDLE",
+          "link": null
+        },
+        {
+          "name": "positive",
+          "type": "POSITIVE",
+          "link": null
+        },
+        {
+          "name": "negative",
+          "type": "NEGATIVE",
+          "link": null
+        },
+        {
+          "name": "settings",
+          "type": "UME_SETTINGS",
+          "link": null
+        },
+        {
+          "name": "loras",
+          "shape": 7,
+          "type": "UME_LORA_STACK",
+          "link": null
+        },
+        {
+          "name": "images",
+          "shape": 7,
+          "type": "UME_IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "gen_pipe",
+          "type": "UME_PIPELINE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_BlockSampler",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [],
+      "color": "#2C3E50",
+      "bgcolor": "#1A252F"
+    },
+    {
+      "id": 21,
+      "type": "UmeAiRT_PipelineUltimateUpscale",
+      "pos": [
+        4339.999920307573,
+        430.0000081210853
+      ],
+      "size": [
+        460,
+        160
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "gen_pipe",
+          "type": "UME_PIPELINE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "gen_pipe",
+          "type": "UME_PIPELINE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_PipelineUltimateUpscale",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        true,
+        "[⬇️] 4x-AnimeSharp.pth",
+        2,
+        0.35,
+        true,
+        0,
+        1,
+        "Pipeline",
+        "Pipeline",
+        "Linear",
+        512,
+        512,
+        8,
+        32,
+        "None",
+        1,
+        64,
+        8,
+        16,
+        true,
+        false
+      ],
+      "color": "#2471A3",
+      "bgcolor": "#123851"
+    },
+    {
+      "id": 22,
+      "type": "UmeAiRT_PipelineSeedVR2Upscale",
+      "pos": [
+        4339.999920307573,
+        659.99999189112
+      ],
+      "size": [
+        460,
+        160
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "gen_pipe",
+          "type": "UME_PIPELINE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "gen_pipe",
+          "type": "UME_PIPELINE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_PipelineSeedVR2Upscale",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        true,
+        "seedvr2_ema_3b_fp8_e4m3fn.safetensors",
+        2,
+        512,
+        512,
+        0,
+        32,
+        1024,
+        "Chess",
+        0,
+        "auto",
+        "lab"
+      ],
+      "color": "#2471A3",
+      "bgcolor": "#123851"
+    },
+    {
+      "id": 23,
+      "type": "UmeAiRT_PipelineSubjectDetailer",
+      "pos": [
+        4339.999920307573,
+        890.0000026930304
+      ],
+      "size": [
+        460,
+        160
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "gen_pipe",
+          "type": "UME_PIPELINE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "gen_pipe",
+          "type": "UME_PIPELINE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_PipelineSubjectDetailer",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        true,
+        "face",
+        0.5,
+        512,
+        1024,
+        0.5,
+        10,
+        3,
+        10,
+        5,
+        true,
+        true
+      ],
+      "color": "#2471A3",
+      "bgcolor": "#123851"
+    },
+    {
+      "id": 24,
+      "type": "UmeAiRT_Detailer_Daemon",
+      "pos": [
+        4339.999920307573,
+        1119.9999594311894
+      ],
+      "size": [
+        460,
+        130
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "gen_pipe",
+          "type": "UME_PIPELINE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "gen_pipe",
+          "type": "UME_PIPELINE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_Detailer_Daemon",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        true,
+        0.5,
+        0.2,
+        0.8,
+        0.5,
+        1,
+        0,
+        0,
+        0,
+        true,
+        0.5,
+        0.05,
+        20,
+        2,
+        8,
+        "euler",
+        "simple",
+        0,
+        "randomize"
+      ],
+      "color": "#2471A3",
+      "bgcolor": "#123851"
+    },
+    {
+      "id": 27,
+      "type": "UmeAiRT_PipelineImageSaver",
+      "pos": [
+        3399.999965483355,
+        1470.000034633826
+      ],
+      "size": [
+        400,
+        90
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "gen_pipe",
+          "type": "UME_PIPELINE",
+          "link": null
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_PipelineImageSaver",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        "MODEL_NAME/%date/%time_%seed"
+      ],
+      "color": "#1A5653",
+      "bgcolor": "#0D2B29"
+    },
+    {
+      "id": 28,
+      "type": "UmeAiRT_Pack_Bundle",
+      "pos": [
+        4849.999937207842,
+        430.0000081210853
+      ],
+      "size": [
+        450,
+        140
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": null
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "model_bundle",
+          "type": "UME_BUNDLE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_Pack_Bundle",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        ""
+      ],
+      "color": "#154360",
+      "bgcolor": "#0A2130"
+    },
+    {
+      "id": 29,
+      "type": "UmeAiRT_Unpack_Pipeline",
+      "pos": [
+        4849.999937207842,
+        599.9999867226325
+      ],
+      "size": [
+        450,
+        390
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pipeline",
+          "type": "UME_PIPELINE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": null
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "links": null
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "links": null
+        },
+        {
+          "name": "model_name",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "positive",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "negative",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "width",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "steps",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "cfg",
+          "type": "FLOAT",
+          "links": null
+        },
+        {
+          "name": "sampler_name",
+          "type": "*",
+          "links": null
+        },
+        {
+          "name": "scheduler",
+          "type": "*",
+          "links": null
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "denoise",
+          "type": "FLOAT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_Unpack_Pipeline",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [],
+      "color": "#17A589",
+      "bgcolor": "#0B5345"
+    },
+    {
+      "id": 38,
+      "type": "UmeAiRT_Signature",
+      "pos": [
+        2399.9999260845143,
+        180.0000012279865
+      ],
+      "size": [
+        400,
+        120
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_Signature",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 39,
+      "type": "UmeAiRT_Bundle_Downloader",
+      "pos": [
+        4339.999920307573,
+        1330.0000045527713
+      ],
+      "size": [
+        460,
+        120
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "status",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "62568582c48abab7e85ee78af295e6530f60593a",
+        "Node name for S&R": "UmeAiRT_Bundle_Downloader",
+        "aux_id": "UmeAiRT/ComfyUI-UmeAiRT-Toolkit"
+      },
+      "widgets_values": [
+        "FLUX/Dev",
+        "GGUF_Q3"
+      ],
+      "color": "#333333",
+      "bgcolor": "#D5D8DC"
+    },
+    {
+      "id": 42,
+      "type": "UmeAiRT_Unpack_SettingsBundle",
+      "pos": [
+        4849.999937207842,
+        1389.9999556575076
+      ],
+      "size": [
+        470,
+        200
+      ],
+      "flags": {},
+      "order": 27,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "settings",
+          "type": "UME_SETTINGS",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "width",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "steps",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "cfg",
+          "type": "FLOAT",
+          "links": null
+        },
+        {
+          "name": "sampler",
+          "type": "*",
+          "links": null
+        },
+        {
+          "name": "scheduler",
+          "type": "*",
+          "links": null
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "c5b515b4f696f4c2eaacef5a8818225698b08324",
+        "Node name for S&R": "UmeAiRT_Unpack_SettingsBundle"
+      },
+      "widgets_values": [],
+      "color": "#17A589",
+      "bgcolor": "#0B5345"
+    },
+    {
+      "id": 43,
+      "type": "UmeAiRT_Unpack_ImageBundle",
+      "pos": [
+        4849.999937207842,
+        1200.0000384075076
+      ],
+      "size": [
+        460,
+        150
+      ],
+      "flags": {},
+      "order": 28,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_bundle",
+          "type": "UME_IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": null
+        },
+        {
+          "name": "mode",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "denoise",
+          "type": "FLOAT",
+          "links": null
+        },
+        {
+          "name": "auto_resize",
+          "type": "BOOLEAN",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "c5b515b4f696f4c2eaacef5a8818225698b08324",
+        "Node name for S&R": "UmeAiRT_Unpack_ImageBundle"
+      },
+      "widgets_values": [],
+      "color": "#17A589",
+      "bgcolor": "#0B5345"
+    },
+    {
+      "id": 44,
+      "type": "UmeAiRT_Unpack_FilesBundle",
+      "pos": [
+        4850.000153462848,
+        1029.9999787103338
+      ],
+      "size": [
+        450,
+        120
+      ],
+      "flags": {},
+      "order": 29,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "files_bundle",
+          "type": "UME_BUNDLE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": null
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "links": null
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "links": null
+        },
+        {
+          "name": "model_name",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-umeairt-toolkit",
+        "ver": "c5b515b4f696f4c2eaacef5a8818225698b08324",
+        "Node name for S&R": "UmeAiRT_Unpack_FilesBundle"
+      },
+      "widgets_values": [],
+      "color": "#17A589",
+      "bgcolor": "#0B5345"
+    }
+  ],
+  "links": [],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.5644739300537776,
+      "offset": [
+        -2165.2042155729555,
+        -111.97934717850427
+      ]
+    },
+    "frontendVersion": "1.42.8"
+  },
+  "version": 0.4
+}
