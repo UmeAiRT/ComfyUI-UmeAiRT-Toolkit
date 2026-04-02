@@ -7,9 +7,15 @@
 
 ## Project Overview
 
-ComfyUI Custom Nodes toolkit with two node families:
-1. **Block Nodes** (primary): Hub-and-spoke architecture using typed objects (`UME_BUNDLE`, `UME_SETTINGS`, `UME_PIPELINE`).
-2. **Pipeline Nodes**: Post-processing and I/O nodes that operate on `GenerationContext` (UME_PIPELINE).
+ComfyUI Custom Nodes toolkit organized into 8 menu categories:
+1. **Loaders**: Model loading nodes (Checkpoint, FLUX, Z-IMG, Bundle) + LoRA stacks.
+2. **Inputs**: Generation Settings and Prompt editors.
+3. **Image**: Image loading, processing (Img2Img/Inpaint/Outpaint), and ControlNet.
+4. **Sampler**: Central hub (`BlockSampler`) using hub-and-spoke architecture with typed objects (`UME_BUNDLE`, `UME_SETTINGS`, `UME_PIPELINE`).
+5. **Post-Process**: Upscalers and Detailers operating on `GenerationContext` (UME_PIPELINE).
+6. **Output**: Image saving.
+7. **Interop**: Pack/Unpack nodes for native ComfyUI compatibility.
+8. **Utils**: Standalone nodes (Signature, Bundle Downloader).
 
 ## Ecosystem (Sibling Projects on `Y:\`)
 
@@ -109,16 +115,16 @@ ComfyUI's Nodes 2.0 (Vue) layout engine natively suffers from a "ghost padding" 
 
 Nodes are color-coded by category in `web/umeairt_colors.js`:
 
-| Category | Color Family | Hex (Bg/Fg) | Examples |
-|----------|--------------|-------------|----------|
-| **Settings / Controls**   | Amber / Bronze | `#4A290B` / `#935116` | Generation Settings, Image Process, ControlNet |
-| **Model / Files**         | Deep Blue      | `#0A2130` / `#154360` | Checkpoint Loader, VAE, CLIP |
-| **Prompts**               | Dark Green     | `#0A2D19` / `#145A32` | Positive/Negative Prompt Input |
-| **LoRA**                  | Violet         | `#25122D` / `#4A235A` | LoRA Stacks |
-| **Samplers (Processors)** | Slate Gray     | `#1A252F` / `#2C3E50` | Block Sampler |
-| **Post-Processing**       | Pale Blue / Teal | `#123851` / `#2471A3` | Ultimate Upscale, Face Detailer |
-| **Utilities**             | Dark Gray      | `#1A252F` / `#34495E` | Debug, Label, UmeAiRT Signature |
-| **Image Inputs**          | Rust Red       | `#35160D` / `#6B2D1A` | Image Loaders |
+| Category | Color Family | Hex (Bg/Fg) | Menu Location |
+|----------|--------------|-------------|---------------|
+| **Settings / Controls**   | Amber / Bronze | `#4A290B` / `#935116` | `UmeAiRT/Inputs`, `UmeAiRT/Image` |
+| **Model / Files**         | Deep Blue      | `#0A2130` / `#154360` | `UmeAiRT/Loaders` |
+| **Prompts**               | Dark Green     | `#0A2D19` / `#145A32` | `UmeAiRT/Inputs` |
+| **LoRA**                  | Violet         | `#25122D` / `#4A235A` | `UmeAiRT/Loaders/LoRA` |
+| **Samplers (Processors)** | Slate Gray     | `#1A252F` / `#2C3E50` | `UmeAiRT/Sampler` |
+| **Post-Processing**       | Pale Blue / Teal | `#123851` / `#2471A3` | `UmeAiRT/Post-Process` |
+| **Utilities**             | Dark Gray      | `#1A252F` / `#34495E` | `UmeAiRT/Utils` |
+| **Image Inputs**          | Rust Red       | `#35160D` / `#6B2D1A` | `UmeAiRT/Image` |
 
 **Connection colors:**
 

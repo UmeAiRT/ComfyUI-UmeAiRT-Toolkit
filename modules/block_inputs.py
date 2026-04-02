@@ -56,7 +56,7 @@ def _make_lora_block_class(count):
         RETURN_TYPES = ("UME_LORA_STACK",)
         RETURN_NAMES = ("loras",)
         FUNCTION = "process"
-        CATEGORY = "UmeAiRT/Block/LoRA"
+        CATEGORY = "UmeAiRT/Loaders/LoRA"
         def process(self, loras=None, **kwargs): return process_lora_stack(loras, **kwargs)
     _LoraBlock.__name__ = f"UmeAiRT_LoraBlock_{count}"
     _LoraBlock.__qualname__ = f"UmeAiRT_LoraBlock_{count}"
@@ -95,7 +95,7 @@ class UmeAiRT_ControlNetImageApply:
     RETURN_TYPES = ("UME_IMAGE",)
     RETURN_NAMES = ("image_bundle",)
     FUNCTION = "apply_controlnet"
-    CATEGORY = "UmeAiRT/Block/ControlNet"
+    CATEGORY = "UmeAiRT/Image"
 
     def apply_controlnet(self, image_bundle, control_net_name: str, strength: float, start_percent: float = 0.0, end_percent: float = 1.0, optional_control_image: Optional[Any] = None):
         import copy
@@ -137,7 +137,7 @@ class UmeAiRT_GenerationSettings:
     RETURN_TYPES = ("UME_SETTINGS",)
     RETURN_NAMES = ("settings",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Block/Settings"
+    CATEGORY = "UmeAiRT/Inputs"
 
     def process(self, width: int, height: int, steps: int, cfg: float, sampler_name: str, scheduler: str, seed: int):
         return (UmeSettings(width=width, height=height, steps=steps, cfg=cfg, sampler_name=sampler_name, scheduler=scheduler, seed=seed),)
@@ -164,7 +164,7 @@ class UmeAiRT_BlockImageLoader(comfy_nodes.LoadImage):
     RETURN_TYPES = ("UME_IMAGE",)
     RETURN_NAMES = ("image_bundle",)
     FUNCTION = "load_block_image"
-    CATEGORY = "UmeAiRT/Block/Image"
+    CATEGORY = "UmeAiRT/Image"
 
     def load_block_image(self, image: str):
         """Loads the specified image file and wraps it in an UmeImage dataclass."""
@@ -226,7 +226,7 @@ class UmeAiRT_BlockImageProcess:
     RETURN_TYPES = ("UME_IMAGE",)
     RETURN_NAMES = ("image_bundle",)
     FUNCTION = "process_image"
-    CATEGORY = "UmeAiRT/Block/Image"
+    CATEGORY = "UmeAiRT/Image"
 
     def process_image(self, image_bundle, denoise: float = 0.75, mode: str = "img2img", auto_resize: bool = False, mask_blur: int = 0, 
                       padding_left: int = 0, padding_top: int = 0, padding_right: int = 0, padding_bottom: int = 0):
@@ -250,7 +250,7 @@ class UmeAiRT_ImageProcess_Img2Img:
     RETURN_TYPES = ("UME_IMAGE",)
     RETURN_NAMES = ("image_bundle",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Block/Image"
+    CATEGORY = "UmeAiRT/Image"
 
     def process(self, image_bundle, denoise=0.75, auto_resize=False):
         return process_image_core(image_bundle, mode="img2img", denoise=denoise, auto_resize=auto_resize)
@@ -273,7 +273,7 @@ class UmeAiRT_ImageProcess_Inpaint:
     RETURN_TYPES = ("UME_IMAGE",)
     RETURN_NAMES = ("image_bundle",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Block/Image"
+    CATEGORY = "UmeAiRT/Image"
 
     def process(self, image_bundle, denoise=0.75, mask_blur=10, auto_resize=False):
         return process_image_core(image_bundle, mode="inpaint", denoise=denoise, mask_blur=mask_blur, auto_resize=auto_resize)
@@ -303,7 +303,7 @@ class UmeAiRT_ImageProcess_Outpaint:
     RETURN_TYPES = ("UME_IMAGE",)
     RETURN_NAMES = ("image_bundle",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Block/Image"
+    CATEGORY = "UmeAiRT/Image"
 
     def process(self, image_bundle, denoise=0.75, target_width=1024, target_height=1024,
                 horizontal_align="center", vertical_align="center", mask_blur=10):
@@ -332,7 +332,7 @@ class UmeAiRT_Positive_Input:
     RETURN_TYPES = ("POSITIVE",)
     RETURN_NAMES = ("positive",)
     FUNCTION = "pass_through"
-    CATEGORY = "UmeAiRT/Block/Prompts"
+    CATEGORY = "UmeAiRT/Inputs"
 
     def pass_through(self, positive):
         return (positive,)
@@ -351,7 +351,7 @@ class UmeAiRT_Negative_Input:
     RETURN_TYPES = ("NEGATIVE",)
     RETURN_NAMES = ("negative",)
     FUNCTION = "pass_through"
-    CATEGORY = "UmeAiRT/Block/Prompts"
+    CATEGORY = "UmeAiRT/Inputs"
 
     def pass_through(self, negative):
         return (negative,)

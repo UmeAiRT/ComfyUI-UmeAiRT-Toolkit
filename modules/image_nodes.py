@@ -38,7 +38,7 @@ class UmeAiRT_PipelineImageSaver:
     RETURN_TYPES = ()
     OUTPUT_NODE = True
     FUNCTION = "save_images"
-    CATEGORY = "UmeAiRT/Pipeline/Output"
+    CATEGORY = "UmeAiRT/Output"
 
     def save_images(self, gen_pipe, filename, prompt=None, extra_pnginfo=None):
         images = gen_pipe.image

@@ -44,7 +44,7 @@ class UmeAiRT_PipelineSubjectDetailer:
     RETURN_TYPES = ("UME_PIPELINE",)
     RETURN_NAMES = ("gen_pipe",)
     FUNCTION = "subject_detail"
-    CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
+    CATEGORY = "UmeAiRT/Post-Process"
 
     def subject_detail(self, gen_pipe, subject, denoise, enabled=True, 
                     guide_size=512, max_size=1024, bbox_threshold=0.5, bbox_dilation=10, 

@@ -16,14 +16,14 @@ The UmeAiRT Toolkit replaces ComfyUI's traditional spaghetti wiring with a **blo
 
 ```mermaid
 graph TB
-    subgraph "Model Loading"
+    subgraph "Loaders"
         CKP["⬡ Checkpoint Loader"]
         FLUX["⬡ FLUX Loader"]
         ZIMG["⬡ Z-IMG Loader"]
         BDL["⬡ Bundle Auto-Loader"]
     end
 
-    subgraph "Configuration"
+    subgraph "Inputs + Image"
         SET["⬡ Generation Settings"]
         POS["⬡ Positive Prompt"]
         NEG["⬡ Negative Prompt"]
@@ -33,20 +33,18 @@ graph TB
         CNET["⬡ ControlNet Apply"]
     end
 
-    subgraph "Sampling"
+    subgraph "Sampler"
         KS["⬡ KSampler"]
     end
 
     subgraph "Post-Process"
         UP["⬡ UltimateSD Upscale"]
         SVR["⬡ SeedVR2 Upscale"]
-        FD["⬡ FaceDetailer"]
+        FD["⬡ Subject Detailer"]
     end
 
     subgraph "Output"
         SAV["⬡ Image Saver"]
-        SRC["⬡ Source Image Output"]
-        INP["⬡ Inpaint Composite"]
     end
 
     CKP -->|UME_BUNDLE| KS
@@ -77,7 +75,7 @@ graph TB
 
 ```
 ComfyUI-UmeAiRT-Toolkit/
-├── __init__.py              # Node registration (47 nodes)
+├── __init__.py              # Node registration (31 nodes)
 ├── modules/
 │   ├── block_loaders.py     # Model loading nodes
 │   ├── block_inputs.py      # LoRA, ControlNet, Settings, Image, Prompts

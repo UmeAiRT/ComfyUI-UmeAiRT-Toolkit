@@ -77,7 +77,7 @@ class UmeAiRT_FilesSettings_Checkpoint:
     RETURN_TYPES = ("UME_BUNDLE",)
     RETURN_NAMES = ("model_bundle",)
     FUNCTION = "load_checkpoint"
-    CATEGORY = "UmeAiRT/Block/Loaders"
+    CATEGORY = "UmeAiRT/Loaders"
     OUTPUT_NODE = True
 
     def load_checkpoint(self, ckpt_name, vae_name="Baked VAE", clip_skip=-1):
@@ -126,7 +126,7 @@ class UmeAiRT_FilesSettings_FLUX:
     RETURN_TYPES = ("UME_BUNDLE",)
     RETURN_NAMES = ("model_bundle",)
     FUNCTION = "load_flux"
-    CATEGORY = "UmeAiRT/Block/Loaders"
+    CATEGORY = "UmeAiRT/Loaders"
     OUTPUT_NODE = True
 
     def load_flux(self, diff_model, clip_1, clip_2, vae):
@@ -171,7 +171,7 @@ class UmeAiRT_FilesSettings_ZIMG:
     RETURN_TYPES = ("UME_BUNDLE",)
     RETURN_NAMES = ("model_bundle",)
     FUNCTION = "load_zimg"
-    CATEGORY = "UmeAiRT/Block/Loaders"
+    CATEGORY = "UmeAiRT/Loaders"
     OUTPUT_NODE = True
 
     def load_zimg(self, diff_model, clip, vae):
@@ -216,7 +216,7 @@ class UmeAiRT_BundleLoader:
     RETURN_TYPES = ("UME_BUNDLE",)
     RETURN_NAMES = ("model_bundle",)
     FUNCTION = "load_bundle"
-    CATEGORY = "UmeAiRT/Block/Loaders"
+    CATEGORY = "UmeAiRT/Loaders"
     OUTPUT_NODE = True
 
     def load_bundle(self, category, version):

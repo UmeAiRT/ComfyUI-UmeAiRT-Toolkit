@@ -131,7 +131,7 @@ class UmeAiRT_Detailer_Daemon:
     RETURN_TYPES = ("UME_PIPELINE",)
     RETURN_NAMES = ("gen_pipe",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
+    CATEGORY = "UmeAiRT/Post-Process"
 
     def process(self, gen_pipe, enabled, detail_amount,
                 start=0.2, end=0.8, bias=0.5, exponent=1.0,

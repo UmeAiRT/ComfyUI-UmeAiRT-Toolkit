@@ -67,7 +67,7 @@ class UmeAiRT_Unpack_Settings:
     RETURN_TYPES = ("INT", "INT", "INT", "FLOAT", "*", "*", "INT")
     RETURN_NAMES = ("width", "height", "steps", "cfg", "sampler", "scheduler", "seed")
     FUNCTION = "unpack"
-    CATEGORY = "UmeAiRT/Utils/Unpack"
+    CATEGORY = "UmeAiRT/Interop"
     def unpack(self, settings):
         """Unpacks the provided settings dataclass."""
         return (
@@ -93,7 +93,7 @@ class UmeAiRT_Unpack_FilesBundle:
     RETURN_TYPES = ("MODEL", "CLIP", "VAE", "STRING")
     RETURN_NAMES = ("model", "clip", "vae", "model_name")
     FUNCTION = "unpack"
-    CATEGORY = "UmeAiRT/Utils/Unpack"
+    CATEGORY = "UmeAiRT/Interop"
 
     def unpack(self, model_bundle):
         """Extracts model components from the UmeBundle dataclass."""
@@ -126,7 +126,7 @@ class UmeAiRT_Pack_Bundle:
     RETURN_TYPES = ("UME_BUNDLE",)
     RETURN_NAMES = ("model_bundle",)
     FUNCTION = "pack"
-    CATEGORY = "UmeAiRT/Utils/Pack"
+    CATEGORY = "UmeAiRT/Interop"
 
     def pack(self, model, clip, vae, model_name=""):
         """Packs native ComfyUI models into a UmeBundle."""
@@ -145,7 +145,7 @@ class UmeAiRT_Unpack_ImageBundle:
     RETURN_TYPES = ("IMAGE", "MASK", "STRING", "FLOAT", "BOOLEAN")
     RETURN_NAMES = ("image", "mask", "mode", "denoise", "auto_resize")
     FUNCTION = "unpack"
-    CATEGORY = "UmeAiRT/Utils/Unpack"
+    CATEGORY = "UmeAiRT/Interop"
 
     def unpack(self, image_bundle):
         """Extracts all fields from the UmeImage dataclass."""
@@ -174,7 +174,7 @@ class UmeAiRT_Unpack_Pipeline:
     RETURN_TYPES = ("IMAGE", "MODEL", "CLIP", "VAE", "STRING", "STRING", "STRING", "INT", "INT", "INT", "FLOAT", "*", "*", "INT", "FLOAT")
     RETURN_NAMES = ("image", "model", "clip", "vae", "model_name", "positive", "negative", "width", "height", "steps", "cfg", "sampler_name", "scheduler", "seed", "denoise")
     FUNCTION = "unpack"
-    CATEGORY = "UmeAiRT/Utils/Unpack"
+    CATEGORY = "UmeAiRT/Interop"
 
     def unpack(self, gen_pipe):
         """Extracts all fields from the GenerationContext pipeline.

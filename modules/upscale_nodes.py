@@ -96,7 +96,7 @@ class UmeAiRT_PipelineUltimateUpscale(UmeAiRT_UltimateUpscale_Base):
     RETURN_TYPES = ("UME_PIPELINE",)
     RETURN_NAMES = ("gen_pipe",)
     FUNCTION = "upscale"
-    CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
+    CATEGORY = "UmeAiRT/Post-Process"
 
     def upscale(self, gen_pipe, model, upscale_by, denoise=0.35, enabled=True, clean_prompt=True,
                 upscale_steps=0, upscale_cfg=1.0, upscale_sampler="Pipeline", upscale_scheduler="Pipeline",

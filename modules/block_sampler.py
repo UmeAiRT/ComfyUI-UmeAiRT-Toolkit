@@ -38,7 +38,7 @@ class UmeAiRT_BlockSampler:
     RETURN_TYPES = ("UME_PIPELINE",)
     RETURN_NAMES = ("gen_pipe",)
     FUNCTION = "process"
-    CATEGORY = "UmeAiRT/Block/Sampler"
+    CATEGORY = "UmeAiRT/Sampler"
 
     def __init__(self):
         self.lora_loader = comfy_nodes.LoraLoader()

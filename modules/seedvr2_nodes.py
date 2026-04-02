@@ -112,7 +112,7 @@ class UmeAiRT_PipelineSeedVR2Upscale:
     RETURN_TYPES = ("UME_PIPELINE",)
     RETURN_NAMES = ("gen_pipe",)
     FUNCTION = "upscale"
-    CATEGORY = "UmeAiRT/Pipeline/Post-Processing"
+    CATEGORY = "UmeAiRT/Post-Process"
 
     @staticmethod
     def _build_configs(model_name: str):

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Menu Restructuring**: Reorganized all node categories from 12 fragmented submenus (3 levels deep) to 8 clean top-level categories (2 levels max). Old `UmeAiRT/Block/*` and `UmeAiRT/Pipeline/*` hierarchy replaced with user-friendly names: `Loaders`, `Loaders/LoRA`, `Inputs`, `Image`, `Sampler`, `Post-Process`, `Output`, `Interop`, `Utils`. No workflow breakage — CATEGORY changes are cosmetic and do not affect serialized workflows.
+
 ### Fixed
 
 - **SeedVR2 Blackwell Crash**: Fixed stack overflow / access violation at ComfyUI startup on RTX 50xx GPUs. The `_probe_bfloat16_support()` function in `seedvr2_core` was creating CUDA tensors at import time before CUDA was fully initialized. Replaced with `torch.cuda.is_bf16_supported()` which queries GPU compute capability natively without touching CUDA memory. ([#3](https://github.com/UmeAiRT/ComfyUI-UmeAiRT-Toolkit/issues/3))
