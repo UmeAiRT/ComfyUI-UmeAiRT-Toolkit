@@ -17,6 +17,12 @@
 |------|------|-------------|
 | `gen_pipe` | `UME_PIPELINE` | Pipeline with enhanced faces |
 
+=== "Standard Mode"
+    ![Subject Detailer](../assets/UmeAiRT_PipelineSubjectDetailer_base.png)
+
+=== "Advanced Inputs"
+    ![Subject Detailer (Advanced)](../assets/UmeAiRT_PipelineSubjectDetailer_advanced.png)
+
 ## BBOX Detector Loader {#bbox-detector-loader}
 
 Loads a face/body detection model for FaceDetailer.

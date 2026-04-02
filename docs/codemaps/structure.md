@@ -38,14 +38,12 @@ Pack and Unpack nodes enable bidirectional compatibility with native/community C
 | **Unpack Pipeline** | UME → Native | Extracts IMAGE + all 14 fields from `UME_PIPELINE` |
 | **Unpack Settings Bundle** | UME → Native | Extracts all settings from `UME_SETTINGS` |
 | **Unpack Image Bundle** | UME → Native | Extracts IMAGE, MASK, mode, denoise, auto_resize from `UME_IMAGE` |
-| **Unpack Prompts Bundle** | UME → Native | Extracts positive/negative strings from `UME_PROMPTS` |
 
 ## Sub-Modules (`modules/`)
 
 - `common.py`: `GenerationContext` class, `PipelineParams`, `extract_pipeline_params()`, `validate_bundle()`, shared constants (`KNOWN_DIT_MODELS`), and core utilities.
 - `logger.py`: Standardized colorized logging utility.
 - `optimization_utils.py`: Environment checks (SageAttention, Triton, etc.).
-- `model_nodes.py`: Multi-LoRA Loader.
 - `logic_nodes.py`: Pipeline-aware Upscalers, Detailers, and Detail Daemon nodes.
 - `block_nodes.py`: Re-export shim for backward compatibility — imports from sub-modules.
 - `block_inputs.py`: LoRA blocks, ControlNet, GenerationSettings (→ `UME_SETTINGS`), Image Loader/Process, Prompt Inputs.

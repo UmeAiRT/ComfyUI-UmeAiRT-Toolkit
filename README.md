@@ -47,9 +47,7 @@ Stop fighting with "noodle soup"! The UmeAiRT Toolkit uses a **hub-and-spoke** a
 |:---|:---|:---|
 | **Models** | `Model Loader` | Checkpoint loader → `UME_BUNDLE` |
 | **Models** | `Model Loader - FLUX` | UNET + Dual CLIP + VAE → `UME_BUNDLE` |
-| **Models** | `Model Loader (Fragmented)` | Separate UNET/CLIP/VAE files → `UME_BUNDLE` |
 | **Models** | `📦 Bundle Auto-Loader` | Select category + version, auto-download & load (aria2 accelerated) |
-| **Models** | `Multi-LoRA Loader` | Apply up to 3 LoRAs to MODEL + CLIP |
 | **Settings** | `Generation Settings` | Width, Height, Steps, CFG, Seed → `UME_SETTINGS` |
 | **Prompts** | `Positive / Negative Prompt Input` | Multiline text editors with dynamic prompts |
 | **LoRA** | `LoRA 1x/3x/5x/10x` | Stackable LoRA loaders → `UME_LORA_STACK` |
@@ -68,7 +66,6 @@ Stop fighting with "noodle soup"! The UmeAiRT Toolkit uses a **hub-and-spoke** a
 | `SeedVR2 Upscale` / `(Advanced)` | AI upscaler (bundled) |
 | `FaceDetailer` / `(Advanced)` | Face enhancement with BBOX detection |
 | `Detailer Daemon` / `(Advanced)` | Advanced detail enhancement |
-| `Inpaint Composite` | Inpainting with pipeline awareness |
 | `Image Saver` | Save with metadata preservation |
 
 ### Pack/Unpack (Interoperability)
@@ -79,17 +76,13 @@ Stop fighting with "noodle soup"! The UmeAiRT Toolkit uses a **hub-and-spoke** a
 | `Unpack Pipeline` | UME → Native | `UME_PIPELINE` → IMAGE + all 14 fields |
 | `Unpack Models Bundle` | UME → Native | `UME_BUNDLE` → MODEL, CLIP, VAE |
 | `Unpack Image Bundle` | UME → Native | `UME_IMAGE` → IMAGE, MASK, mode, denoise |
-| `Unpack Settings/Prompts` | UME → Native | Extract individual settings or prompt strings |
+| `Unpack Settings` | UME → Native | Extract individual settings values |
 
 ### Utilities
 
 | Node | Description |
 |:---|:---|
-| `Label` | Visual annotation node for organizing workflows |
 | `💾 Bundle Model Downloader` | Download model bundles from HuggingFace (aria2 accelerated, no VRAM load — ideal for RunPod/cloud) |
-| `📜 UmeAiRT Log Viewer` | View toolkit activity directly on the canvas |
-| `🩺 Health Check` | Validate dependencies and optimizations at startup |
-
 ---
 
 ## 🚀 Installation

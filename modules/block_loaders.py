@@ -149,41 +149,6 @@ class UmeAiRT_FilesSettings_FLUX:
         return (UmeBundle(model=model, clip=clip, vae=vae_obj, model_name=model_name),)
 
 
-class UmeAiRT_FilesSettings_Fragmented:
-    """Fragmented Model Loader for multi-file model architectures.
-
-    Loads models split across multiple safetensors files using ComfyUI's
-    native DiffusersLoader. Designed for models distributed as folders
-    (e.g. HuggingFace Diffusers format).
-    """
-
-    @classmethod
-    def INPUT_TYPES(s):
-        paths = []
-        for search_path in folder_paths.get_folder_paths("diffusion_models"):
-            if os.path.isdir(search_path):
-                for f in os.listdir(search_path):
-                    full_path = os.path.join(search_path, f)
-                    if os.path.isdir(full_path):
-                        paths.append(f)
-        return {
-            "required": {
-                "model_path": (paths, {"tooltip": "Select a model folder from your diffusion_models directory. Folders typically contain index.json + sharded safetensors files."}),
-            }
-        }
-    RETURN_TYPES = ("UME_BUNDLE",)
-    RETURN_NAMES = ("model_bundle",)
-    FUNCTION = "load_diffusers"
-    CATEGORY = "UmeAiRT/Block/Loaders"
-    OUTPUT_NODE = True
-
-    def load_diffusers(self, model_path):
-        model_name = model_path
-        node = comfy_nodes.DiffusersLoader()
-        model, clip, vae = node.load_checkpoint(model_path)[:3]
-        return (UmeBundle(model=model, clip=clip, vae=vae, model_name=model_name),)
-
-
 class UmeAiRT_FilesSettings_ZIMG:
     """Z-IMAGE model loader (Lumina2 architecture).
 

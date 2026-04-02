@@ -29,5 +29,4 @@
 !!! tip "HuggingFace token"
     For faster/authenticated downloads from HuggingFace, set the `HF_TOKEN` environment variable or add it to your HuggingFace CLI config.
 
-<!-- TODO: Screenshot — Bundle Auto-Loader with category/version dropdowns + download progress in console -->
-<!-- PLACEHOLDER: Show the Bundle Auto-Loader node with "FLUX/Dev" selected and "GGUF_Q4" version, plus a terminal showing download progress -->
+![Bundle Auto-Loader](../assets/UmeAiRT_BundleLoader.png)

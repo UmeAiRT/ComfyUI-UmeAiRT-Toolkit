@@ -28,9 +28,14 @@ LoRA 3x → LoRA 5x → KSampler
 (3 LoRAs)  (5 more)   (8 total applied)
 ```
 
-!!! tip "LoRA Block vs Multi-LoRA Loader"
-    - **LoRA Block** → outputs `UME_LORA_STACK` → feeds into the **Block KSampler**
-    - **[Multi-LoRA Loader](multi-lora.md)** → outputs `MODEL + CLIP` → feeds into **standard ComfyUI KSampler**
+=== "LoRA 1x"
+    ![LoRA 1x Block](../assets/UmeAiRT_LoraBlock_1.png)
 
-<!-- TODO: Screenshot — LoRA 3x block with 2 LoRAs enabled and strength sliders visible -->
-<!-- PLACEHOLDER: Show a LoRA 3x node with lora_1 and lora_2 toggled ON, lora_3 as "None" -->
+=== "LoRA 3x"
+    ![LoRA 3x Block](../assets/UmeAiRT_LoraBlock_3.png)
+
+=== "LoRA 5x"
+    ![LoRA 5x Block](../assets/UmeAiRT_LoraBlock_5.png)
+
+=== "LoRA 10x"
+    ![LoRA 10x Block](../assets/UmeAiRT_LoraBlock_10.png)

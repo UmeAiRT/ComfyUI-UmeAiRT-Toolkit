@@ -20,10 +20,7 @@ const UME_NODE_COLORS = {
         color: "#154360",
         bgcolor: "#0A2130"
     },
-    "UmeAiRT_FilesSettings_Fragmented": {
-        color: "#154360",
-        bgcolor: "#0A2130"
-    },
+
     "UmeAiRT_FilesSettings_ZIMG": {
         color: "#154360",
         bgcolor: "#0A2130"
@@ -76,11 +73,7 @@ const UME_NODE_COLORS = {
     },
 
     // Detailer Daemon - Pale Blue
-    "UmeAiRT_Detailer_Daemon_Simple": {
-        color: "#2471A3",
-        bgcolor: "#123851"
-    },
-    "UmeAiRT_Detailer_Daemon_Advanced": {
+    "UmeAiRT_Detailer_Daemon": {
         color: "#2471A3",
         bgcolor: "#123851"
     },
@@ -91,11 +84,7 @@ const UME_NODE_COLORS = {
         bgcolor: "#123851"
     },
 
-    // Pipeline Inpaint Composite - Pale Blue
-    "UmeAiRT_PipelineInpaintComposite": {
-        color: "#2471A3",
-        bgcolor: "#123851"
-    },
+
 
     // Pipeline Image Saver - Blue-Teal
     "UmeAiRT_PipelineImageSaver": {
@@ -115,11 +104,7 @@ const UME_NODE_COLORS = {
         bgcolor: "#123851"
     },
 
-    // Multi-LoRA Loader - Violet
-    "UmeAiRT_MultiLoraLoader": {
-        color: "#4A235A",
-        bgcolor: "#25122D"
-    },
+
 
     // === UTILITY NODES ===
 
@@ -129,11 +114,7 @@ const UME_NODE_COLORS = {
         bgcolor: "#123851"
     },
 
-    // Source Image Output - Rust Red
-    "UmeAiRT_SourceImage_Output": {
-        color: "#6B2D1A",
-        bgcolor: "#35160D"
-    },
+
 
 
     // Block Image Loaders - Rust Red
@@ -165,11 +146,7 @@ const UME_NODE_COLORS = {
     },
 
     // ControlNet - Amber/Bronze
-    "UmeAiRT_ControlNetImageApply_Simple": {
-        color: "#935116",
-        bgcolor: "#4A290B"
-    },
-    "UmeAiRT_ControlNetImageApply_Advanced": {
+    "UmeAiRT_ControlNetImageApply": {
         color: "#935116",
         bgcolor: "#4A290B"
     },
@@ -187,11 +164,7 @@ const UME_NODE_COLORS = {
         bgcolor: "#0A2130"
     },
 
-    // Label - Dark Gray
-    "UmeAiRT_Label": {
-        color: "#34495E",
-        bgcolor: "#1A252F"
-    },
+
 
     // Prompt Inputs - Green
     "UmeAiRT_Positive_Input": {
@@ -203,34 +176,18 @@ const UME_NODE_COLORS = {
         bgcolor: "#3B100C"
     },
 
-    // Unpack Nodes - Amber
-    "UmeAiRT_Faces_Unpack_Node": {
-        color: "#935116",
-        bgcolor: "#4A290B"
-    },
-    "UmeAiRT_Tags_Unpack_Node": {
-        color: "#935116",
-        bgcolor: "#4A290B"
-    },
-    "UmeAiRT_Pipe_Unpack_Node": {
-        color: "#935116",
-        bgcolor: "#4A290B"
-    },
+    // Unpack Nodes - Teal
     "UmeAiRT_Unpack_SettingsBundle": {
-        color: "#935116",
-        bgcolor: "#4A290B"
-    },
-    "UmeAiRT_Unpack_PromptsBundle": {
-        color: "#935116",
-        bgcolor: "#4A290B"
+        color: "#17A589",
+        bgcolor: "#0B5345"
     },
     "UmeAiRT_Unpack_FilesBundle": {
-        color: "#935116",
-        bgcolor: "#4A290B"
+        color: "#17A589",
+        bgcolor: "#0B5345"
     },
     "UmeAiRT_Unpack_ImageBundle": {
-        color: "#935116",
-        bgcolor: "#4A290B"
+        color: "#17A589",
+        bgcolor: "#0B5345"
     },
 
     // Pack/Unpack Pipeline - Teal
@@ -243,11 +200,7 @@ const UME_NODE_COLORS = {
         bgcolor: "#0A2130"
     },
 
-    // Log Viewer - Dark Grey
-    "UmeAiRT_Log_Viewer": {
-        color: "#34495E",
-        bgcolor: "#1A252F"
-    }
+
 };
 
 // Connection slot colors - Softer, harmonious palette

@@ -67,9 +67,7 @@ nav:
       - Checkpoint Loader: nodes/checkpoint-loader.md
       - FLUX Loader: nodes/flux-loader.md
       - Z-IMG Loader: nodes/zimg-loader.md
-      - Fragmented Loader: nodes/fragmented-loader.md
       - Bundle Auto-Loader: nodes/bundle-loader.md
-      - Multi-LoRA Loader: nodes/multi-lora.md
     - Generation:
       - Generation Settings: nodes/generation-settings.md
       - Image Loader: nodes/image-loader.md
@@ -84,16 +82,11 @@ nav:
       - FaceDetailer: nodes/facedetailer.md
       - Detailer Daemon: nodes/detailer-daemon.md
     - Image Output:
-      - Source Image Output: nodes/source-image-output.md
-      - Inpaint Composite: nodes/inpaint-composite.md
       - Image Saver: nodes/image-saver.md
     - Pack / Unpack:
       - Overview: nodes/pack-unpack.md
     - Utilities:
       - Bundle Downloader: nodes/bundle-downloader.md
-      - Health Check: nodes/health-check.md
-      - Log Viewer: nodes/log-viewer.md
-      - Label: nodes/label.md
   - Project:
     - Changelog: changelog.md
     - Contributing: contributing.md
@@ -102,3 +95,6 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/UmeAiRT
+
+extra_css:
+  - assets/custom.css

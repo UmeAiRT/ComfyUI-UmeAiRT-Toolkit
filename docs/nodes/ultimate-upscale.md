@@ -21,5 +21,11 @@
 |------|------|-------------|
 | `gen_pipe` | `UME_PIPELINE` | Pipeline with upscaled image |
 
+=== "Standard Mode"
+    ![UltimateSD Upscale](../assets/UmeAiRT_PipelineUltimateUpscale_base.png)
+
+=== "Advanced Inputs"
+    ![UltimateSD Upscale (Advanced)](../assets/UmeAiRT_PipelineUltimateUpscale_advanced.png)
+
 !!! tip "When to use"
     Use UltimateSD Upscale for **traditional tiled upscaling** with model redraw. For AI-native upscaling with better coherence, try [SeedVR2 Upscale](seedvr2-upscale.md).

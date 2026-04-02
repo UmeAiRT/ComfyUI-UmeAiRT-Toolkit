@@ -20,6 +20,8 @@ Sets the processing mode, denoise, and optional parameters on an image bundle.
 | `padding_right` | `INT` | ❌ | 0 | Outpaint pixels — right side |
 | `padding_bottom` | `INT` | ❌ | 0 | Outpaint pixels — bottom |
 
+![Image Process (All-in-One)](../assets/UmeAiRT_BlockImageProcess.png)
+
 ---
 
 ## ⬡ Image Process (Img2Img)
@@ -33,6 +35,8 @@ Dedicated node for img2img workflows — the simplest Image Process node.
 | `image_bundle` | `UME_IMAGE` | ✅ | — | Input image bundle |
 | `denoise` | `FLOAT` | ✅ | 0.75 | Strength of AI transformation |
 | `auto_resize` | `BOOLEAN` | ❌ | OFF | Resize to match Generation Settings |
+
+![Image Process (Img2Img)](../assets/UmeAiRT_ImageProcess_Img2Img.png)
 
 ---
 
@@ -48,6 +52,8 @@ Dedicated node for inpainting — fills masked areas (white = modify).
 | `denoise` | `FLOAT` | ✅ | 0.75 | How much the AI changes inside the mask |
 | `mask_blur` | `INT` | ❌ | 10 | Soften mask edges for smooth blending |
 | `auto_resize` | `BOOLEAN` | ❌ | OFF | Resize to match Generation Settings |
+
+![Image Process (Inpaint)](../assets/UmeAiRT_ImageProcess_Inpaint.png)
 
 ---
 
@@ -77,6 +83,8 @@ Source image: **1024×1024** → Target: **1344×1024** with `center` alignment:
 - Horizontal padding: 320px total → 160px left, 160px right
 - Vertical padding: 0px (already matches)
 - The AI generates content in the new areas, blending naturally
+
+![Image Process (Outpaint)](../assets/UmeAiRT_ImageProcess_Outpaint.png)
 
 ### Outputs
 

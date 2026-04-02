@@ -12,9 +12,7 @@ Load models, VAEs, and text encoders into memory.
 | [Checkpoint Loader (Advanced)](checkpoint-loader.md#advanced) | ⬡ Checkpoint Loader (Advanced) | UME_BUNDLE | All-in-one: model + prompts + settings |
 | [FLUX Loader](flux-loader.md) | ⬡ FLUX Loader | MODEL, CLIP, VAE | FLUX architecture (dual CLIP) |
 | [Z-IMG Loader](zimg-loader.md) | ⬡ Z-IMG Loader | MODEL, CLIP, VAE | Z-IMAGE / Lumina2 architecture |
-| [Fragmented Loader](fragmented-loader.md) | ⬡ Fragmented Loader | MODEL, CLIP, VAE | Diffusers-format model folders |
 | [Bundle Auto-Loader](bundle-loader.md) | ⬡ 📦 Bundle Auto-Loader | UME_BUNDLE | Auto-download + load from manifest |
-| [Multi-LoRA Loader](multi-lora.md) | ⬡ Multi-LoRA Loader | MODEL, CLIP | Apply up to 3 LoRAs (wired) |
 
 ## Generation
 
@@ -50,8 +48,6 @@ Save and composite final images.
 
 | Node | Display Name | Output | Use Case |
 |------|-------------|--------|----------|
-| [Source Image Output](source-image-output.md) | ⬡ Source Image Output | IMAGE, MASK | Pass-through for source image |
-| [Inpaint Composite](inpaint-composite.md) | ⬡ Inpaint Composite | IMAGE | Blend generated + source via mask |
 | [Image Saver](image-saver.md) | ⬡ Image Saver | — | Save with metadata + naming |
 
 ## Pack / Unpack
@@ -67,6 +63,3 @@ Workflow helpers and diagnostics.
 | Node | Display Name | Output | Use Case |
 |------|-------------|--------|----------|
 | [Bundle Downloader](bundle-downloader.md) | ⬡ 💾 Bundle Model Downloader | STRING | Pre-download models without loading |
-| [Health Check](health-check.md) | ⬡ 🩺 Health Check | — | System diagnostics |
-| [Log Viewer](log-viewer.md) | ⬡ 📜 Log Viewer | — | View UmeAiRT logs |
-| [Label](label.md) | ⬡ Label | — | Visual annotation node |

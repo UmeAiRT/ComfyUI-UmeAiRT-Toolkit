@@ -116,7 +116,7 @@ Nodes are color-coded by category in `web/umeairt_colors.js`:
 | **Prompts**               | Dark Green     | `#0A2D19` / `#145A32` | Positive/Negative Prompt Input |
 | **LoRA**                  | Violet         | `#25122D` / `#4A235A` | LoRA Stacks |
 | **Samplers (Processors)** | Slate Gray     | `#1A252F` / `#2C3E50` | Block Sampler |
-| **Post-Processing**       | Pale Blue / Teal | `#123851` / `#2471A3` | Ultimate Upscale, Face Detailer, Inpaint Composite |
+| **Post-Processing**       | Pale Blue / Teal | `#123851` / `#2471A3` | Ultimate Upscale, Face Detailer |
 | **Utilities**             | Dark Gray      | `#1A252F` / `#34495E` | Debug, Label, UmeAiRT Signature |
 | **Image Inputs**          | Rust Red       | `#35160D` / `#6B2D1A` | Image Loaders |
 

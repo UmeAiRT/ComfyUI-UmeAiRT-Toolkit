@@ -8,12 +8,8 @@ from modules.utils_nodes import (
     UmeAiRT_Unpack_FilesBundle,
     UmeAiRT_Unpack_ImageBundle,
     UmeAiRT_Unpack_Pipeline,
-    UmeAiRT_Unpack_Prompt,
-    UmeAiRT_Label,
     UmeAiRT_Bundle_Downloader,
-    UmeAiRT_Log_Viewer,
     UmeAiRT_Signature,
-    UmeAiRT_HealthCheck,
 )
 from modules.common import UmeBundle, UmeSettings, UmeImage, GenerationContext
 
@@ -54,10 +50,6 @@ class TestUnpackFilesBundle(unittest.TestCase):
         self.assertIsInstance(result, tuple)
 
 
-class TestLabel(unittest.TestCase):
-    def test_input_types(self):
-        inputs = UmeAiRT_Label.INPUT_TYPES()
-        self.assertIn("required", inputs)
 
 
 class TestBundleDownloader(unittest.TestCase):
@@ -66,10 +58,6 @@ class TestBundleDownloader(unittest.TestCase):
         self.assertIn("required", inputs)
 
 
-class TestLogViewer(unittest.TestCase):
-    def test_input_types(self):
-        inputs = UmeAiRT_Log_Viewer.INPUT_TYPES()
-        self.assertIn("required", inputs)
 
 
 class TestSignature(unittest.TestCase):
@@ -78,10 +66,6 @@ class TestSignature(unittest.TestCase):
         self.assertIn("required", inputs)
 
 
-class TestHealthCheck(unittest.TestCase):
-    def test_input_types(self):
-        inputs = UmeAiRT_HealthCheck.INPUT_TYPES()
-        self.assertIn("required", inputs)
 
 
 if __name__ == "__main__":

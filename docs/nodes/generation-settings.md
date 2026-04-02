@@ -28,5 +28,4 @@
     | FLUX Dev | 20-28 | 1.0 | euler | simple |
     | Z-IMAGE Turbo | 4-8 | 1.0 | euler | sgm_uniform |
 
-<!-- TODO: Screenshot — Generation Settings node with sliders visible -->
-<!-- PLACEHOLDER: Show the node with width=1024, height=1024, steps=20, cfg=8.0 settings -->
+![Generation Settings](../assets/UmeAiRT_GenerationSettings.png)

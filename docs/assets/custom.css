@@ -1,0 +1,29 @@
+/* Premium aesthetic for documentation images */
+.md-content img {
+    /* Harmonize size, prevent massive overflows */
+    max-width: 100%;
+    /* Keep aspect ratio */
+    height: auto;
+    
+    /* Center all images neatly */
+    display: block;
+    margin: 2rem auto;
+    
+    /* Visual polish */
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05); /* very subtle edge for dark mode */
+    
+    /* Smooth transition if they are hovered or lazy loaded */
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.md-content img:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Adjust margin inside tabs to fit tighter layout */
+.tabbed-content img {
+    margin: 1rem auto;
+}

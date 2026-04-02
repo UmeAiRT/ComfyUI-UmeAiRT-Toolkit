@@ -5,16 +5,9 @@ try:
 except Exception as e:
     print(f"[UmeAiRT-Toolkit] Failed to register extra samplers: {e}")
 # ------------------------------------
-
-from .modules.model_nodes import (
-    UmeAiRT_MultiLoraLoader
-)
 from .modules.image_nodes import (
-    UmeAiRT_SourceImage_Output,
-    UmeAiRT_PipelineInpaintComposite,
     UmeAiRT_PipelineImageSaver
 )
-
 # Register 'bbox' folder for FaceDetailer
 import folder_paths
 import os
@@ -37,7 +30,6 @@ from .modules.block_nodes import (
     UmeAiRT_GenerationSettings,
     UmeAiRT_FilesSettings_Checkpoint,
     UmeAiRT_FilesSettings_FLUX,
-    UmeAiRT_FilesSettings_Fragmented,
     UmeAiRT_FilesSettings_ZIMG,
     UmeAiRT_BlockImageLoader, UmeAiRT_BlockImageProcess,
     UmeAiRT_ImageProcess_Img2Img, UmeAiRT_ImageProcess_Inpaint, UmeAiRT_ImageProcess_Outpaint,
@@ -46,32 +38,21 @@ from .modules.block_nodes import (
     UmeAiRT_Positive_Input, UmeAiRT_Negative_Input
 )
 from .modules.utils_nodes import (
-    UmeAiRT_Label,
     UmeAiRT_Bundle_Downloader,
-    UmeAiRT_Log_Viewer,
     UmeAiRT_Unpack_Settings,
-    UmeAiRT_Unpack_Prompt,
-    UmeAiRT_Faces_Unpack_Node,
-    UmeAiRT_Tags_Unpack_Node,
-    UmeAiRT_Pipe_Unpack_Node,
     UmeAiRT_Unpack_SettingsBundle,
-    UmeAiRT_Unpack_PromptsBundle,
     UmeAiRT_Unpack_ImageBundle,
     UmeAiRT_Unpack_FilesBundle,
     UmeAiRT_Unpack_Pipeline,
     UmeAiRT_Pack_Bundle,
-    UmeAiRT_Signature,
-    UmeAiRT_HealthCheck
+    UmeAiRT_Signature
 )
 
 NODE_CLASS_MAPPINGS = {
     # Block Loaders
     "UmeAiRT_FilesSettings_Checkpoint": UmeAiRT_FilesSettings_Checkpoint,
     "UmeAiRT_FilesSettings_FLUX": UmeAiRT_FilesSettings_FLUX,
-    "UmeAiRT_FilesSettings_Fragmented": UmeAiRT_FilesSettings_Fragmented,
-    "UmeAiRT_FilesSettings_ZIMG": UmeAiRT_FilesSettings_ZIMG,
     "UmeAiRT_BundleLoader": UmeAiRT_BundleLoader,
-    "UmeAiRT_MultiLoraLoader": UmeAiRT_MultiLoraLoader,
 
     # Block Settings & Image
     "UmeAiRT_GenerationSettings": UmeAiRT_GenerationSettings,
@@ -98,8 +79,6 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_Detailer_Daemon": UmeAiRT_Detailer_Daemon,
 
     # Image
-    "UmeAiRT_SourceImage_Output": UmeAiRT_SourceImage_Output,
-    "UmeAiRT_PipelineInpaintComposite": UmeAiRT_PipelineInpaintComposite,
     "UmeAiRT_PipelineImageSaver": UmeAiRT_PipelineImageSaver,
 
     # Pack/Unpack (Interoperability)
@@ -108,27 +87,17 @@ NODE_CLASS_MAPPINGS = {
     "UmeAiRT_Unpack_FilesBundle": UmeAiRT_Unpack_FilesBundle,
     "UmeAiRT_Unpack_ImageBundle": UmeAiRT_Unpack_ImageBundle,
     "UmeAiRT_Unpack_SettingsBundle": UmeAiRT_Unpack_SettingsBundle,
-    "UmeAiRT_Unpack_PromptsBundle": UmeAiRT_Unpack_PromptsBundle,
-    "UmeAiRT_Faces_Unpack_Node": UmeAiRT_Faces_Unpack_Node,
-    "UmeAiRT_Tags_Unpack_Node": UmeAiRT_Tags_Unpack_Node,
-    "UmeAiRT_Pipe_Unpack_Node": UmeAiRT_Pipe_Unpack_Node,
 
     # Utils
-    "UmeAiRT_Label": UmeAiRT_Label,
     "UmeAiRT_Signature": UmeAiRT_Signature,
     "UmeAiRT_Bundle_Downloader": UmeAiRT_Bundle_Downloader,
-    "UmeAiRT_Log_Viewer": UmeAiRT_Log_Viewer,
-    "UmeAiRT_HealthCheck": UmeAiRT_HealthCheck,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     # Loaders
     "UmeAiRT_FilesSettings_Checkpoint": "⬡ Checkpoint Loader",
     "UmeAiRT_FilesSettings_FLUX": "⬡ FLUX Loader",
-    "UmeAiRT_FilesSettings_Fragmented": "⬡ Fragmented Loader",
-    "UmeAiRT_FilesSettings_ZIMG": "⬡ Z-IMG Loader",
     "UmeAiRT_BundleLoader": "⬡ 📦 Bundle Auto-Loader",
-    "UmeAiRT_MultiLoraLoader": "⬡ Multi-LoRA Loader",
 
     # Settings & Image
     "UmeAiRT_GenerationSettings": "⬡ Generation Settings",
@@ -155,8 +124,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_Detailer_Daemon": "⬡ Detailer Daemon",
 
     # Image
-    "UmeAiRT_SourceImage_Output": "⬡ Source Image Output",
-    "UmeAiRT_PipelineInpaintComposite": "⬡ Inpaint Composite",
     "UmeAiRT_PipelineImageSaver": "⬡ Image Saver",
 
     # Pack/Unpack
@@ -165,17 +132,10 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UmeAiRT_Unpack_FilesBundle": "⬡ Unpack Models Bundle",
     "UmeAiRT_Unpack_ImageBundle": "⬡ Unpack Image Bundle",
     "UmeAiRT_Unpack_SettingsBundle": "⬡ Unpack Settings Bundle",
-    "UmeAiRT_Unpack_PromptsBundle": "⬡ Unpack Prompts Bundle",
-    "UmeAiRT_Faces_Unpack_Node": "⬡ Unpack Faces",
-    "UmeAiRT_Tags_Unpack_Node": "⬡ Unpack Tags",
-    "UmeAiRT_Pipe_Unpack_Node": "⬡ Unpack Pipe",
 
     # Utils
-    "UmeAiRT_Label": "⬡ Label",
     "UmeAiRT_Signature": "⬡ UmeAiRT Signature",
     "UmeAiRT_Bundle_Downloader": "⬡ 💾 Bundle Model Downloader",
-    "UmeAiRT_Log_Viewer": "⬡ 📜 UmeAiRT Log Viewer",
-    "UmeAiRT_HealthCheck": "⬡ 🩺 UmeAiRT Health Check",
 }
 
 WEB_DIRECTORY = "./web"

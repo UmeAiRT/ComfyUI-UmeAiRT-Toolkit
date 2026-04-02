@@ -21,5 +21,8 @@
 !!! note "These are simple text pass-through nodes"
     They output raw text strings. The KSampler handles CLIP encoding internally. This is different from ComfyUI's built-in `CLIPTextEncode` which outputs CONDITIONING tensors.
 
-<!-- TODO: Screenshot — Both prompt nodes side by side -->
-<!-- PLACEHOLDER: Show Positive Prompt and Negative Prompt nodes connected to a KSampler, with example prompt text visible -->
+=== "Positive Prompt"
+    ![Positive Prompt Input](../assets/UmeAiRT_Positive_Input.png)
+
+=== "Negative Prompt"
+    ![Negative Prompt Input](../assets/UmeAiRT_Negative_Input.png)
