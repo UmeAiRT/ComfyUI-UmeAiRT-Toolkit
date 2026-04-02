@@ -605,13 +605,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Loaders">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lora-loaders-submenu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LoRA (Loaders submenu)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
-  <a href="#generation" class="md-nav__link">
+  <a href="#inputs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Generation
+        Inputs
       
     </span>
   </a>
@@ -619,10 +636,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sampling-post-process" class="md-nav__link">
+  <a href="#image" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sampling &amp; Post-Process
+        Image
       
     </span>
   </a>
@@ -630,10 +647,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#image-output" class="md-nav__link">
+  <a href="#sampler" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Image Output
+        Sampler
       
     </span>
   </a>
@@ -641,10 +658,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pack-unpack" class="md-nav__link">
+  <a href="#post-process" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pack / Unpack
+        Post-Process
       
     </span>
   </a>
@@ -652,10 +669,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#utilities" class="md-nav__link">
+  <a href="#output" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Utilities
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interop-pack-unpack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interop (Pack / Unpack)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#utils" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Utils
       
     </span>
   </a>
@@ -1724,13 +1763,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Loaders">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lora-loaders-submenu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LoRA (Loaders submenu)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
-  <a href="#generation" class="md-nav__link">
+  <a href="#inputs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Generation
+        Inputs
       
     </span>
   </a>
@@ -1738,10 +1794,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sampling-post-process" class="md-nav__link">
+  <a href="#image" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sampling &amp; Post-Process
+        Image
       
     </span>
   </a>
@@ -1749,10 +1805,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#image-output" class="md-nav__link">
+  <a href="#sampler" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Image Output
+        Sampler
       
     </span>
   </a>
@@ -1760,10 +1816,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pack-unpack" class="md-nav__link">
+  <a href="#post-process" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pack / Unpack
+        Post-Process
       
     </span>
   </a>
@@ -1771,10 +1827,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#utilities" class="md-nav__link">
+  <a href="#output" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Utilities
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interop-pack-unpack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interop (Pack / Unpack)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#utils" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Utils
       
     </span>
   </a>
@@ -1804,7 +1882,7 @@
 <h1 id="node-reference">Node Reference<a class="headerlink" href="#node-reference" title="Permanent link">&para;</a></h1>
 <p>All UmeAiRT nodes use the <strong>⬡</strong> prefix in ComfyUI and are organized into categories in the right-click menu under <code>UmeAiRT/</code>.</p>
 <h2 id="loaders">Loaders<a class="headerlink" href="#loaders" title="Permanent link">&para;</a></h2>
-<p>Load models, VAEs, and text encoders into memory.</p>
+<p>Load models, VAEs, and text encoders into memory. Menu: <code>UmeAiRT/Loaders</code></p>
 <table>
 <thead>
 <tr>
@@ -1818,25 +1896,19 @@
 <tr>
 <td><a href="checkpoint-loader/">Checkpoint Loader</a></td>
 <td>⬡ Checkpoint Loader</td>
-<td>MODEL, CLIP, VAE</td>
-<td>SD 1.5 / SDXL single-file checkpoints</td>
-</tr>
-<tr>
-<td><a href="checkpoint-loader/#advanced">Checkpoint Loader (Advanced)</a></td>
-<td>⬡ Checkpoint Loader (Advanced)</td>
 <td>UME_BUNDLE</td>
-<td>All-in-one: model + prompts + settings</td>
+<td>SD 1.5 / SDXL single-file checkpoints</td>
 </tr>
 <tr>
 <td><a href="flux-loader/">FLUX Loader</a></td>
 <td>⬡ FLUX Loader</td>
-<td>MODEL, CLIP, VAE</td>
+<td>UME_BUNDLE</td>
 <td>FLUX architecture (dual CLIP)</td>
 </tr>
 <tr>
 <td><a href="zimg-loader/">Z-IMG Loader</a></td>
 <td>⬡ Z-IMG Loader</td>
-<td>MODEL, CLIP, VAE</td>
+<td>UME_BUNDLE</td>
 <td>Z-IMAGE / Lumina2 architecture</td>
 </tr>
 <tr>
@@ -1847,8 +1919,28 @@
 </tr>
 </tbody>
 </table>
-<h2 id="generation">Generation<a class="headerlink" href="#generation" title="Permanent link">&para;</a></h2>
-<p>Configure generation parameters and prepare images for processing.</p>
+<h3 id="lora-loaders-submenu">LoRA (Loaders submenu)<a class="headerlink" href="#lora-loaders-submenu" title="Permanent link">&para;</a></h3>
+<p>Stack LoRA models for style/character modifications. Menu: <code>UmeAiRT/Loaders/LoRA</code></p>
+<table>
+<thead>
+<tr>
+<th>Node</th>
+<th>Display Name</th>
+<th>Output</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="lora-blocks/">LoRA Blocks</a></td>
+<td>⬡ LoRA 1x/3x/5x/10x</td>
+<td>UME_LORA_STACK</td>
+<td>Stack LoRA models with strengths</td>
+</tr>
+</tbody>
+</table>
+<h2 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">&para;</a></h2>
+<p>Configure generation parameters and prompts. Menu: <code>UmeAiRT/Inputs</code></p>
 <table>
 <thead>
 <tr>
@@ -1865,6 +1957,26 @@
 <td>UME_SETTINGS</td>
 <td>Dimensions, steps, CFG, sampler, seed</td>
 </tr>
+<tr>
+<td><a href="prompt-inputs/">Prompt Inputs</a></td>
+<td>⬡ Positive/Negative Prompt</td>
+<td>POSITIVE/NEGATIVE</td>
+<td>Text prompt editors</td>
+</tr>
+</tbody>
+</table>
+<h2 id="image">Image<a class="headerlink" href="#image" title="Permanent link">&para;</a></h2>
+<p>Load and process images for generation. Menu: <code>UmeAiRT/Image</code></p>
+<table>
+<thead>
+<tr>
+<th>Node</th>
+<th>Display Name</th>
+<th>Output</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td><a href="image-loader/">Image Loader</a></td>
 <td>⬡ Image Loader</td>
@@ -1896,27 +2008,15 @@
 <td>Target dimensions + alignment</td>
 </tr>
 <tr>
-<td><a href="lora-blocks/">LoRA Blocks</a></td>
-<td>⬡ LoRA 1x/3x/5x/10x</td>
-<td>UME_LORA_STACK</td>
-<td>Stack LoRA models with strengths</td>
-</tr>
-<tr>
 <td><a href="controlnet/">ControlNet</a></td>
-<td>⬡ ControlNet Apply/Process</td>
+<td>⬡ ControlNet Apply</td>
 <td>UME_IMAGE</td>
-<td>Apply ControlNet guidance</td>
-</tr>
-<tr>
-<td><a href="prompt-inputs/">Prompt Inputs</a></td>
-<td>⬡ Positive/Negative Prompt</td>
-<td>POSITIVE/NEGATIVE</td>
-<td>Text prompt editors</td>
+<td>Apply ControlNet guidance to image bundle</td>
 </tr>
 </tbody>
 </table>
-<h2 id="sampling-post-process">Sampling &amp; Post-Process<a class="headerlink" href="#sampling-post-process" title="Permanent link">&para;</a></h2>
-<p>Generate and enhance images.</p>
+<h2 id="sampler">Sampler<a class="headerlink" href="#sampler" title="Permanent link">&para;</a></h2>
+<p>Central sampling hub. Menu: <code>UmeAiRT/Sampler</code></p>
 <table>
 <thead>
 <tr>
@@ -1931,8 +2031,22 @@
 <td><a href="ksampler/">KSampler</a></td>
 <td>⬡ KSampler</td>
 <td>UME_PIPELINE</td>
-<td>Central sampling hub</td>
+<td>Central sampling hub — creates the generation pipeline</td>
 </tr>
+</tbody>
+</table>
+<h2 id="post-process">Post-Process<a class="headerlink" href="#post-process" title="Permanent link">&para;</a></h2>
+<p>Enhance generated images. Menu: <code>UmeAiRT/Post-Process</code></p>
+<table>
+<thead>
+<tr>
+<th>Node</th>
+<th>Display Name</th>
+<th>Output</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td><a href="ultimate-upscale/">UltimateSD Upscale</a></td>
 <td>⬡ UltimateSD Upscale</td>
@@ -1946,21 +2060,21 @@
 <td>AI-native upscaling</td>
 </tr>
 <tr>
-<td><a href="facedetailer/">FaceDetailer</a></td>
-<td>⬡ FaceDetailer</td>
+<td><a href="facedetailer/">Subject Detailer</a></td>
+<td>⬡ Subject Detailer</td>
 <td>UME_PIPELINE</td>
-<td>Automatic face enhancement</td>
+<td>Automatic face/hand enhancement</td>
 </tr>
 <tr>
 <td><a href="detailer-daemon/">Detailer Daemon</a></td>
 <td>⬡ Detailer Daemon</td>
 <td>UME_PIPELINE</td>
-<td>Configurable face detection params</td>
+<td>Detail enhancement via sampling schedule</td>
 </tr>
 </tbody>
 </table>
-<h2 id="image-output">Image Output<a class="headerlink" href="#image-output" title="Permanent link">&para;</a></h2>
-<p>Save and composite final images.</p>
+<h2 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h2>
+<p>Save final images. Menu: <code>UmeAiRT/Output</code></p>
 <table>
 <thead>
 <tr>
@@ -1979,11 +2093,11 @@
 </tr>
 </tbody>
 </table>
-<h2 id="pack-unpack">Pack / Unpack<a class="headerlink" href="#pack-unpack" title="Permanent link">&para;</a></h2>
-<p>Convert between UmeAiRT bundles and standard ComfyUI types.</p>
-<p>See <a href="pack-unpack/">Pack / Unpack Overview</a> for the full list of 13 interoperability nodes.</p>
-<h2 id="utilities">Utilities<a class="headerlink" href="#utilities" title="Permanent link">&para;</a></h2>
-<p>Workflow helpers and diagnostics.</p>
+<h2 id="interop-pack-unpack">Interop (Pack / Unpack)<a class="headerlink" href="#interop-pack-unpack" title="Permanent link">&para;</a></h2>
+<p>Convert between UmeAiRT bundles and standard ComfyUI types. Menu: <code>UmeAiRT/Interop</code></p>
+<p>See <a href="pack-unpack/">Pack / Unpack Overview</a> for the full list of interoperability nodes.</p>
+<h2 id="utils">Utils<a class="headerlink" href="#utils" title="Permanent link">&para;</a></h2>
+<p>Standalone workflow helpers. Menu: <code>UmeAiRT/Utils</code></p>
 <table>
 <thead>
 <tr>
@@ -1999,6 +2113,12 @@
 <td>⬡ 💾 Bundle Model Downloader</td>
 <td>STRING</td>
 <td>Pre-download models without loading</td>
+</tr>
+<tr>
+<td>⬡ UmeAiRT Signature</td>
+<td>⬡ UmeAiRT Signature</td>
+<td>—</td>
+<td>Branding node for canvas</td>
 </tr>
 </tbody>
 </table>

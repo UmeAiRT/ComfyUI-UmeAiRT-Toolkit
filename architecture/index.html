@@ -1780,14 +1780,14 @@
 </table>
 <h2 id="data-flow">Data Flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>graph TB
-    subgraph "Model Loading"
+    subgraph "Loaders"
         CKP["⬡ Checkpoint Loader"]
         FLUX["⬡ FLUX Loader"]
         ZIMG["⬡ Z-IMG Loader"]
         BDL["⬡ Bundle Auto-Loader"]
     end
 
-    subgraph "Configuration"
+    subgraph "Inputs + Image"
         SET["⬡ Generation Settings"]
         POS["⬡ Positive Prompt"]
         NEG["⬡ Negative Prompt"]
@@ -1797,20 +1797,18 @@
         CNET["⬡ ControlNet Apply"]
     end
 
-    subgraph "Sampling"
+    subgraph "Sampler"
         KS["⬡ KSampler"]
     end
 
     subgraph "Post-Process"
         UP["⬡ UltimateSD Upscale"]
         SVR["⬡ SeedVR2 Upscale"]
-        FD["⬡ FaceDetailer"]
+        FD["⬡ Subject Detailer"]
     end
 
     subgraph "Output"
         SAV["⬡ Image Saver"]
-        SRC["⬡ Source Image Output"]
-        INP["⬡ Inpaint Composite"]
     end
 
     CKP --&gt;|UME_BUNDLE| KS
@@ -1837,7 +1835,7 @@
     SVR --&gt;|UME_PIPELINE| SAV</code></pre>
 <h2 id="module-structure">Module Structure<a class="headerlink" href="#module-structure" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ComfyUI-UmeAiRT-Toolkit/
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── __init__.py              # Node registration (47 nodes)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── __init__.py              # Node registration (31 nodes)
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── modules/
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│   ├── block_loaders.py     # Model loading nodes
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│   ├── block_inputs.py      # LoRA, ControlNet, Settings, Image, Prompts
