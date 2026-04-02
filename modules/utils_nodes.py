@@ -86,7 +86,7 @@ class UmeAiRT_Unpack_FilesBundle:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "files_bundle": ("UME_BUNDLE", {"tooltip": "Connect a Model Loader output here to see its individual model components."}),
+                "model_bundle": ("UME_BUNDLE", {"tooltip": "Connect a Model Loader output here to see its individual model components."}),
             }
         }
     
@@ -95,13 +95,13 @@ class UmeAiRT_Unpack_FilesBundle:
     FUNCTION = "unpack"
     CATEGORY = "UmeAiRT/Utils/Unpack"
 
-    def unpack(self, files_bundle):
+    def unpack(self, model_bundle):
         """Extracts model components from the UmeBundle dataclass."""
         return (
-            files_bundle.model,
-            files_bundle.clip,
-            files_bundle.vae,
-            files_bundle.model_name,
+            model_bundle.model,
+            model_bundle.clip,
+            model_bundle.vae,
+            model_bundle.model_name,
         )
 
 
