@@ -1,5 +1,7 @@
+import copy
 import torch
 import torchvision.transforms.functional as TF
+import traceback
 import weakref
 import folder_paths
 import nodes as comfy_nodes
@@ -14,6 +16,29 @@ try:
     from .facedetailer_core import detector, logic as fd_logic
 except ImportError:
     pass
+
+
+def _check_controlnets_equal(c1, c2):
+    """Compare two ControlNet stacks without using == on tensors."""
+    if c1 is c2:
+        return True
+    if not c1 and not c2:
+        return True
+    if not c1 or not c2:
+        return False
+    if len(c1) != len(c2):
+        return False
+    for t1, t2 in zip(c1, c2):
+        if len(t1) != len(t2):
+            return False
+        if t1[0] != t2[0]:
+            return False
+        if t1[1] is not t2[1]:
+            return False
+        if t1[2:] != t2[2:]:
+            return False
+    return True
+
 
 # --- Processor Blocks ---
 
@@ -228,44 +253,49 @@ class UmeAiRT_BlockSampler:
             self._last_neg_text == neg_text and 
             last_clip is clip and
             self._last_loras == loras and
-            self._last_controlnets == controlnets
+            _check_controlnets_equal(self._last_controlnets, controlnets)
         )
 
         if can_use_cache:
-             positive_cond = self._cached_positive
-             negative_cond = self._cached_negative
+             positive_cond = copy.deepcopy(self._cached_positive)
+             negative_cond = copy.deepcopy(self._cached_negative)
              log_node("Block Sampler: Using cached Prompts (Fast Start)", color="GREEN")
         else:
              log_node("Block Sampler: Encoding Prompts...")
              tokens = clip.tokenize(pos_text)
-             cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-             positive_cond = [[cond, {"pooled_output": pooled}]]
+             positive_cond = clip.encode_from_tokens_scheduled(tokens)
 
              tokens = clip.tokenize(neg_text)
-             cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-             negative_cond = [[cond, {"pooled_output": pooled}]]
+             negative_cond = clip.encode_from_tokens_scheduled(tokens)
 
              self._last_pos_text = pos_text
              self._last_neg_text = neg_text
-             import weakref
              self._last_clip_ref = weakref.ref(clip)
              self._last_loras = loras
              self._last_controlnets = controlnets
-             self._cached_positive = positive_cond
-             self._cached_negative = negative_cond
+             # Store pristine cached copy
+             self._cached_positive = copy.deepcopy(positive_cond)
+             self._cached_negative = copy.deepcopy(negative_cond)
 
         if controlnets:
             for cnet_def in controlnets:
                 c_name, c_image, c_str, c_start, c_end = cnet_def
                 if c_name != "None" and c_image is not None:
                     try:
-                        if c_name in self._controlnet_cache:
-                            c_model = self._controlnet_cache[c_name]
-                        else:
-                            c_model = self.cnet_loader.load_controlnet(c_name)[0]
+                        if c_name in self._controlnet_cache:
+                            c_model = self._controlnet_cache[c_name]
+                        else:
+                            c_model = self.cnet_loader.load_controlnet(c_name)[0]
                             self._controlnet_cache[c_name] = c_model
-                        positive_cond, negative_cond = self.cnet_apply.apply_controlnet(positive_cond, negative_cond, c_model, c_image, c_str, c_start, c_end)
-                    except Exception as e: log_node(f"Block Sampler ControlNet Error: {e}", color="RED")
+
+                        positive_cond, negative_cond = self.cnet_apply.apply_controlnet(
+                            positive_cond, negative_cond, c_model, c_image, c_str, c_start, c_end
+                        )
+
+                        log_node(f"Block Sampler: ControlNet '{c_name}' applied (strength={c_str}).", color="GREEN")
+                    except Exception as e:
+                        log_node(f"Block Sampler ControlNet Error: {e}", color="RED")
+                        traceback.print_exc()
 
         log_node(f"Block Sampler: {mode_str} | {width}x{height} | Steps: {steps} | CFG: {cfg}")
 

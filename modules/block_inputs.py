@@ -83,7 +83,8 @@ class UmeAiRT_ControlNetImageApply:
             "required": {
                 "image_bundle": ("UME_IMAGE", {"tooltip": "Input Image Bundle."}),
                 "control_net_name": (folder_paths.get_filename_list("controlnet"), {"tooltip": "Select ControlNet model."}),
-                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.01, "tooltip": "How strongly the ControlNet guides the image. Start with 1.0 and lower if the effect is too strong."}),
+                "preprocessor": (["None", "UmeAiRT_Canny", "UmeAiRT_Depth", "UmeAiRT_SoftEdge", "UmeAiRT_Lineart", "UmeAiRT_DWPose"], {"default": "None", "tooltip": "Apply a native ControlNet preprocessor automatically."}),
+                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider", "tooltip": "How strongly the ControlNet guides the image. Start with 1.0 and lower if the effect is too strong."}),
                 "start_percent": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001, "advanced": True, "tooltip": "When the ControlNet starts influencing (0.0 = from the beginning). Raise to let the AI establish composition first."}),
                 "end_percent": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.001, "advanced": True, "tooltip": "When the ControlNet stops influencing (1.0 = until the very end). Lower to let the AI refine details freely."}),
             },
@@ -97,7 +98,7 @@ class UmeAiRT_ControlNetImageApply:
     FUNCTION = "apply_controlnet"
     CATEGORY = "UmeAiRT/Image"
 
-    def apply_controlnet(self, image_bundle, control_net_name: str, strength: float, start_percent: float = 0.0, end_percent: float = 1.0, optional_control_image: Optional[Any] = None):
+    def apply_controlnet(self, image_bundle, control_net_name: str, strength: float, start_percent: float = 0.0, end_percent: float = 1.0, optional_control_image: Optional[Any] = None, preprocessor: str = "None"):
         import copy
         new_bundle = copy.copy(image_bundle)
         cnet_stack = list(new_bundle.controlnets) if new_bundle.controlnets else []
@@ -107,6 +108,81 @@ class UmeAiRT_ControlNetImageApply:
 
             if control_use_image is None:
                 raise ValueError("ControlNet Image Apply: No Image found in bundle and no optional image provided.")
+
+            if preprocessor == "UmeAiRT_Canny":
+                try:
+                    from .preprocessors.canny_core import apply_canny
+                    log_node("ControlNet Apply: Running native Canny Preprocessor...", color="CYAN")
+                    control_use_image = apply_canny(control_use_image, low_threshold=100, high_threshold=200)
+                    log_node("ControlNet Apply: Native Canny Success.", color="GREEN")
+                except Exception as e:
+                    log_node(f"UmeAiRT ControlNet Apply: Native Canny failed: {e}", color="RED")
+            elif preprocessor == "UmeAiRT_Depth":
+                try:
+                    from .manifest import download_bundle_files
+                    log_node("ControlNet Apply: Fetching Depth Model...", color="CYAN")
+                    resolved, _, _, _, errs = download_bundle_files("PREPROCESSORS/Depth", "Zoe-N")
+                    if errs:
+                        log_node(f"Failed to download Depth Model from UmeAiRT Asset CDN: {errs}", color="RED")
+                    else:
+                        import os
+                        model_path = os.path.join(folder_paths.models_dir, "preprocessors", "depth", "Intel-zoedepth-nyu-kitti")
+                        from .preprocessors.depth_core import apply_zoedepth
+                        log_node("ControlNet Apply: Running native Depth Preprocessor...", color="CYAN")
+                        control_use_image = apply_zoedepth(control_use_image, model_path)
+                        log_node("ControlNet Apply: Native Depth Success.", color="GREEN")
+                except Exception as e:
+                    log_node(f"UmeAiRT ControlNet Apply: Native Depth failed: {e}", color="RED")
+            elif preprocessor == "UmeAiRT_SoftEdge":
+                try:
+                    from .manifest import download_bundle_files
+                    log_node("ControlNet Apply: Fetching SoftEdge Model...", color="CYAN")
+                    resolved, _, _, _, errs = download_bundle_files("PREPROCESSORS/SoftEdge", "HED")
+                    if errs:
+                        log_node(f"Failed to download SoftEdge Model from UmeAiRT Asset CDN: {errs}", color="RED")
+                    else:
+                        import os
+                        model_path = os.path.join(folder_paths.models_dir, "models_base", "ControlNetHED.pth")
+                        from .preprocessors.hed_core import apply_hed
+                        log_node("ControlNet Apply: Running native SoftEdge Preprocessor...", color="CYAN")
+                        control_use_image = apply_hed(control_use_image, model_path)
+                        log_node("ControlNet Apply: Native SoftEdge Success.", color="GREEN")
+                except Exception as e:
+                    log_node(f"UmeAiRT ControlNet Apply: Native SoftEdge failed: {e}", color="RED")
+            elif preprocessor == "UmeAiRT_Lineart":
+                try:
+                    from .manifest import download_bundle_files
+                    log_node("ControlNet Apply: Fetching Lineart Model...", color="CYAN")
+                    resolved, _, _, _, errs = download_bundle_files("PREPROCESSORS/Lineart", "Standard")
+                    if errs:
+                        log_node(f"Failed to download Lineart Model from UmeAiRT Asset CDN: {errs}", color="RED")
+                    else:
+                        import os
+                        model_path_coarse = os.path.join(folder_paths.models_dir, "models_base", "sk_model2.pth")
+                        model_path_fine = os.path.join(folder_paths.models_dir, "models_base", "sk_model.pth")
+                        from .preprocessors.lineart_core import apply_lineart
+                        log_node("ControlNet Apply: Running native Lineart Preprocessor...", color="CYAN")
+                        control_use_image = apply_lineart(control_use_image, model_path_fine, model_path_coarse, use_coarse=True)
+                        log_node("ControlNet Apply: Native Lineart Success.", color="GREEN")
+                except Exception as e:
+                    log_node(f"UmeAiRT ControlNet Apply: Native Lineart failed: {e}", color="RED")
+            elif preprocessor == "UmeAiRT_DWPose":
+                try:
+                    from .manifest import download_bundle_files
+                    log_node("ControlNet Apply: Fetching DWPose Model...", color="CYAN")
+                    resolved, _, _, _, errs = download_bundle_files("PREPROCESSORS/Pose", "DWPose")
+                    if errs:
+                        log_node(f"Failed to download DWPose Model from UmeAiRT Asset CDN: {errs}", color="RED")
+                    else:
+                        import os
+                        model_path_det = os.path.join(folder_paths.models_dir, "models_base", "yolox_l.onnx")
+                        model_path_pose = os.path.join(folder_paths.models_dir, "models_base", "dw-ll_ucoco_384.onnx")
+                        from .preprocessors.dwpose_core import apply_dwpose
+                        log_node("ControlNet Apply: Running native DWPose Preprocessor...", color="CYAN")
+                        control_use_image = apply_dwpose(control_use_image, model_path_det, model_path_pose)
+                        log_node("ControlNet Apply: Native DWPose Success.", color="GREEN")
+                except Exception as e:
+                    log_node(f"UmeAiRT ControlNet Apply: Native DWPose failed: {e}", color="RED")
 
             cnet_stack.append((control_net_name, control_use_image, strength, start_percent, end_percent))
 

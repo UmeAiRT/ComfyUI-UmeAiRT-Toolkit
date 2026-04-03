@@ -59,6 +59,11 @@ def find_file_in_folders(filename, folder_types):
     for folder_type in folder_types:
         try:
             path = folder_paths.get_full_path(folder_type, filename)
+            if not path:
+                # Fallback: check models_dir directly
+                fallback_path = os.path.join(folder_paths.models_dir, folder_type, filename)
+                if os.path.exists(fallback_path):
+                    path = fallback_path
             if path and os.path.exists(path):
                 # Check for interrupted download markers
                 if os.path.exists(path + ".aria2") or os.path.exists(path + ".download"):

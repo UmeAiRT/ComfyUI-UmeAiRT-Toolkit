@@ -8,8 +8,6 @@ from modules.image_nodes import (
 )
 
 
-
-
 class TestPipelineImageSaver(unittest.TestCase):
     def test_input_types(self):
         inputs = UmeAiRT_PipelineImageSaver.INPUT_TYPES()
@@ -24,3 +22,4 @@ class TestPipelineImageSaver(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

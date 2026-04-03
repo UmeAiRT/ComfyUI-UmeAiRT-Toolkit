@@ -66,7 +66,5 @@ class TestSignature(unittest.TestCase):
         self.assertIn("required", inputs)
 
 
-
-
 if __name__ == "__main__":
     unittest.main()

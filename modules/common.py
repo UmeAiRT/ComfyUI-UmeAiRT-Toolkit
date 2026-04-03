@@ -200,7 +200,8 @@ def resize_tensor(tensor, target_h, target_w, interp_mode="bilinear", is_mask=Fa
         # Image: [B, H, W, C] -> [B, C, H, W]
         t = tensor.permute(0, 3, 1, 2)
     
-    t_resized = torch.nn.functional.interpolate(t, size=(target_h, target_w), mode=interp_mode, align_corners=False if interp_mode!="nearest" else None)
+    align_corners = False if interp_mode not in ("nearest", "nearest-exact") else None
+    t_resized = torch.nn.functional.interpolate(t, size=(target_h, target_w), mode=interp_mode, align_corners=align_corners)
     
     if is_mask:
         # [B, 1, H, W] -> [B, H, W] #

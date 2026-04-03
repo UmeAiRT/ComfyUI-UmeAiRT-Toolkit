@@ -6,7 +6,7 @@ except Exception as e:
     print(f"[UmeAiRT-Toolkit] Failed to register extra samplers: {e}")
 # ------------------------------------
 from .modules.image_nodes import (
-    UmeAiRT_PipelineImageSaver
+    UmeAiRT_PipelineImageSaver,
 )
 # Register 'bbox' folder for FaceDetailer
 import folder_paths
@@ -45,7 +45,7 @@ from .modules.utils_nodes import (
     UmeAiRT_Unpack_FilesBundle,
     UmeAiRT_Unpack_Pipeline,
     UmeAiRT_Pack_Bundle,
-    UmeAiRT_Signature
+    UmeAiRT_Signature,
 )
 
 NODE_CLASS_MAPPINGS = {
