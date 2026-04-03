@@ -71,6 +71,24 @@ UmeAiRT_LoraBlock_10 = _make_lora_block_class(10)
 
 # --- ControlNet Blocks ---
 
+def _get_controlnet_models():
+    """Combine local controlnet models with auto-downloadable ones from manifest."""
+    local_models = folder_paths.get_filename_list("controlnet")
+    
+    REMOTE_PREFIX = "[⬇️] "
+    manifest_models = []
+    try:
+        from .manifest import load_manifest
+        data = load_manifest()
+        cnet_data = data.get("_CONTROLNET_MODELS", {})
+        for model_name in cnet_data.keys():
+            if model_name not in local_models:
+                manifest_models.append(f"{REMOTE_PREFIX}{model_name}")
+    except Exception as e:
+        log_node(f"ControlNet Apply: Could not load manifest for remote models: {e}", color="YELLOW")
+        
+    return ["None"] + local_models + sorted(manifest_models)
+
 class UmeAiRT_ControlNetImageApply:
     """Injects ControlNet configuration into an image bundle.
 
@@ -82,7 +100,7 @@ class UmeAiRT_ControlNetImageApply:
         return {
             "required": {
                 "image_bundle": ("UME_IMAGE", {"tooltip": "Input Image Bundle."}),
-                "control_net_name": (folder_paths.get_filename_list("controlnet"), {"tooltip": "Select ControlNet model."}),
+                "control_net_name": (_get_controlnet_models(), {"tooltip": "Select ControlNet model."}),
                 "preprocessor": (["None", "UmeAiRT_Canny", "UmeAiRT_Depth", "UmeAiRT_SoftEdge", "UmeAiRT_Lineart", "UmeAiRT_DWPose"], {"default": "None", "tooltip": "Apply a native ControlNet preprocessor automatically."}),
                 "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01, "display": "slider", "tooltip": "How strongly the ControlNet guides the image. Start with 1.0 and lower if the effect is too strong."}),
                 "start_percent": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001, "advanced": True, "tooltip": "When the ControlNet starts influencing (0.0 = from the beginning). Raise to let the AI establish composition first."}),
@@ -104,6 +122,19 @@ class UmeAiRT_ControlNetImageApply:
         cnet_stack = list(new_bundle.controlnets) if new_bundle.controlnets else []
 
         if control_net_name != "None":
+            # Auto-download remote model if requested
+            if control_net_name.startswith("[⬇️] "):
+                actual_model = control_net_name.replace("[⬇️] ", "")
+                from .manifest import download_bundle_files
+                try:
+                    resolved_files, meta, dn, sk, err = download_bundle_files("_CONTROLNET_MODELS", actual_model)
+                    if err:
+                        raise RuntimeError(f"ControlNet Apply: Failed to auto-download {actual_model}: {', '.join(err)}")
+                except Exception as e:
+                    log_node(f"ControlNet Apply: Remote manifest resolution error for '{actual_model}': {e}", color="RED")
+                    raise RuntimeError(f"ControlNet Apply: failed to retrieve '{actual_model}': {e}")
+                control_net_name = actual_model
+
             control_use_image = optional_control_image if optional_control_image is not None else new_bundle.image
 
             if control_use_image is None:

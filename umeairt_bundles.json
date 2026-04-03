@@ -2,7 +2,7 @@
 
     "FLUX": {
         "_meta": {
-            "base_url": "https://huggingface.co/UmeAiRT/ComfyUI-Auto_installer/resolve/main/models",
+            "base_url": "https://huggingface.co/UmeAiRT/ComfyUI-Auto-Installer-Assets/resolve/main/models",
             "loader_type": "flux",
             "clip_type": "flux"
         },
@@ -184,7 +184,7 @@
     },
     "FLUX_FILL": {
         "_meta": {
-            "base_url": "https://huggingface.co/UmeAiRT/ComfyUI-Auto_installer/resolve/main/models",
+            "base_url": "https://huggingface.co/UmeAiRT/ComfyUI-Auto-Installer-Assets/resolve/main/models",
             "loader_type": "flux",
             "clip_type": "flux"
         },
@@ -261,7 +261,7 @@
     },
     "Z-IMAGE_TURBO": {
         "_meta": {
-            "base_url": "https://huggingface.co/UmeAiRT/ComfyUI-Auto_installer/resolve/main/models",
+            "base_url": "https://huggingface.co/UmeAiRT/ComfyUI-Auto-Installer-Assets/resolve/main/models",
             "loader_type": "zimg",
             "clip_type": "lumina2"
         },
