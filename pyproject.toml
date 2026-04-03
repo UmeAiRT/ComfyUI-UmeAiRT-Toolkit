@@ -56,5 +56,7 @@ collect_ignore_glob = ["*/__init__.py", "__init__.py"]
 [tool.bandit]
 # B101 = assert usage (fine in non-production code)
 # B310 = urlopen audit (legitimate — we download models)
-skips = ["B101", "B310"]
-exclude_dirs = ["vendor", "usdu_core", "facedetailer_core", "seedvr2_core", "tests"]
+# B614 = torch.load (vendored preprocessor networks use safe state_dict loading)
+# B615 = HF from_pretrained (local_files_only=True in our code, vendored in networks/)
+skips = ["B101", "B310", "B614", "B615"]
+exclude_dirs = ["vendor", "usdu_core", "facedetailer_core", "seedvr2_core", "tests", "modules/preprocessors/networks"]

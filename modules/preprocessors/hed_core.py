@@ -46,7 +46,7 @@ def apply_hed(image_tensor: torch.Tensor, model_path: str) -> torch.Tensor:
     device = mm.get_torch_device()
 
     net = ControlNetHED_Apache2()
-    net.load_state_dict(torch.load(model_path, map_location='cpu'))
+    net.load_state_dict(torch.load(model_path, map_location='cpu', weights_only=True))
     net.float().eval().to(device)
 
     out_batch = []

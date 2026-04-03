@@ -14,8 +14,8 @@ def apply_zoedepth(image_tensor: torch.Tensor, model_path: str) -> torch.Tensor:
     device = mm.get_torch_device()
     
     # Load model and processor pointing to local UmeAiRT asset path
-    image_processor = AutoImageProcessor.from_pretrained(model_path, local_files_only=True)
-    model = ZoeDepthForDepthEstimation.from_pretrained(model_path, local_files_only=True)
+    image_processor = AutoImageProcessor.from_pretrained(model_path, local_files_only=True)  # nosec B615
+    model = ZoeDepthForDepthEstimation.from_pretrained(model_path, local_files_only=True)  # nosec B615
     
     # Put model on GPU
     model.to(device)

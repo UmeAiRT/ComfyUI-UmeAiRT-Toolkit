@@ -83,9 +83,9 @@ def apply_lineart(image_tensor: torch.Tensor, model_path: str, coarse_model_path
     model = Generator(3, 1, 3)
     
     if use_coarse:
-        model.load_state_dict(torch.load(coarse_model_path, map_location='cpu'))
+        model.load_state_dict(torch.load(coarse_model_path, map_location='cpu', weights_only=True))
     else:
-        model.load_state_dict(torch.load(model_path, map_location='cpu'))
+        model.load_state_dict(torch.load(model_path, map_location='cpu', weights_only=True))
         
     model.eval().to(device)
 
